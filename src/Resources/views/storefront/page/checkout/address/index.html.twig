@@ -1,0 +1,81 @@
+{% sw_extends '@Storefront/storefront/page/checkout/_page.html.twig' %}
+
+{% block base_header %}
+    {% sw_include '@Storefront/storefront/layout/header/header-minimal.html.twig' %}
+{% endblock %}
+
+{% block base_navigation %}{% endblock %}
+
+{% block page_checkout_main_content %}
+    {% block page_checkout_address %}
+        {% block page_checkout_address_header %}
+            <h1 class="address-main-header">
+                Anmelden oder Registrieren
+            </h1>
+        {% endblock %}
+
+        {% block page_checkout_address_login_toggle %}
+            <br />
+            <div class="row justify-content-md-center align-items-center">
+                <div class="col-md-4">
+                    <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page">
+                        <button type="button" class="btn-primary btn btn-buy">
+                            Ich bin bereits Kunde
+                        </button>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="/cidaas/register?redirect_to=frontend.checkout.confirm.page">
+                        <button type="button" class="btn-primary btn btn-buy">
+                            Ich möchte mich registrieren
+                        </button>
+                    </a>
+                </div>
+            </div>
+        {% endblock %}
+
+        {% block page_checkout_address_login %}
+            <div class="collapse" id="loginCollapse">
+                {% block page_checkout_address_login_card %}
+                    {% sw_include '@Storefront/storefront/component/account/login.html.twig' %}
+                {% endblock %}
+            </div>
+        {% endblock %}
+
+        {% block page_checkout_address_register %}
+            {% block page_checkout_address_register_card %}
+                
+            {% endblock %}
+        {% endblock %}
+    {% endblock %}
+{% endblock %}
+
+{% block page_checkout_aside_summary %}
+    {{ parent() }}
+
+    {% block page_checkout_address_products %}
+        <div class="checkout-aside-products">
+            {% block page_checkout_address_products_header %}
+                <h2 class="checkout-aside-product-header">
+                    {{ "checkout.cartHeader"|trans|sw_sanitize }}
+                </h2>
+            {% endblock %}
+
+            {% block page_checkout_address_products_list %}
+                <div class="checkout-aside-product-list">
+                    {% block page_checkout_address_product_list_container %}
+                        {% for lineItem in page.cart.lineItems %}
+                            {% block page_checkout_address_product_summary_item %}
+                                {% sw_include '@Storefront/storefront/page/checkout/checkout-aside-item.html.twig' %}
+                            {% endblock %}
+                        {% endfor %}
+                    {% endblock %}
+                </div>
+            {% endblock %}
+        </div>
+    {% endblock %}
+{% endblock %}
+
+{% block base_footer %}
+    {% sw_include '@Storefront/storefront/layout/footer/footer-minimal.html.twig' %}
+{% endblock %}

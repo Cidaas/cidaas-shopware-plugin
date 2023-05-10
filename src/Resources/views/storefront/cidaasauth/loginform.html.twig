@@ -1,0 +1,6 @@
+{% block loginform %}
+    <form id="loginForm" method="post" action="{{url}}/login-srv/login">
+        <input type="hidden" name="email" value="{{email}}" />
+        <input type="hidden" name="password" value="{{password}}" />
+    </form>
+{% endblock %}

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/platform/master/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title>Cidaas Oauth2-OpenID Connect</title>
+        <title lang="de-DE">Cidaas Oauth2 Connect-Konfiguration</title>
+
+        <input-field>
+            <name>clientId</name>
+            <copyable>true</copyable>
+            <label>Client Id</label>
+            <label lang="de-DE">Client Id</label>
+            <placeholder>Client Id</placeholder>
+            <placeholder lang="de-DE">Client Id</placeholder>
+            <helpText>Please enter client Id for your cidaas oauth2 Connect app</helpText>
+            <helpText lang="de-DE">Ihre Kunden-ID für die cidaas oauth2 Connect App</helpText>
+        </input-field>
+
+        <input-field type="password">
+            <name>clientSecret</name>
+            <label>Client Secret</label>
+            <label lang="de-DE">Geheim Schlüssel</label>
+            <helpText>Please client secret from your cidaas oauth2 Connect app</helpText>
+            <helpText lang="de-DE">Ihr Kundengeheimnis für die cidaas oauth2 Connect App</helpText>
+        </input-field>
+        <input-field type="url">
+            <name>baseUri</name>
+            <label>Base URL</label>
+            <label lang="de-DE">Base URL</label>
+        </input-field>
+    </card>
+    <card>
+        <title>Kundengruppen Zuordnung / Feldzuordnung (Gruppenzuordnung (1-4) noch ohne Funktion)</title>
+            <input-field>
+                <name>cfCustomernumber</name>
+                <label>CustomerNumber CustomField</label>
+                <label lang="de-DE">Kundennummer CustomField</label>
+                <placeholder>123456</placeholder>
+                <placeholder lang="de-DE">123456</placeholder>
+                <helpText>Please enter the name of the CustomField holding customernumber</helpText>
+                <helpText lang="de-DE">Bitte trage den Feldnamen des CustomFields ein für die Kundennummer</helpText>
+            </input-field>
+            <component name="sw-entity-single-select">
+                <name>customergroupDefault</name>
+                <entity>customer_group</entity>
+                <label>Standard Kundengruppe auswählen</label>
+            </component>
+            <input-field>
+                <name>customergroup1</name>
+                <label>Cidaas Kundengruppen-Id 1</label>
+                <placeholder>Kundengruppe1</placeholder>
+                <disabled>true</disabled>
+            </input-field>
+            <component name="sw-entity-single-select">
+                <name>customergroupsw1</name>
+                <entity>customer_group</entity>
+                <label>Kundengruppe auswählen 1</label>
+                <disabled>true</disabled>
+            </component>
+            <input-field>
+                <name>customergroup2</name>
+                <label>Cidaas Kundengruppen-Id 2</label>
+                <placeholder>Kundengruppe2</placeholder>
+                <disabled>true</disabled>
+            </input-field>
+            <component name="sw-entity-single-select">
+                <name>customergroupsw2</name>
+                <entity>customer_group</entity>
+                <label>Kundengruppe auswählen 2</label>
+                <disabled>true</disabled>
+            </component>
+            <input-field>
+                <name>customergroup3</name>
+                <label>Cidaas Kundengruppen-Id 3</label>
+                <placeholder>Kundengruppe3</placeholder>
+                <disabled>true</disabled>
+            </input-field>
+            <component name="sw-entity-single-select">
+                <name>customergroupsw3</name>
+                <entity>customer_group</entity>
+                <label>Kundengruppe auswählen 3</label>
+                <disabled>true</disabled>
+            </component>
+            <input-field>
+                <name>customergroup4</name>
+                <label>Cidaas Kundengruppen-Id 4</label>
+                <placeholder>Kundengruppe4</placeholder>
+                <disabled>true</disabled>
+            </input-field>
+            <component name="sw-entity-single-select">
+                <name>customergroupsw4</name>
+                <entity>customer_group</entity>
+                <label>Kundengruppe auswählen 4</label>
+                <disabled>true</disabled>
+            </component>
+    </card>
+
+</config>

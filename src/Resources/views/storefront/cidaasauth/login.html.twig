@@ -1,0 +1,30 @@
+{% block login_form %}
+    <div class="">
+        <form id="loginForm" method="POST">
+            <div id="emailContainer">
+                <label class="form-label" for="email">E-Mail:</label>
+                <input type="email" name="username" class="form-control" id="email" /><br />
+            </div>
+            <div id="passwordContainer" style="display: none">
+                <label class="form-label" for="password">Passwort:</label>
+                <input type="password" name="password" class="form-control" id="password"/> <br />
+            </div>
+            <div id="onetimePassword" style="display:none">
+                <p>
+                    Wir haben unsere Systeme aktuallisiert, dadurch wurden alle Passwörter zurück gesetzt.
+                    Du hast eine E-Mail bekommen mit einem Einmal-Passwort, bitte nutze dieses Passwort um dich zu authentifizieren, danach kannst du dein Passwort festlegen.
+                </p>
+                <div>
+                    <a href="#" id="toOtpLink">
+                    <button type="button" id="toOtp" class="btn btn-primary btn-buy">Zum Login</button>
+                    </a>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-buy" id="nextButton">Weiter </button>
+            <div id='complete' style="display: none">
+                deine muddah is complete :D
+            </div>
+            <input type="hidden" name="requestId" value="{{requestId}}" />
+        </form>
+    </div>
+{% endblock %}

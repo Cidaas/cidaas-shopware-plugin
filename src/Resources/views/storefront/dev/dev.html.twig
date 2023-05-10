@@ -1,0 +1,24 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_content %}
+<div>
+    <div data-cidaas-login 
+        data-cidaas-login-options="{{
+            {
+                'csrf': sw_csrf('cidaashelper.form', {"mode": "token"}),
+                'csrfExists': sw_csrf('cidaas.exists', {"mode": "token"}),
+                'csrfDev3': sw_csrf('cidaas.dev3', {"mode": "token"}),
+                'requestId': requestId,
+                'cidaas': cidaas
+            }|json_encode
+        }}"
+    ></div>
+    <div class="row justify-content-md-center align-items-center">
+        <div class="col-md-3">
+            {% sw_include '@CidaasHelper/storefront/cidaasauth/login.html.twig' 
+                with {requestId}
+            %}
+        </div>
+    </div>
+</div>
+{% endblock %}
