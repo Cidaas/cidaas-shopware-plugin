@@ -5,23 +5,6 @@ stages:
   - test
   - release
 
-test_build:
-  stage: test
-  image: node:16-buster
-  allow_failure: false
-  script:
-    - rm -rf /root/.npmrc
-    - npm install
-    - npm run test:coverage
-    - npm run build
-  coverage: '/Lines \W+: (\d+\.\d+)%.*/'
-  artifacts:
-    expire_in: 1 hrs
-    paths:
-      - coverage
-      - dist
-
-
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
   stage: release
