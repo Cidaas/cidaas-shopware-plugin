@@ -43,24 +43,24 @@ github_sync:
       else
         git remote add github https://$GIT_SERVER_HOST/$GIT_PROJECT_PATH.git;
       fi
-    - |
-      ISFILECHANGED=false
-      for FILE in $OBJECTS
-      do
-        if grep -Fxq $FILE .gitignore;
-          then :
-        else
-          echo "$FILE" >> .gitignore;
-          ISFILECHANGED=true
-        fi
-      done
-      if $ISFILECHANGED;
-      then
-        git add .gitignore;
-        git commit -m "$COMMIT_MESSAGE";
-        git rm -r --cached .;
-        git commit -am "$CACHE_UPDATE_COMMIT_MESSAGE"
-      fi
+    # - |
+    #   ISFILECHANGED=false
+    #   for FILE in $OBJECTS
+    #   do
+    #     if grep -Fxq $FILE .gitignore;
+    #       then :
+    #     else
+    #       echo "$FILE" >> .gitignore;
+    #       ISFILECHANGED=true
+    #     fi
+    #   done
+    #   if $ISFILECHANGED;
+    #   then
+    #     git add .gitignore;
+    #     git commit -m "$COMMIT_MESSAGE";
+    #     git rm -r --cached .;
+    #     git commit -am "$CACHE_UPDATE_COMMIT_MESSAGE"
+    #   fi
     - git push https://$GITHUB_USER:$PAT@$GIT_SERVER_HOST/$GIT_PROJECT_PATH.git HEAD:$GITHUB_TARGET_BRANCH -f
     - git push https://$GITHUB_USER:$PAT@$GIT_SERVER_HOST/$GIT_PROJECT_PATH.git HEAD:$(git describe --abbrev=0 --tags)
   only:
