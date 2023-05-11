@@ -9,4 +9,9 @@
 composer.lock
 
 # Ignore build
-/.build
+/.buildDockerfile
+.gitlab-ci.yml
+scripts
+docker-compose.yml
+.releaserc
+temp
