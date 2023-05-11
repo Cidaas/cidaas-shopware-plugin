@@ -1,9 +1,12 @@
 include:
   - template: Code-Quality.gitlab-ci.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
+    file: common/github_sync.yml
 
 stages:
   - test
   - release
+  - publish
 
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
@@ -12,3 +15,8 @@ release:
     - semantic-release
   only:
     - master
+
+github_sync:
+  stage: publish
+  variables:
+    GIT_PROJECT_PATH: "Cidaas/cidaas-shopware-plugin"
