@@ -18,5 +18,5 @@ ingress:
   - hostname: kube-nightlybuild-dev.cidaas.de
     secretName: kube-nightlybuild-dev.cidaas.de
     paths:
-      - /shopware
+      - /
 " > values.yml
