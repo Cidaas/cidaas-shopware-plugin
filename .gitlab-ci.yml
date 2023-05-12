@@ -5,6 +5,7 @@ stages:
   - test
   - package
   - release
+  - publish
 
 build_image:
   image: $DOCKER_IMAGE_DEFAULT
@@ -17,5 +18,17 @@ release:
   stage: release
   script:
     - semantic-release
+  only:
+    - master
+
+deploy:
+  extends: .deploy_kube
+  stage: publish
+  variables:
+    VALUE_FILE_SUFFIX: test
+    TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates.git
+    CIDAAS_CI_TEMPLATE: "widas-kubernetes-ci-templates/deployment_ymls/cidaas-service-all-in-one.yml.j2"
+    KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
+    DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
   only:
     - master
