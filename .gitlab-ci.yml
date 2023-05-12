@@ -1,5 +1,8 @@
 include:
   - template: Code-Quality.gitlab-ci.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
+    file: templates/.kube-deploy.yml
+
 
 stages:
   - test
