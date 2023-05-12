@@ -1,7 +1,7 @@
 #!/bin/sh
 echo "
 name: ${CI_PROJECT_NAME}
-namespace: wimcon1-loadtest-01-custom-services
+namespace: cidaas-nightlybuild-services
 replica: 1
 imagePullSecret: docker-global-cred
 image: $DOCKER_IMAGE
@@ -17,6 +17,4 @@ memory:
 ingress:
   - hostname: kube-nightlybuild-dev.cidaas.de
     secretName: kube-nightlybuild-dev.cidaas.de
-    paths:
-      - /
 " > values.yml
