@@ -5,6 +5,12 @@ stages:
   - test
   - release
 
+build_image:
+  image: $DOCKER_IMAGE_DEFAULT
+  stage: package
+  script:
+    - docker build -t $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID .
+
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
   stage: release
