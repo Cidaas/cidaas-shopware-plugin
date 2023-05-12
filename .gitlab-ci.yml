@@ -13,8 +13,15 @@ stages:
 build_image:
   image: $DOCKER_IMAGE_DEFAULT
   stage: package
+  before_script:
+    - mkdir -p ~/.docker
+    - echo $CIM_DOCKER_CRED > ~/.docker/config.json
+    - apk add git
+    - git clone ${TEMPLATE_REPO}
+    - chmod 700 ./${SCRIPTS_PATH}/dev_docker_build.sh
   script:
-    - docker build -t $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID .
+    - ${SCRIPTS_PATH}/dev_docker_build.sh
+
 
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
