@@ -9,6 +9,6 @@ logging:
   before_script:
     - mkdir -p /root/.kube && echo $KUBECONFIG_FILE | base64 -d > /root/.kube/config
   script:
-    - kubectl rollout restart -n wimcon1-loadtest-01-custom-services deployment cidaas-shopware-plugin
+    - kubectl delete -n wimcon1-loadtest-01-custom-services deployment cidaas-shopware-plugin
   only:
     - kubectl-branch
