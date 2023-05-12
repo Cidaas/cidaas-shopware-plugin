@@ -7,6 +7,7 @@ imagePullSecret: docker-global-cred
 image: $DOCKER_IMAGE
 port: 80
 runtimeId: wimcon1-loadtest-01
+tenantKey: cidaas-kube-nightlybuild-dev
 cpu:
   min: 100m
   max: 500m
