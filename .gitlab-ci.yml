@@ -8,8 +8,10 @@ include:
       - common/deployment.yml
 
 variables:
+  DOCKER_DRIVER: overlay2
   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
   SCRIPTS_PATH: widas-ci-templates/ci-scripts
+  DEPLOYMENT_YML_PATH: widas-ci-templates/deployment-ymls/service-without-ingress.yml.j2
 
 
 stages:
