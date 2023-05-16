@@ -1,8 +1,13 @@
 include:
-  - template: Code-Quality.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/License-Scanning.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
+    file: common/docker.yml
 
 variables:
   DOCKER_DRIVER: overlay2
@@ -15,21 +20,22 @@ stages:
   - package
   # - release
   - publish
+  - cleanup
 
-build_image:
-  image: $DOCKER_IMAGE_DEFAULT
-  stage: package
-  before_script:
-    - mkdir -p ~/.docker
-    - echo $CIM_DOCKER_CRED > ~/.docker/config.json
-    - apk add git
-    - git clone ${TEMPLATE_REPO}
-    - chmod 700 ./${SCRIPTS_PATH}/dev_docker_build.sh
-  script:
-    - ${SCRIPTS_PATH}/dev_docker_build.sh
-  only:
-    - development
-    - master
+# build_image:
+#   image: $DOCKER_IMAGE_DEFAULT
+#   stage: package
+#   before_script:
+#     - mkdir -p ~/.docker
+#     - echo $CIM_DOCKER_CRED > ~/.docker/config.json
+#     - apk add git
+#     - git clone ${TEMPLATE_REPO}
+#     - chmod 700 ./${SCRIPTS_PATH}/dev_docker_build.sh
+#   script:
+#     - ${SCRIPTS_PATH}/dev_docker_build.sh
+#   only:
+#     - development
+#     - master
 
 
 # release:
