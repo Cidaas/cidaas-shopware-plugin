@@ -14,4 +14,9 @@ cpu:
 memory:
   min: 128Mi
   max: 512Mi
+ingress:
+  - hostname: kube-nightlybuild-dev.cidaas.de
+    secretName: kube-nightlybuild-dev.cidaas.de
+    paths:
+      - /shopware
 " > values.yml
