@@ -2,7 +2,7 @@ include:
   - template: Code-Quality.gitlab-ci.yml
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
-  - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
+  - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
     file: common/docker.yml
 
 variables:
