@@ -3,7 +3,9 @@ include:
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
   - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
-    file: common/docker.yml
+    file: 
+      - common/docker.yml
+      - common/deployment.yml
 
 variables:
   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
