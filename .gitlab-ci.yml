@@ -2,6 +2,8 @@ include:
   - template: Code-Quality.gitlab-ci.yml
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
+    file: common/docker.yml
 
 variables:
   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
@@ -11,38 +13,28 @@ variables:
 stages:
   - test
   - package
-  - release
+  # - release
   - publish
 
-build_image:
-  image: $DOCKER_IMAGE_DEFAULT
-  stage: package
-  before_script:
-    - mkdir -p ~/.docker
-    - echo $CIM_DOCKER_CRED > ~/.docker/config.json
-    - apk add git
-    - git clone ${TEMPLATE_REPO}
-    - chmod 700 ./${SCRIPTS_PATH}/dev_docker_build.sh
-  script:
-    - ${SCRIPTS_PATH}/dev_docker_build.sh
+# release:
+#   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
+#   stage: release
+#   script:
+#     - semantic-release
+#   only:
+#     - master
 
+kube_deployment:
+  extends: .kube_deployment
 
-release:
-  image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
-  stage: release
-  script:
-    - semantic-release
-  only:
-    - master
-
-deploy:
-  extends: .deploy_kube
-  stage: publish
-  variables:
-    VALUE_FILE_SUFFIX: test
-    TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates.git
-    CIDAAS_CI_TEMPLATE: "widas-kubernetes-ci-templates/deployment_ymls/cidaas-service-all-in-one.yml.j2"
-    KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
-    DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
-  only:
-    - master
+# deploy:
+#   extends: .deploy_kube
+#   stage: publish
+#   variables:
+#     VALUE_FILE_SUFFIX: test
+#     TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates.git
+#     CIDAAS_CI_TEMPLATE: "widas-kubernetes-ci-templates/deployment_ymls/cidaas-service-all-in-one.yml.j2"
+#     KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
+#     DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
+#   only:
+#     - master
