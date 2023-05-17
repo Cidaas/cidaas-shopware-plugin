@@ -4,6 +4,7 @@ include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
   - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
@@ -18,7 +19,7 @@ variables:
 stages:
   - test
   - package
-  # - release
+  - release
   - publish
   - cleanup
 
@@ -38,13 +39,13 @@ stages:
 #     - master
 
 
-# release:
-#   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
-#   stage: release
-#   script:
-#     - semantic-release
-#   only:
-#     - master
+release:
+  image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
+  stage: release
+  script:
+    - semantic-release
+  only:
+    - master
 
 
 development_deploy:
