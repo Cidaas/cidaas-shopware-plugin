@@ -4,7 +4,6 @@ include:
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Security/Container-Scanning.gitlab-ci.yml
-  - template: Code-Quality.gitlab-ci.yml
   - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
     file: templates/.kube-deploy.yml
   - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
@@ -14,6 +13,7 @@ variables:
   DOCKER_DRIVER: overlay2
   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
   SCRIPTS_PATH: widas-ci-templates/ci-scripts
+  QUALITY_BASE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/codequality.git
 
 
 stages:
@@ -37,6 +37,56 @@ stages:
 #   only:
 #     - development
 #     - master
+
+code_quality_json:
+  stage: test
+  allow_failure: true
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
+  script:
+    - docker pull "$CODE_QUALITY_IMAGE"
+    # Clone the .codeclimate.yml from the code quality base repo
+    - git clone ${QUALITY_BASE_REPO}
+    - cp .codeclimate.yml .
+    - rm -rf codequality
+    # Run the codeclimate image from gitlab
+    - docker run
+      --env SOURCE_CODE="$PWD"
+      --env CODECLIMATE_CODE="$PWD/app"
+      --volume /tmp/cc:/tmp/cc
+      --volume "$PWD":/code
+      --volume /var/run/docker.sock:/var/run/docker.sock
+      "$CODE_QUALITY_IMAGE" /code
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths: [gl-code-quality-report.json]
+  dependencies: []
+
+code_quality_html:
+  stage: test
+  allow_failure: true
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - docker pull codeclimate/codeclimate
+    - git clone ${QUALITY_BASE_REPO}
+    - cp .codeclimate.yml .
+    - rm -rf codequality
+    - docker info
+    - docker run
+       --env SOURCE_CODE="$PWD"
+       --env CODECLIMATE_CODE="$PWD"
+       --volume "$PWD":/code
+       --volume /var/run/docker.sock:/var/run/docker.sock
+       --volume /tmp/cc:/tmp/cc
+       codeclimate/codeclimate:latest analyze -f html > codeclimate.html
+  artifacts:
+    paths: [codeclimate.html]
+  dependencies: []
 
 
 release:

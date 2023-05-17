@@ -27,7 +27,6 @@ plugins:
     enabled: true
     config:
       file_extensions: "php,inc,lib"
-      ignore_warnings: true
 
 exclude_patterns:
   - "src/test/"
