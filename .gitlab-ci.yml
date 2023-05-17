@@ -65,30 +65,6 @@ code_quality_json:
     paths: [gl-code-quality-report.json]
   dependencies: []
 
-code_quality_html:
-  stage: test
-  allow_failure: true
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-  script:
-    - docker pull codeclimate/codeclimate
-    - git clone ${QUALITY_BASE_REPO}
-    - cp .codeclimate.yml .
-    - rm -rf codequality
-    - docker info
-    - docker run
-       --env SOURCE_CODE="$PWD"
-       --env CODECLIMATE_CODE="$PWD"
-       --volume "$PWD":/code
-       --volume /var/run/docker.sock:/var/run/docker.sock
-       --volume /tmp/cc:/tmp/cc
-       codeclimate/codeclimate:latest analyze -f html > codeclimate.html
-  artifacts:
-    paths: [codeclimate.html]
-  dependencies: []
-
-
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
   stage: release
@@ -96,7 +72,6 @@ release:
     - semantic-release
   only:
     - master
-
 
 development_deploy:
   extends: .deploy_kube
