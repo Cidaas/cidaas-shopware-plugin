@@ -67,6 +67,7 @@ development_deploy:
     VALUE_FILE_SUFFIX: test
     DOCKER_DRIVER: overlay2
     KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
+    DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
   before_script:
     - rm -rvf /root/.kube
     - mkdir -p /root/.kube && echo $KUBECONFIG_FILE | base64 -d > /root/.kube/config
