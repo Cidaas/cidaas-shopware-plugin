@@ -3,7 +3,7 @@ include:
   # - template: Security/License-Scanning.gitlab-ci.yml
   # - template: Security/SAST.gitlab-ci.yml
   # - template: Security/Secret-Detection.gitlab-ci.yml
-  # - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
   # - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
   #   file: templates/.kube-deploy.yml
   - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
@@ -14,7 +14,7 @@ variables:
 
 
 stages:
-  # - test
+  - test
   - package
   # - release
   - publish
