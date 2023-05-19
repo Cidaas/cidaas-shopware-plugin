@@ -5,7 +5,7 @@ namespace: cidaas-nightlybuild-services
 replica: 1
 imagePullSecret: docker-global-cred
 image: $DOCKER_IMAGE
-port: 80
+port: 3000
 runtimeId: wimcon1-dev-01
 tenantKey: cidaas-kube-nightlybuild-dev
 healthCheckPath: /shopware-ui
