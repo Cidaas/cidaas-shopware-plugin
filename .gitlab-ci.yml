@@ -28,6 +28,8 @@ code_quality_json:
     DOCKER_DRIVER: overlay2
     DOCKER_TLS_CERTDIR: ""
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
+  before_script:
+    - ls -l
   script:
     - docker pull "$CODE_QUALITY_IMAGE"
     - docker run
@@ -37,6 +39,8 @@ code_quality_json:
       --volume "$PWD":/code
       --volume /var/run/docker.sock:/var/run/docker.sock
       "$CODE_QUALITY_IMAGE" /code
+  after_script:
+    - ls -l
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
