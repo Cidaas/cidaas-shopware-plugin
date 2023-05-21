@@ -3,7 +3,6 @@ include:
   # - template: Security/License-Scanning.gitlab-ci.yml
   # - template: Security/SAST.gitlab-ci.yml
   # - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Code-Quality.gitlab-ci.yml
   # - template: Security/Container-Scanning.gitlab-ci.yml
   # - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
   #   file: templates/.kube-deploy.yml
@@ -31,7 +30,7 @@ code_quality_json:
     - ls -l
   script:
     - docker pull codeclimate/codeclimate
-    - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock codeclimate/codeclimate analyse -f json
+    - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock codeclimate/codeclimate analyze -f json
   after_script:
     - ls -l
 
