@@ -30,6 +30,7 @@ code_quality_json:
     - ls -l
     - echo "$PWD"
     - pwd
+    - git checkout $CI_COMMIT_REF_NAME
   script:
     - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock "$CODE_QUALITY_IMAGE" /code
   after_script:
