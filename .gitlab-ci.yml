@@ -21,31 +21,39 @@ stages:
   # - publish
   # - cleanup
 
-code_quality_json:
-  stage: test
-  allow_failure: true
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
+# code_quality_json:
+#   stage: test
+#   allow_failure: true
+#   variables:
+#     DOCKER_DRIVER: overlay2
+#     DOCKER_TLS_CERTDIR: ""
+#     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
+#   before_script:
+#     - ls -l
+#   script:
+#     - docker pull "$CODE_QUALITY_IMAGE"
+#     - docker run
+#       --env SOURCE_CODE="$PWD"
+#       --env CODECLIMATE_CODE="$PWD/app"
+#       --volume /tmp/cc:/tmp/cc
+#       --volume "$PWD":/code
+#       --volume /var/run/docker.sock:/var/run/docker.sock
+#       "$CODE_QUALITY_IMAGE" /code
+#   after_script:
+#     - ls -l
+#   artifacts:
+#     reports:
+#       codequality: gl-code-quality-report.json
+#     paths: [gl-code-quality-report.json]
+#   dependencies: []
+
+code_quality:
   before_script:
     - ls -l
-  script:
-    - docker pull "$CODE_QUALITY_IMAGE"
-    - docker run
-      --env SOURCE_CODE="$PWD"
-      --env CODECLIMATE_CODE="$PWD/app"
-      --volume /tmp/cc:/tmp/cc
-      --volume "$PWD":/code
-      --volume /var/run/docker.sock:/var/run/docker.sock
-      "$CODE_QUALITY_IMAGE" /code
   after_script:
     - ls -l
   artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
     paths: [gl-code-quality-report.json]
-  dependencies: []
 
 # release:
 #   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
