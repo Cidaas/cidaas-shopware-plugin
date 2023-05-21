@@ -58,22 +58,8 @@ code_quality_json:
   stage: test
   image: docker:git
   allow_failure: true
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
-    QUALITY_BASE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/cidaas-public-devkits/cidaas-plugins/cidaas-shopware-plugin.git
   script:
     - docker pull codeclimate/codeclimate
-    - git clone ${QUALITY_BASE_REPO}
-    - ls -a
-    - cd cidaas-shopware-plugin
-    - git checkout ${CI_COMMIT_REF_NAME}
-    - cd ..
-    - cp cidaas-shopware-plugin/.codeclimate.yml .
-    - rm -rf cidaas-shopware-plugin
-    - ls -a
-    - docker info
     - docker run 
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
@@ -82,6 +68,8 @@ code_quality_json:
        --volume /tmp/cc:/tmp/cc 
        codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
   artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
     paths: [gl-code-quality-report.json]
   dependencies: []
 
