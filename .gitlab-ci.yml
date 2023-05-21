@@ -20,41 +20,41 @@ stages:
   # - publish
   # - cleanup
 
-code_quality_json:
-  stage: test
-  image: docker:git
-  allow_failure: true
-  variables:
-    DOCKER_DRIVER: overlay2
-    DOCKER_TLS_CERTDIR: ""
-    CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
-    QUALITY_BASE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/cidaas-public-devkits/cidaas-plugins/cidaas-shopware-plugin.git
-  script:
-    - docker pull "$CODE_QUALITY_IMAGE"
-    # Clone the .codeclimate.yml from the code quality base repo
-    - git clone ${QUALITY_BASE_REPO}
-    - ls -a
-    - cd cidaas-shopware-plugin
-    - git checkout ${CI_COMMIT_REF_NAME}
-    - cd ..
-    - cp cidaas-shopware-plugin/.codeclimate.yml .
-    - rm -rf cidaas-shopware-plugin
-    - ls -a
-    # Run the codeclimate image from gitlab
-    - docker run
-      --env SOURCE_CODE="$PWD"
-      --env CODECLIMATE_CODE="$PWD/app"
-      --volume /tmp/cc:/tmp/cc
-      --volume "$PWD":/code
-      --volume /var/run/docker.sock:/var/run/docker.sock
-      "$CODE_QUALITY_IMAGE" /code
-  artifacts:
-    reports:
-      codequality: gl-code-quality-report.json
-    paths: [gl-code-quality-report.json]
-  dependencies: []
+# code_quality_json:
+#   stage: test
+#   image: docker:git
+#   allow_failure: true
+#   variables:
+#     DOCKER_DRIVER: overlay2
+#     DOCKER_TLS_CERTDIR: ""
+#     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
+#     QUALITY_BASE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/cidaas-public-devkits/cidaas-plugins/cidaas-shopware-plugin.git
+#   script:
+#     - docker pull "$CODE_QUALITY_IMAGE"
+#     # Clone the .codeclimate.yml from the code quality base repo
+#     - git clone ${QUALITY_BASE_REPO}
+#     - ls -a
+#     - cd cidaas-shopware-plugin
+#     - git checkout ${CI_COMMIT_REF_NAME}
+#     - cd ..
+#     - cp cidaas-shopware-plugin/.codeclimate.yml .
+#     - rm -rf cidaas-shopware-plugin
+#     - ls -a
+#     # Run the codeclimate image from gitlab
+#     - docker run
+#       --env SOURCE_CODE="$PWD"
+#       --env CODECLIMATE_CODE="$PWD/app"
+#       --volume /tmp/cc:/tmp/cc
+#       --volume "$PWD":/code
+#       --volume /var/run/docker.sock:/var/run/docker.sock
+#       "$CODE_QUALITY_IMAGE" /code
+#   artifacts:
+#     reports:
+#       codequality: gl-code-quality-report.json
+#     paths: [gl-code-quality-report.json]
+#   dependencies: []
 
-code_quality_html:
+code_quality_json:
   stage: test
   image: docker:git
   allow_failure: true
@@ -80,9 +80,9 @@ code_quality_html:
        --volume "$PWD":/code 
        --volume /var/run/docker.sock:/var/run/docker.sock 
        --volume /tmp/cc:/tmp/cc 
-       codeclimate/codeclimate:latest analyze -f html > codeclimate.html
+       codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
   artifacts:
-    paths: [codeclimate.html]
+    paths: [gl-code-quality-report.json]
   dependencies: []
 
 
