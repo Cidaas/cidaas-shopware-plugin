@@ -22,22 +22,32 @@ stages:
 
 code_quality_json:
   stage: test
-  image: docker:dind
+  image: docker:git
   allow_failure: true
   variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
     CODE_QUALITY_IMAGE: "registry.gitlab.com/gitlab-org/ci-cd/codequality:latest"
-  before_script:
-    - ls -l
-    - echo "$PWD"
-    - pwd
-    - git checkout $CI_COMMIT_REF_NAME
   script:
-    - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock "$CODE_QUALITY_IMAGE" /code
-  after_script:
-    - ls -l
-    - cd ..
-    - ls -l
-    - cat .codeclimate.yml
+    - docker pull "$CODE_QUALITY_IMAGE"
+    # Clone the .codeclimate.yml from the code quality base repo
+    - git clone ${CI_COMMIT_REF_NAME}
+    - cp codequality/conf/codeclimate/rules/java/.codeclimate.yml .
+    - rm -rf codequality
+    # Run the codeclimate image from gitlab
+    - docker run
+      --env SOURCE_CODE="$PWD"
+      --env CODECLIMATE_CODE="$PWD/app"
+      --volume /tmp/cc:/tmp/cc
+      --volume "$PWD":/code
+      --volume /var/run/docker.sock:/var/run/docker.sock
+      "$CODE_QUALITY_IMAGE" /code
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths: [gl-code-quality-report.json]
+  dependencies: []
+
 
 # release:
 #   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
