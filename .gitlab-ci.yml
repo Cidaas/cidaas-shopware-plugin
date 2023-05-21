@@ -31,12 +31,7 @@ code_quality_json:
     - ls -l
   script:
     - docker pull "$CODE_QUALITY_IMAGE"
-    - docker run --env SOURCE_CODE="$PWD" --env CODECLIMATE_CODE="$PWD/app" \
-      --volume /tmp/cc:/tmp/cc \
-      --volume "$PWD":/code \
-      --volume /var/run/docker.sock:/var/run/docker.sock \
-      registry.gitlab.com/gitlab-org/ci-cd/codequality /code
-      "$CODE_QUALITY_IMAGE" /code
+    - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock "$CODE_QUALITY_IMAGE" /code
   after_script:
     - ls -l
 
