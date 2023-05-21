@@ -30,7 +30,9 @@ code_quality_json:
     - ls -l
   script:
     - docker pull codeclimate/codeclimate
-    - docker run -e SOURCE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock codeclimate/codeclimate analyze -f json
+    - docker run -e CODECLIMATE_CODE="$PWD" -v "$PWD":/code -v /var/run/docker.sock:/var/run/docker.sock \
+      -v /tmp/cc:/tmp/cc \
+      codeclimate/codeclimate analyze -f json
   after_script:
     - ls -l
 
