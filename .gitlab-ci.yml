@@ -1,5 +1,24 @@
+include:
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/License-Scanning.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
+    file: templates/.kube-deploy.yml
+  - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
+    file: common/docker.yml
+
+# variables:
+#   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
+#   SCRIPTS_PATH: widas-ci-templates/ci-scripts
+
 stages:
   - test
+  - package
+  - release
+  - publish
+  - cleanup
 
 code_quality_json:
   stage: test
@@ -18,4 +37,39 @@ code_quality_json:
     reports:
       codequality: gl-code-quality-report.json
     paths: [gl-code-quality-report.json]
-  dependencies: []
+
+release:
+  image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
+  stage: release
+  script:
+    - semantic-release
+  only:
+    - master
+
+# development_deploy:
+#   extends: .deploy_kube
+#   stage: publish
+#   variables:
+#     VALUE_FILE_SUFFIX: test
+#     KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
+#     DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
+#   only:
+#     - development
+
+development_deploy:
+  image: docker-registry.widas.de:5050/dockerregistry/common/kubectl-docker:v1
+  stage: publish
+  variables:
+    VALUE_FILE_SUFFIX: test
+    DOCKER_DRIVER: overlay2
+    KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
+    DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
+  before_script:
+    - rm -rvf /root/.kube
+    - mkdir -p /root/.kube && echo $KUBECONFIG_FILE | base64 -d > /root/.kube/config
+  script:
+    - chmod +x scripts/create_valuesfile_${VALUE_FILE_SUFFIX}.sh &&  scripts/create_valuesfile_${VALUE_FILE_SUFFIX}.sh
+    - cat values.yml
+    - jinja2 cidaas-service-all-in-one.yml.j2 values.yml --format=yml >> ./cidaas-service-deployment.yml
+    - cat cidaas-service-deployment.yml
+    - kubectl apply -f cidaas-service-deployment.yml
