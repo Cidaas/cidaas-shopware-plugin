@@ -9,10 +9,6 @@ include:
   - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
     file: common/docker.yml
 
-# variables:
-#   TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
-#   SCRIPTS_PATH: widas-ci-templates/ci-scripts
-
 stages:
   - test
   - package

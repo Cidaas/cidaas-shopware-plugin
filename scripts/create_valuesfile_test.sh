@@ -8,7 +8,6 @@ image: $DOCKER_IMAGE
 port: 443
 runtimeId: wimcon1-dev-01
 tenantKey: cidaas-kube-nightlybuild-dev
-healthCheckPath: /
 cpu:
   min: 100m
   max: 500m
