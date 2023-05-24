@@ -401,6 +401,22 @@ class CidaasLoginService {
         }
     }
 
+    public function mapSubToCustomer($email, $sub,  $context)
+    {
+        $client = new Client();
+        $customer = $this->getCustomerByEmail($email, $context);
+        try {
+            $temp_cf=$customer->getCustomFields();
+            $temp_cf['sub'] = $sub;
+            $this->customerRepo->update([[
+                'id' => $customer->getId(),
+                'customFields' => $temp_cf
+            ]], $context->getContext());
+        } catch (ClientException $e) {
+            return json_decode($e->getResponse()->getBody()->getContents());
+        }
+    }
+
     public function checkCustomerNumber($user, $context) {
         $sub = $user['sub'];
         $customer = $this->getCustomerBySub($sub, $context);
