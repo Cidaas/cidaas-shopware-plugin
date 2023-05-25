@@ -20,6 +20,14 @@ stages:
   - publish
   - cleanup
 
+build_image_dev:
+  stage: package
+  before_script:
+    - mkdir ssl && cd ssl
+    - echo $TEST_CERT >> server.crt
+    - echo $TEST_KEY >> server.key
+    - cat server.crt
+    - cd ..
 # code_quality_json:
 #   stage: test
 #   image: docker:git
