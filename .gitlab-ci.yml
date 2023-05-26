@@ -33,16 +33,19 @@ github_sync:
   stage: publish
   image: bitnami/git
   variables:
-    COMMIT_MESSAGE: release $(git describe --abbrev=0 --tags)
+    RELEASE_VERSION: $(git describe --abbrev=0 --tags)
+    COMMIT_MESSAGE: release_$RELEASE_VERSION
   script:
     - git config --global --add safe.directory $PWD
     - git config --global user.name $GITLAB_USER_NAME
     - git config --global user.email $GITLAB_USER_EMAIL
     - git checkout master
+    - echo $RELEASE_VERSION
+    - echo $COMMIT_MESSAGE
     - git remote -v >> temp
     - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/shopware-plugin.git;fi
     - rm -rf Dockerfile docker-compose.yml .gitlab-ci.yml docs .codeclimate.yml .releaserc temp
-    - git add . && git commit -m ${COMMIT_MESSAGE} && git status
+    - git add . && git commit -m release_$RELEASE_VERSION && git status
     - git push https://$USERNAME:$PAT@github.com/Cidaas/shopware-plugin.git master -f
     - git push https://$USERNAME:$PAT@$github.com/Cidaas/shopware-plugin.git HEAD:$(git describe --abbrev=0 --tags)
   only:
