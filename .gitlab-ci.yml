@@ -1,50 +1,25 @@
-include:
-  # - template: Security/Dependency-Scanning.gitlab-ci.yml
-  # - template: Security/License-Scanning.gitlab-ci.yml
-  # - template: Security/SAST.gitlab-ci.yml
-  # - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Security/Container-Scanning.gitlab-ci.yml
-  - project: widas/software-quality/gitlab-template-projects/widas-kubernetes-ci-templates
-    file: templates/.kube-deploy.yml
-  - project: widas/software-quality/gitlab-template-projects/widas-ci-templates
-    file: common/docker.yml
-
-variables:
-  TEMPLATE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.widas.de/widas/software-quality/gitlab-template-projects/widas-ci-templates
-  SCRIPTS_PATH: widas-ci-templates/ci-scripts
-
 stages:
   - test
-  - package
   - release
   - publish
-  - cleanup
 
-build_image_dev:
-  stage: package
-  before_script:
-    - mkdir ssl && cd ssl
-    - echo $TEST_CERT >> server.crt
-    - echo $TEST_KEY >> server.key
-    - cat server.crt
-    - cd ..
-# code_quality_json:
-#   stage: test
-#   image: docker:git
-#   allow_failure: true
-#   script:
-#     - docker pull codeclimate/codeclimate
-#     - docker run 
-#        --env SOURCE_CODE="$PWD"
-#        --env CODECLIMATE_CODE="$PWD"
-#        --volume "$PWD":/code 
-#        --volume /var/run/docker.sock:/var/run/docker.sock 
-#        --volume /tmp/cc:/tmp/cc 
-#        codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
-#   artifacts:
-#     reports:
-#       codequality: gl-code-quality-report.json
-#     paths: [gl-code-quality-report.json]
+code_quality_json:
+  stage: test
+  image: docker:git
+  allow_failure: true
+  script:
+    - docker pull codeclimate/codeclimate
+    - docker run
+       --env SOURCE_CODE="$PWD"
+       --env CODECLIMATE_CODE="$PWD"
+       --volume "$PWD":/code
+       --volume /var/run/docker.sock:/var/run/docker.sock
+       --volume /tmp/cc:/tmp/cc
+       codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths: [gl-code-quality-report.json]
 
 release:
   image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
@@ -54,32 +29,23 @@ release:
   only:
     - master
 
-# development_deploy:
-#   extends: .deploy_kube
-#   stage: publish
-#   variables:
-#     VALUE_FILE_SUFFIX: test
-#     KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
-#     DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
-#   only:
-#     - development
-
-development_deploy:
-  image: docker-registry.widas.de:5050/dockerregistry/common/kubectl-docker:v1
+github_sync:
   stage: publish
+  image: bitnami/git
   variables:
-    VALUE_FILE_SUFFIX: test
-    DOCKER_DRIVER: overlay2
-    KUBECONFIG_FILE: $wimcon1_loadtest_01_custom
-    DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHA-$CI_PIPELINE_ID
-  before_script:
-    - rm -rvf /root/.kube
-    - mkdir -p /root/.kube && echo $KUBECONFIG_FILE | base64 -d > /root/.kube/config
+    COMMIT_MESSAGE: release $(git describe --abbrev=0 --tags)
   script:
-    - chmod +x scripts/create_valuesfile_${VALUE_FILE_SUFFIX}.sh &&  scripts/create_valuesfile_${VALUE_FILE_SUFFIX}.sh
-    - cat values.yml
-    - jinja2 cidaas-service-all-in-one.yml.j2 values.yml --format=yml >> ./cidaas-service-deployment.yml
-    - cat cidaas-service-deployment.yml
-    - kubectl apply -f cidaas-service-deployment.yml
+    - git config --global --add safe.directory $PWD
+    - git config --global user.name $GITLAB_USER_NAME
+    - git config --global user.email $GITLAB_USER_EMAIL
+    - git checkout master
+    - git remote -v >> temp
+    - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/shopware-plugin.git;fi
+    - rm -rf Dockerfile docker-compose.yml .gitlab-ci.yml docs .codeclimate.yml .releaserc temp
+    - git add . && git commit -m ${COMMIT_MESSAGE} && git status
+    - git push https://$USERNAME:$PAT@github.com/Cidaas/shopware-plugin.git master -f
+    - git push https://$USERNAME:$PAT@$github.com/Cidaas/shopware-plugin.git HEAD:$(git describe --abbrev=0 --tags)
   only:
-    - development
+    - master
+  when: manual
+
