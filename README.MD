@@ -1,7 +1,9 @@
 # Cidaas SSO plugin
-Shopware extension to connect to [cidaas](https://www.cidaas.com) by Widas ID
-----
+
+## Shopware extension to connect to [cidaas](https://www.cidaas.com) by Widas ID
+
 ## Author
+
 [Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
 
 ## Requirements / Installation

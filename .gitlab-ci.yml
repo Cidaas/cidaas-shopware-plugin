@@ -1,5 +1,7 @@
 stages:
   - test
+  - release
+  - publish
 
 code_quality_json:
   stage: test
@@ -7,15 +9,43 @@ code_quality_json:
   allow_failure: true
   script:
     - docker pull codeclimate/codeclimate
-    - docker run 
+    - docker run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
-       --volume "$PWD":/code 
-       --volume /var/run/docker.sock:/var/run/docker.sock 
-       --volume /tmp/cc:/tmp/cc 
+       --volume "$PWD":/code
+       --volume /var/run/docker.sock:/var/run/docker.sock
+       --volume /tmp/cc:/tmp/cc
        codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
     paths: [gl-code-quality-report.json]
-  dependencies: []
+
+release:
+  image: docker-registry.widas.de:5050/dockerregistry/common/semantic-release:v1.0.5
+  stage: release
+  script:
+    - semantic-release
+  only:
+    - master
+
+github_sync:
+  stage: publish
+  image: bitnami/git
+  variables:
+    COMMIT_MESSAGE: release $(git describe --abbrev=0 --tags)
+  script:
+    - git config --global --add safe.directory $PWD
+    - git config --global user.name $GITLAB_USER_NAME
+    - git config --global user.email $GITLAB_USER_EMAIL
+    - git checkout master
+    - git remote -v >> temp
+    - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/shopware-plugin.git;fi
+    - rm -rf Dockerfile docker-compose.yml .gitlab-ci.yml docs .codeclimate.yml .releaserc temp
+    - git add . && git commit -m ${COMMIT_MESSAGE} && git status
+    - git push https://$USERNAME:$PAT@github.com/Cidaas/shopware-plugin.git master -f
+    - git push https://$USERNAME:$PAT@$github.com/Cidaas/shopware-plugin.git HEAD:$(git describe --abbrev=0 --tags)
+  only:
+    - master
+  when: manual
+

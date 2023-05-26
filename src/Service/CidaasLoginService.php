@@ -50,6 +50,7 @@ class CidaasLoginService {
     private $customerRepo;
     private $customerGroupRepo;
     private $customerAddressRepo;
+    private $customerGroupTranslationRepo;
     private $contextRestorer;
     private $sysConfig;
 
@@ -79,13 +80,15 @@ class CidaasLoginService {
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
         EntityRepositoryInterface $customerGroupRepo,
-        EntityRepositoryInterface $customerAddressRepo
+        EntityRepositoryInterface $customerAddressRepo,
+        EntityRepositoryInterface $customerGroupTranslationRepo
         )
         {
             $this->eventDispatcher = $eventDispatcher;
             $this->customerRepo = $customerRepo;
             $this->customerGroupRepo = $customerGroupRepo;
             $this->customerAddressRepo = $customerAddressRepo;
+            $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
             $this->contextRestorer = $contextRestorer;
             $this->sysConfig = $sysConfig;
             $this->wellKnownUrl = $sysConfig->get('CidaasSso.config.baseUri').$this->wellKnown;
@@ -401,6 +404,22 @@ class CidaasLoginService {
         }
     }
 
+    public function mapSubToCustomer($email, $sub,  $context)
+    {
+        $client = new Client();
+        $customer = $this->getCustomerByEmail($email, $context);
+        try {
+            $temp_cf=$customer->getCustomFields();
+            $temp_cf['sub'] = $sub;
+            $this->customerRepo->update([[
+                'id' => $customer->getId(),
+                'customFields' => $temp_cf
+            ]], $context->getContext());
+        } catch (ClientException $e) {
+            return json_decode($e->getResponse()->getBody()->getContents());
+        }
+    }
+
     public function checkCustomerNumber($user, $context) {
         $sub = $user['sub'];
         $customer = $this->getCustomerBySub($sub, $context);
@@ -458,7 +477,7 @@ class CidaasLoginService {
         $customer = $this->getCustomerBySub($user['sub'], $context);
         if (count($user['groups'])<2) {
             $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
-            if(false && $customer->getGroupId() !== $stdGroup->getId()) {
+            if($customer->getGroupId() !== $stdGroup->getCustomerGroupId()) {
                 $this->customerRepo->update([
                     [
                         'id' => $customer->getId(),
@@ -533,10 +552,16 @@ class CidaasLoginService {
         return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
     }
 
+    /**
+     * The original code received throws error as wrong table being used to fetch the customerGroupId, name is not a part of the table customer_group.
+     * The name column is a part of the table customer_group_tranlsation where customer_group_id is a foreign key that is the pirmary key of the table customer_group.
+     * Due to the above reason previous return statement is commented
+     */
     public function getGroupByName($name, SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('name', $name));
-        return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        // return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        return $this->customerGroupTranslationRepo->search($criteria, $context->getContext())->first();
     }
 
     public function validateToken($token) {
@@ -657,28 +682,19 @@ class CidaasLoginService {
     }
 
     private function getSalutationId($salutation) {
-        $queryBuilder2 = $this->connection->createQueryBuilder();
-            $queryBuilder2->select('id')
-                ->from('salutation')
-                ->where('salutation_key="Divers"');
-            print_r($queryBuilder2->execute()->fetchAll(FetchMode::COLUMN));
-            // $salutation2 = $queryBuilder2->execute()->fetchAll(FetchMode::COLUMN)[0];
+        $queryBuilder = $this->connection->createQueryBuilder();
         if ($salutation === null || $salutation === "") {
             $queryBuilder = $this->connection->createQueryBuilder();
             $queryBuilder->select('id')
                 ->from('salutation')
-                ->where('salutation_key="Divers"');
+                ->where('salutation_key="not_specified"');
             $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
             return Uuid::fromBytesToHex($salutation);
         }
-        $queryBuilder = $this->connection->createQueryBuilder();
         $queryBuilder->select('id')
             ->from('salutation')
             ->where('salutation_key="'. $salutation .'"');
         $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
-        if ($salutation == null) {
-            return Uuid::fromBytesToHex($salutation2);
-        }
         return Uuid::fromBytesToHex($salutation);
     }
 

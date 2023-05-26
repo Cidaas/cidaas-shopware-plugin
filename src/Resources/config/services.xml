@@ -22,6 +22,7 @@
             <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute"/>
             <argument type="service" id="customer_group.repository" />
             <argument type="service" id="customer_address.repository" />
+            <argument type="service" id="customer_group_translation.repository" />
         </service>
     </services>
 </container>

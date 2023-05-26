@@ -106,7 +106,7 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                     $request->getSession()->set('sub', $token['sub']);
                     $request->getSession()->set('identity_id', $token['identity_id']);
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
-                    if (!$this->loginService->customerExistsBySub($token['sub'], $context)) {
+                    if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)) {
                         // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
@@ -124,6 +124,9 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                                 'errorSnippet'=>$err ?? null
                             ]);
                         }
+                    }
+                    if (!$this->loginService->customerExistsBySub($token['sub'], $context) && $this->loginService->customerExistsByEmail($user['email'], $context)) {
+                        $this->loginService->mapSubToCustomer($user['email'], $token['sub'], $context);
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
@@ -152,7 +155,7 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                     $request->getSession()->set('sub', $token->sub);
                     $request->getSession()->set('identity_id', $token->identity_id);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
-                    if (!$this->loginService->customerExistsBySub($token->sub, $context)) {
+                    if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)) {
                         // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
@@ -170,6 +173,9 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                                 'errorSnippet'=>$err ?? null
                             ]);
                         }
+                    }
+                    if (!$this->loginService->customerExistsBySub($token->sub, $context) && $this->loginService->customerExistsByEmail($user['email'], $context)) {
+                        $this->loginService->mapSubToCustomer($user['email'], $token->sub, $context);
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
