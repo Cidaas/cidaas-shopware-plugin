@@ -49,8 +49,7 @@ github_sync:
     - rm -rf Dockerfile docker-compose.yml .gitlab-ci.yml docs .codeclimate.yml .releaserc temp
     - git add . && git commit -m release_$RELEASE_VERSION && git status
     - git push https://$USERNAME:$PAT@github.com/Cidaas/shopware-plugin.git master -f
-    - git push https://$USERNAME:$PAT@$github.com/Cidaas/shopware-plugin.git HEAD:$(git describe --abbrev=0 --tags)
+    - git push https://$USERNAME:$PAT@github.com/Cidaas/shopware-plugin.git HEAD:$(git describe --abbrev=0 --tags)
   only:
     - master
   when: manual
-
