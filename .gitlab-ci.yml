@@ -43,7 +43,6 @@ github_sync:
     - git config --global --add safe.directory $PWD
     - git config --global user.name $GITLAB_USER_NAME
     - git config --global user.email $GITLAB_USER_EMAIL
-    - git checkout master
     - echo $RELEASE_VERSION
     - git remote -v >> temp
     - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/shopware-plugin.git;fi
