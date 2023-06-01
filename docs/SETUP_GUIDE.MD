@@ -38,7 +38,7 @@ password: shopware
 ```
 
 6. Install the plugin `Cidaas SSO - OpenId Connect` from the section `My extensions`
-7. Enable and configure the plugin by adding `client id`, `client secret` and `base url`
+7. Enable and configure the plugin by adding `client id`, `client secret` and `base url`. You can setup a client for shopware plugin in cidaas admin app following the [wiki](https://docs-old.cidaas.com/extension/shopware_plugin.html). Please read the README in the root folder for more details
 8. Click on save
 9. Now you are ready to access the shop app :). Access the `SHOP URL`. In our case, the link is `http://localhost`
 10. Click on the profile icon and now you can start exploring `Cidaas shopware plugin` by clicking on `Login` or `Signup`
