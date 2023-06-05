@@ -127,8 +127,6 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                         }
                     }
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && $this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        error_log($token['sub']);
-                        error_log($user['email']);
                         $this->loginService->mapSubToCustomer($user['email'], $token['sub'], $context);
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
