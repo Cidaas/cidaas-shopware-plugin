@@ -658,6 +658,66 @@ class CidaasLoginService {
         }
     }
 
+    public function updateProfile($firstName, $lastName, $salutationId, $sub, $context) {
+        $client = new Client();
+        $customer = $this->getCustomerBySub($sub, $context);
+        $adminToken = $this->getAdminToken();
+        $queryBuilder = $this->connection->createQueryBuilder();
+        $tmp_id=Uuid::fromHexToBytes($salutationId);
+        $queryBuilder->select('salutation_key')
+            ->from('salutation')
+            ->where('id="'.$tmp_id.'"');
+        $salutationKey = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
+        try {
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+                'headers' => [
+                    'authorization' => 'Bearer '.$adminToken->access_token
+                ],
+                'form_params' => [
+                    'given_name' => $firstName,
+                    'family_name' => $lastName,
+                    'customFields' => [
+                        'salutation' => $salutationKey ? $salutationKey : 'not_specified'
+                    ],
+                    'sub' => $sub,
+                    'provider' => 'self'
+                ]
+                ]);
+            $this->customerRepo->update([[
+                'id' => $customer->getId(),
+                'firstName' => $firstName,
+                'lastName' => $lastName,
+                'salutationId' => $salutationId
+            ]], $context->getContext());
+            return json_decode($response->getBody()->getContents());
+        } catch (ClientException $e) {
+            error_log(json_decode($e->getResponse()->getBody()->getContents()));
+            return false;
+        }
+    }
+
+    public function updateAddress($address, $context) {
+        try {
+            $this->customerAddressRepo->update([[
+                'id' => $address['id'],
+                'firstName' => $address['firstName'],
+                'lastName' => $address['lastName'],
+                'salutationId' => $address['salutationId'],
+                'company' => $address['company'],
+                'department' => $address['department'],
+                'street' => $address['street'],
+                'zipcode' => $address['zipcode'],
+                'city' => $address['city'],
+                'countryId' => $address['countryId'],
+                'countryStateId' => array_key_exists('countryStateId', $address) ?  $address['countryStateId'] : null
+            ]], $context->getContext());
+            return true;
+        } catch (ClientException $e) {
+            error_log(json_decode($e->getResponse()->getBody()->getContents()));
+            return false;
+        }
+    }
+
     private function getCountryId($countryVal) {
         $queryBuilder = $this->connection->createQueryBuilder();
         $queryBuilder->select('country_id')

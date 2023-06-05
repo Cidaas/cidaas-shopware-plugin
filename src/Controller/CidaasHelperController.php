@@ -109,7 +109,6 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         // $data = $this->loginService->registerExistingUser($user, $context);
-                        error_log("test");
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
                             if ($request->getSession()->get('redirect_to')) {
@@ -128,8 +127,6 @@ use Jk\CidaasHelper\Util\CidaasStruct;
                         }
                     }
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && $this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        error_log($token['sub']);
-                        error_log($user['email']);
                         $this->loginService->mapSubToCustomer($user['email'], $token['sub'], $context);
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
@@ -374,6 +371,42 @@ use Jk\CidaasHelper\Util\CidaasStruct;
             )
         );
     }
+
+     /**
+     * @Route("/cidaas/update-profile", name="frontend.account.profile.save", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
+     */
+    public function updateProfile(Request $request, SalesChannelContext $context): Response
+    {
+        $sub = $request->getSession()->get('sub');
+        $identityId = $request->getSession()->get('identity_id');
+        $firstName = $request->get('firstName');
+        $lastName = $request->get('lastName');
+        $salutationId = $request->get('salutationId');
+        $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
+        if ($res) {
+            $this->addFlash('success', 'Successfully updated profile');
+        } else {
+            $this->addFlash('error', 'Failed to update profile');
+        }
+        return $this->redirectToRoute('frontend.account.profile.page');
+    }
+
+      /**
+     * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
+     */
+    public function updateAddress(Request $request, SalesChannelContext $context): Response
+    {
+        $sub = $request->getSession()->get('sub');
+        $address = $request->get('address');
+        $res = $this->loginService->updateAddress($address, $context);
+        if ($res) {
+            $this->addFlash('success', 'Successfully updated address');
+        } else {
+            $this->addFlash('error', 'Failed to update address');
+        }
+        return $this->redirectToRoute('frontend.account.address.page');
+    }
+
 
     /**
      * @Route("/cidaas/url", name="cidaas.url", methods={"GET"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
