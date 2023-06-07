@@ -475,7 +475,7 @@ class CidaasLoginService {
     public function checkCustomerGroups($user, $context) {
         $groups = [];
         $customer = $this->getCustomerBySub($user['sub'], $context);
-        if (count($user['groups'])<2) {
+        if (array_key_exists('groups', $user) && count($user['groups'])<2) {
             $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
             if($customer->getGroupId() !== $stdGroup->getCustomerGroupId()) {
                 $this->customerRepo->update([
@@ -486,11 +486,15 @@ class CidaasLoginService {
                 ], $context->getContext());
             }
         }
-        foreach($user['groups'] as $g) {
-            if ($g['groupId'] !== 'CIDAAS_USERS')
-                $groups[] = $g['groupId'];
+
+        if (array_key_exists('groups', $user)) {
+            foreach($user['groups'] as $g) {
+                if ($g['groupId'] !== 'CIDAAS_USERS')
+                    $groups[] = $g['groupId'];
+            }
         }
-        foreach ($groups as $group) {
+
+        // foreach ($groups as $group) {
             // if ($group === 'mitglied') {
             //     $mg = $this->getMitgliederGroup($context);
             //     if ($customer->getGroupId() !== $mg->getId()) {
@@ -525,7 +529,7 @@ class CidaasLoginService {
             //         ], $context->getContext());
             //     }
             // }
-        }
+        // }
         return;
     }
 
