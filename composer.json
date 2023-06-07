@@ -18,6 +18,7 @@
   },
   "extra": {
     "shopware-plugin-class": "Jk\\CidaasHelper\\CidaasSso",
+    "plugin-icon": "src/Resources/config/plugin.png",
     "label": {
       "de-DE": "Cidaas SSO - OpenId Connect",
       "en-GB": "Cidaas SSO - OpenId Connect"
