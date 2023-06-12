@@ -1,9 +1,9 @@
 {
-  "name": "jk/cidaashelper",
+  "name": "cidaas/cidaas-oauth2-connect",
   "description": "Cidaas SSO - OpenID Connect",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "authors": [
     {
       "name": "Joshua Kopp",
@@ -13,11 +13,11 @@
   ],
   "autoload": {
     "psr-4": {
-      "Jk\\CidaasHelper\\": "src/"
+      "Cidaas\\OauthConnect\\": "src/"
     }
   },
   "extra": {
-    "shopware-plugin-class": "Jk\\CidaasHelper\\CidaasSso",
+    "shopware-plugin-class": "Cidaas\\OauthConnect\\CidaasOauthConnect",
     "plugin-icon": "src/Resources/config/plugin.png",
     "label": {
       "de-DE": "Cidaas SSO - OpenId Connect",
@@ -29,7 +29,7 @@
     }
   },
   "require": {
-    "shopware/core": "~6.4",
-    "shopware/storefront": "~6.4"
+    "shopware/core": "^6.4",
+    "shopware/storefront": "^6.4"
   }
 }
