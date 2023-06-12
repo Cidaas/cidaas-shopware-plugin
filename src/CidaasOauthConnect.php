@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Jk\CidaasHelper;
+namespace Cidaas\OauthConnect;
 
 use Shopware\Core\Framework\Plugin;
 
-class CidaasSso extends Plugin
+class CidaasOauthConnect extends Plugin
 {
 }

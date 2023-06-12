@@ -10,7 +10,7 @@
  */
 
 
-namespace Jk\CidaasHelper\Service;
+namespace Cidaas\OauthConnect\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
@@ -38,7 +38,7 @@ use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\PlatformRequest;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 
-use Jk\CidaasHelper\Util\CidaasStruct;
+use Cidaas\OauthConnect\Util\CidaasStruct;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\FetchMode;
@@ -91,16 +91,16 @@ class CidaasLoginService {
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
             $this->contextRestorer = $contextRestorer;
             $this->sysConfig = $sysConfig;
-            $this->wellKnownUrl = $sysConfig->get('CidaasSso.config.baseUri').$this->wellKnown;
+            $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
             $client = new Client();
             $res = $client->get($this->wellKnownUrl);
             $this->oAuthEndpoints = json_decode($res->getBody()->getContents());
-            $this->clientId = $sysConfig->get('CidaasSso.config.clientId');
-            $this->clientSecret = $sysConfig->get('CidaasSso.config.clientSecret');
+            $this->clientId = $sysConfig->get('CidaasOauthConnect.config.clientId');
+            $this->clientSecret = $sysConfig->get('CidaasOauthConnect.config.clientSecret');
 
-            $this->cidaasUrl = $sysConfig->get('CidaasSso.config.baseUri');
-            $this->cfCustomerNumber = $sysConfig->get('CidaasSso.config.CfCustomernumber');
-            $this->defaultGroup = $sysConfig->get('CidaasSso.config.customergroupDefault');
+            $this->cidaasUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri');
+            $this->cfCustomerNumber = $sysConfig->get('CidaasOauthConnect.config.CfCustomernumber');
+            $this->defaultGroup = $sysConfig->get('CidaasOauthConnect.config.customergroupDefault');
             
             $this->connection = $connection;
             $this->registerRoute = $registerRoute;

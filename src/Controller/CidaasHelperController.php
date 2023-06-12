@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Jk\CidaasHelper\Controller;
+namespace Cidaas\OauthConnect\Controller;
 
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,11 +16,11 @@ use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use GuzzleHttp\Client;
 
-use Jk\CidaasHelper\Service\CidaasLoginService;
+use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
 
 
-use Jk\CidaasHelper\Util\CidaasStruct;
+use Cidaas\OauthConnect\Util\CidaasStruct;
 
 /**
  * @RouteScope(scopes={"storefront"})

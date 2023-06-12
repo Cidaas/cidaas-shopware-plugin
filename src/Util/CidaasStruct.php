@@ -1,6 +1,6 @@
 <?php
 
-namespace Jk\CidaasHelper\Util;
+namespace Cidaas\OauthConnect\Util;
 
 use Shopware\Core\Framework\Struct\Struct;
 
