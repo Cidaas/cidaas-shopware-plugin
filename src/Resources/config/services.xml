@@ -5,15 +5,15 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
-        <service id="Jk\CidaasHelper\Controller\CidaasHelperController" public="true">
-            <argument type="service" id="Jk\CidaasHelper\Service\CidaasLoginService" />
+        <service id="Cidaas\OauthConnect\Controller\CidaasHelperController" public="true">
+            <argument type="service" id="Cidaas\OauthConnect\Service\CidaasLoginService" />
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\LogoutRoute"/>
             <call method="setContainer">
                 <argument id="service_container" type="service"/>
             </call>
         </service>
-        <service id="Jk\CidaasHelper\Service\CidaasLoginService">
+        <service id="Cidaas\OauthConnect\Service\CidaasLoginService">
             <argument type="service" id="event_dispatcher"/>
             <argument type="service" id="customer.repository"/>
             <argument type="service" id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer"/>
