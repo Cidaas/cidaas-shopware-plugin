@@ -30,7 +30,6 @@ export default class CidaasUtil {
     }
 
     getScope() {
-        console.log('scope',this.scope)
         return this.scope;
     }
     checkRequestData(request) {
@@ -57,7 +56,6 @@ export default class CidaasUtil {
 
     emailExists(email, requestId) {
         return new Promise(resolve => {
-            // console.log('email', email, 'requestId', requestId)
             this.client.post(this.url+'/users-srv/user/checkexists/'+requestId, JSON.stringify({
                 email,
                 requestId
