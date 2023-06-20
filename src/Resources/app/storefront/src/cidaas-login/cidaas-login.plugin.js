@@ -12,18 +12,14 @@ export default class CidaasLogin extends Plugin {
     }
     
     init() {
-        console.log('jup')
-        console.log(this.options)
         this.client = new HttpClient()
         this.email = null
         this.password = null
         this.nextButton = DomAccess.querySelector(document, '#nextButton')
         this.nextLoadingThingy = new ButtonLoadingIndicatorUtil(this.nextButton)
-        console.log(this.options)
         $('#nextButton').on('click', (evt) => {
             if (this.email === null) {
                 this.email = $('#email').val()
-                console.log(this.email)
                 this.nextLoadingThingy.create()
                 this.client.post(this.options.cidaas+'/users-srv/user/checkexists/'+this.options.requestId, JSON.stringify({
                     email: this.email,
@@ -36,9 +32,7 @@ export default class CidaasLogin extends Plugin {
                                 email: this.email,
                                 _csrf_token: this.options.csrfExists
                             }), (res2) => {
-                                console.log(res2)
                                 let result2 = JSON.parse(res2)
-                                console.log(result2)
                                 if (result2.exists) {
                                     this.client.get('/cidaas/lastlogin/'+result2.id, (res3) => {
                                         let result3 = JSON.parse(res3)
@@ -59,14 +53,12 @@ export default class CidaasLogin extends Plugin {
                                 }
                             })
                         } else {
-                            console.log(result);
                             $('#emailContainer').hide()
                             $('#nextButton').hide()
                             this.nextLoadingThingy.remove()
                             $('#complete').show()
                         }
                     } else {
-                        console.log("TODO: register")
                         window.location.href='/cidaas/register?userIdHint='+this.email+'&type=email'
                     }
                     
@@ -110,7 +102,6 @@ export default class CidaasLogin extends Plugin {
     }
 // ElementLoadingIndicatorUtil.create(this.mediaDiv)
     handleFormResponse(response) {
-        console.log(response)
         // window.location.reload()
 
     }

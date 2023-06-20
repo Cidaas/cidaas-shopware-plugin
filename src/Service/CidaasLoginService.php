@@ -233,7 +233,7 @@ class CidaasLoginService {
         return $customer->getLastLogin();
     }
 
-    public function getAuthorizationUri($state, $email=null, $url): String
+    public function getAuthorizationUri($state, $url, $email=null): String
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint 
@@ -247,7 +247,7 @@ class CidaasLoginService {
 
     }
 
-    public function getRegisterUri($state, $userIdHint=null, $type=null, $url): String
+    public function getRegisterUri($state, $url, $userIdHint=null, $type=null): String
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
@@ -695,30 +695,7 @@ class CidaasLoginService {
             ]], $context->getContext());
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
-            error_log(json_decode($e->getResponse()->getBody()->getContents()));
-            return false;
-        }
-    }
-
-    public function updateAddress($address, $context) {
-        try {
-            $this->customerAddressRepo->update([[
-                'id' => $address['id'],
-                'firstName' => $address['firstName'],
-                'lastName' => $address['lastName'],
-                'salutationId' => $address['salutationId'],
-                'company' => $address['company'],
-                'department' => $address['department'],
-                'street' => $address['street'],
-                'zipcode' => $address['zipcode'],
-                'city' => $address['city'],
-                'countryId' => $address['countryId'],
-                'countryStateId' => array_key_exists('countryStateId', $address) ?  $address['countryStateId'] : null
-            ]], $context->getContext());
-            return true;
-        } catch (ClientException $e) {
-            error_log(json_decode($e->getResponse()->getBody()->getContents()));
-            return false;
+            return json_decode($e->getResponse()->getBody()->getContents());
         }
     }
 
