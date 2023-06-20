@@ -12,7 +12,6 @@ import * as $ from 'jquery'
 export default class CidaasPassword extends Plugin {
     
     init() {
-        console.log('deine muddah')
         $('#profilePasswordForm').on('submit', this.handleFormSubmit.bind(this))
         this.newPasswordInput = $('#newPassword')
         this.confirmPasswordInput = $('#passwordConfirmation')

@@ -254,7 +254,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         if ($request->getSession()->get('state')) {
             $state = $request->getSession()->get('state');
         }
-        $authUri =  $this->loginService->getAuthorizationUri($state, $email, $request->get('sw-sales-channel-absolute-base-url'));
+        $authUri =  $this->loginService->getAuthorizationUri($state, $request->get('sw-sales-channel-absolute-base-url', $email));
         return $this->json(array(
             'authUri' => $authUri
         ));
@@ -291,7 +291,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, null, $request->get('sw-sales-channel-absolute-base-url'));
+        $red = $this->loginService->getAuthorizationUri($state, $request->get('sw-sales-channel-absolute-base-url'));
         return new RedirectResponse($red);
     }
 
@@ -305,9 +305,9 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         if ($request->query->get('userIdHint')) {
             $userIdHint = $request->query->get('userIdHint');
             $type = $request->query->get('type');
-            return new RedirectResponse($this->loginService->getRegisterUri($state, $userIdHint, $type, $request->get('sw-sales-channel-absolute-base-url')));
+            return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url'), $userIdHint, $type));
         }
-        return new RedirectResponse($this->loginService->getRegisterUri($state,null, null, $request->get('sw-sales-channel-absolute-base-url')));
+        return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url')));
     }
 
     /**
@@ -383,30 +383,14 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
         $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
-        if ($res) {
+        if($res->success) {
             $this->addFlash('success', 'Successfully updated profile');
         } else {
-            $this->addFlash('error', 'Failed to update profile');
+            error_log(json_encode($res));
+            $this->addFlash('danger', 'Failed to update profile');
         }
         return $this->redirectToRoute('frontend.account.profile.page');
     }
-
-      /**
-     * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
-     */
-    public function updateAddress(Request $request, SalesChannelContext $context): Response
-    {
-        $sub = $request->getSession()->get('sub');
-        $address = $request->get('address');
-        $res = $this->loginService->updateAddress($address, $context);
-        if ($res) {
-            $this->addFlash('success', 'Successfully updated address');
-        } else {
-            $this->addFlash('error', 'Failed to update address');
-        }
-        return $this->redirectToRoute('frontend.account.address.page');
-    }
-
 
     /**
      * @Route("/cidaas/url", name="cidaas.url", methods={"GET"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})

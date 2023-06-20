@@ -94,7 +94,6 @@ export default class CidaasInfo extends Plugin {
                 window.location.href=this.options.cidaasUrl+'/identity/password_forgot_init?userIdHint='+fixedEmail+'&requestId='+this.requestId+'&type=email&redirect_to='+this.redirectUrl
             })
             $('#already').on('click', (evt) => {
-                console.log('already')
                 window.location.href="/cidaas/login?redirect_login=email&email="+fixedEmail+"&requestId="+this.requestId
             })
             
