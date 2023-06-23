@@ -383,11 +383,19 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
         $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
-        if($res->success) {
-            $this->addFlash('success', 'Successfully updated profile');
+        if($res) {
+            if(array_key_exists('success', $res) && $res->success) {
+                $this->addFlash('success', 'Successfully updated profile');
+            } else {
+                if(array_key_exists('success', $res) && !$res->success) {
+                    $this->addFlash('danger', 'Failed to update profile: '.$res->error->error);
+                } else {
+                    error_log(json_encode($res));
+                    $this->addFlash('danger', 'Failed to update profile for unknown reason. Please check error log for more details.');
+                }
+            }
         } else {
-            error_log(json_encode($res));
-            $this->addFlash('danger', 'Failed to update profile');
+            $this->addFlash('danger', 'Failed to update profile for unknown reason.');
         }
         return $this->redirectToRoute('frontend.account.profile.page');
     }
