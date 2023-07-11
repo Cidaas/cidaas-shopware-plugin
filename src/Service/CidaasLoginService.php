@@ -642,7 +642,7 @@ class CidaasLoginService {
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function changePassword($newPassword, $confirmPassword, $oldPassword, $identityId, $token) {
+    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token) {
         $client = new Client();
         try {
             $response = $client->post($this->cidaasUrl.'/users-srv/changepassword', [
@@ -650,7 +650,7 @@ class CidaasLoginService {
                     'authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
-                    'identityId' => $identityId,
+                    'sub' => $sub,
                     'new_password' => $newPassword,
                     'confirm_password' => $confirmPassword,
                     'old_password' => $oldPassword

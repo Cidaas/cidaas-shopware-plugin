@@ -104,7 +104,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 if (isset($token['sub'])) {
                     $request->getSession()->set('_cidaas_token', $token['access_token']);
                     $request->getSession()->set('sub', $token['sub']);
-                    $request->getSession()->set('identity_id', $token['identity_id']);
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
@@ -154,7 +153,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 if (isset($token->sub)) {
                     $request->getSession()->set('_cidaas_token', $token->access_token);
                     $request->getSession()->set('sub', $token->sub);
-                    $request->getSession()->set('identity_id', $token->identity_id);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         // $data = $this->loginService->registerExistingUser($user, $context);
@@ -337,24 +335,13 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     {
         //authz-srv/authz/?response_type=token&client_id=96d26174-49bb-4278-84db-e109c55144e4&viewtype=login&redirect_uri=https://my-test.mainz05.de/user-profile/changepassword
         $sub = $request->getSession()->get('sub');
-        $identityId = $request->getSession()->get('identity_id');
         $token = $request->getSession()->get('_cidaas_token');
         $newPassword = $request->get('newPassword');
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
-        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $identityId, $token);
+        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
         $this->addFlash('success', 'Passwort erfolgreich geändert');
         return $this->json($res);
-        
-        // $result = $request->query->get('result');
-        // if ($request->getMethod() === 'POST')
-        //     $result = $request->get('result');
-        // if ($result) {
-        //     $this->addFlash('success', 'Passwort erfolgreich geändert');
-        // } 
-        // return $this->json(array(
-        //     'success' => $result
-        // ));
     }
 
     /**
@@ -378,7 +365,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     public function updateProfile(Request $request, SalesChannelContext $context): Response
     {
         $sub = $request->getSession()->get('sub');
-        $identityId = $request->getSession()->get('identity_id');
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
