@@ -381,9 +381,8 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                         if (array_key_exists('error', $responseData)) {
                             // Handle error data
                             // Extract error details
-                            $error = $responseData['error'];
-                            $errorMessage = $error['error'];
-                            $this->addFlash('danger', 'Failed to update profile: '.$errorMessage);
+                            $error = $responseData['error']['error'];
+                            $this->addFlash('danger', 'Failed to update profile: '.$error);
                         } else {
                             // No error information available
                             error_log(json_encode($responseData));
