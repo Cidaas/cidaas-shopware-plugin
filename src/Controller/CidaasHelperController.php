@@ -370,16 +370,28 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $salutationId = $request->get('salutationId');
         $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
         if($res) {
-            if(array_key_exists('success', $res) && $res->success) {
-                $this->addFlash('success', 'Successfully updated profile');
-            } else {
-                if(array_key_exists('success', $res) && !$res->success) {
-                    $this->addFlash('danger', 'Failed to update profile: '.$res->error->error);
+              // Assuming $object is your stdClass object
+                $responseData = json_decode(json_encode($res), true);
+                // Now you can use $array with array_key_exists()
+                if (array_key_exists('success', $responseData) && $responseData['success'] === true) {
+                    // Key exists in the array
+                    $this->addFlash('success', 'Successfully updated profile');
+                } elseif (array_key_exists('success', $responseData) && $responseData['success'] === false){
+                    if (array_key_exists('error', $responseData)) {
+                    // Handle error data
+                    // Extract error details
+                    $error = $responseData['error'];
+                    $errorMessage = $error['error'];
+                    $this->addFlash('danger', 'Failed to update profile: '.$errorMessage);
                 } else {
-                    error_log(json_encode($res));
+                    // No error information available
+                    error_log(json_encode($responseData));
                     $this->addFlash('danger', 'Failed to update profile for unknown reason. Please check error log for more details.');
                 }
-            }
+                } else {
+                    // Key does not exist in the array
+                    $this->addFlash('danger', 'Failed to update profile for unknown reason.');
+                }
         } else {
             $this->addFlash('danger', 'Failed to update profile for unknown reason.');
         }
