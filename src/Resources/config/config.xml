@@ -20,9 +20,26 @@
         <input-field type="password">
             <name>clientSecret</name>
             <label>Client Secret</label>
-            <label lang="de-DE">Geheim Schlüssel</label>
+            <label lang="de-DE">Client Secret</label>
             <helpText>Please client secret from your cidaas oauth2 Connect app</helpText>
             <helpText lang="de-DE">Ihr Kundengeheimnis für die cidaas oauth2 Connect App</helpText>
+        </input-field>
+        <input-field>
+            <name>nonInteractiveClientId</name>
+            <copyable>true</copyable>
+            <label>Non Interactive Client Id</label>
+            <label lang="de-DE">Non-Interactive Client ID</label>
+            <placeholder>Non Interactive Client Id</placeholder>
+            <placeholder lang="de-DE">Non-Interactive Client ID</placeholder>
+            <helpText>Please enter non interactive client id for your cidaas oauth2 Connect app</helpText>
+            <helpText lang="de-DE">Ihre Non-interactive Client ID für die cidaas oauth2 Connect App</helpText>
+        </input-field>
+        <input-field type="password">
+            <name>nonInteractiveClientSecret</name>
+            <label>Non Interactive Client Secret</label>
+            <label lang="de-DE">Non-Interactive Client Secret</label>
+            <helpText>Please enter non interactive client secret from your cidaas oauth2 Connect app</helpText>
+            <helpText lang="de-DE">Ihr Non-interactive Client Secret für die cidaas oauth2 Connect App</helpText>
         </input-field>
         <input-field type="url">
             <name>baseUri</name>

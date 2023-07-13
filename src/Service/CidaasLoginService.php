@@ -65,6 +65,8 @@ class CidaasLoginService {
 
     private $clientId;
     private $clientSecret;
+    private $nonInteractiveClientId;
+    private $nonInteractiveClientSecret;
 
     private $cidaasUrl;
 
@@ -97,6 +99,8 @@ class CidaasLoginService {
             $this->oAuthEndpoints = json_decode($res->getBody()->getContents());
             $this->clientId = $sysConfig->get('CidaasOauthConnect.config.clientId');
             $this->clientSecret = $sysConfig->get('CidaasOauthConnect.config.clientSecret');
+            $this->nonInteractiveClientId = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientId');
+            $this->nonInteractiveClientSecret = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientSecret');
 
             $this->cidaasUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri');
             $this->cfCustomerNumber = $sysConfig->get('CidaasOauthConnect.config.CfCustomernumber');
@@ -744,8 +748,8 @@ class CidaasLoginService {
         $resp = $client->post($this->cidaasUrl.'/token-srv/token', [
             'form_params' => [
                 "grant_type" =>  'client_credentials',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret
+                'client_id' => $this->nonInteractiveClientId,
+                'client_secret' => $this->nonInteractiveClientSecret
             ]
             ]);
         return json_decode($resp->getBody()->getContents());
