@@ -104,7 +104,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 if (isset($token['sub'])) {
                     $request->getSession()->set('_cidaas_token', $token['access_token']);
                     $request->getSession()->set('sub', $token['sub']);
-                    $request->getSession()->set('identity_id', $token['identity_id']);
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
@@ -154,7 +153,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 if (isset($token->sub)) {
                     $request->getSession()->set('_cidaas_token', $token->access_token);
                     $request->getSession()->set('sub', $token->sub);
-                    $request->getSession()->set('identity_id', $token->identity_id);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         // $data = $this->loginService->registerExistingUser($user, $context);
@@ -337,24 +335,13 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     {
         //authz-srv/authz/?response_type=token&client_id=96d26174-49bb-4278-84db-e109c55144e4&viewtype=login&redirect_uri=https://my-test.mainz05.de/user-profile/changepassword
         $sub = $request->getSession()->get('sub');
-        $identityId = $request->getSession()->get('identity_id');
         $token = $request->getSession()->get('_cidaas_token');
         $newPassword = $request->get('newPassword');
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
-        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $identityId, $token);
+        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
         $this->addFlash('success', 'Passwort erfolgreich geändert');
         return $this->json($res);
-        
-        // $result = $request->query->get('result');
-        // if ($request->getMethod() === 'POST')
-        //     $result = $request->get('result');
-        // if ($result) {
-        //     $this->addFlash('success', 'Passwort erfolgreich geändert');
-        // } 
-        // return $this->json(array(
-        //     'success' => $result
-        // ));
     }
 
     /**
@@ -378,22 +365,35 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     public function updateProfile(Request $request, SalesChannelContext $context): Response
     {
         $sub = $request->getSession()->get('sub');
-        $identityId = $request->getSession()->get('identity_id');
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
         $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
         if($res) {
-            if(array_key_exists('success', $res) && $res->success) {
-                $this->addFlash('success', 'Successfully updated profile');
-            } else {
-                if(array_key_exists('success', $res) && !$res->success) {
-                    $this->addFlash('danger', 'Failed to update profile: '.$res->error->error);
+              // Assuming $object is your stdClass object
+                $responseData = json_decode(json_encode($res), true);
+                 // Key exists in the array
+                if(array_key_exists('success', $responseData)){
+                  if($responseData['success'] === true){
+                     $this->addFlash('success', 'Successfully updated profile');
+                  } elseif ($responseData['success'] === false){
+                    if (array_key_exists('error', $responseData)) {
+                            // Handle error data
+                            // Extract error details
+                            $error = $responseData['error']['error'];
+                            $this->addFlash('danger', 'Failed to update profile: '.$error);
+                        } else {
+                            // No error information available
+                            error_log(json_encode($responseData));
+                            $this->addFlash('danger', 'Failed to update profile for unknown reason. Please check error log for more details.');
+                        }
+                  } else {
+                      $this->addFlash('danger', 'Failed to update profile for unknown reason.');
+                  }
                 } else {
-                    error_log(json_encode($res));
-                    $this->addFlash('danger', 'Failed to update profile for unknown reason. Please check error log for more details.');
+                    // Key does not exist in the array
+                    $this->addFlash('danger', 'Failed to update profile for unknown reason.');
                 }
-            }
         } else {
             $this->addFlash('danger', 'Failed to update profile for unknown reason.');
         }
