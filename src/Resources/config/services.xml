@@ -16,7 +16,6 @@
         <service id="Cidaas\OauthConnect\Service\CidaasLoginService">
             <argument type="service" id="event_dispatcher"/>
             <argument type="service" id="customer.repository"/>
-            <argument type="service" id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer"/>
             <argument type="service" id="Shopware\Core\System\SalesChannel\Context\CartRestorer"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
             <argument type="service" id ="Doctrine\DBAL\Connection"/>

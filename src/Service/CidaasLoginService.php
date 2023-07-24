@@ -77,13 +77,13 @@ class CidaasLoginService {
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
         EntityRepository $customerRepo,
+        CartRestorer $contextRestorer,
         SystemConfigService $sysConfig,
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
         EntityRepository $customerGroupRepo,
         EntityRepository $customerAddressRepo,
-        EntityRepository $customerGroupTranslationRepo,
-        CartRestorer $contextRestorer
+        EntityRepository $customerGroupTranslationRepo
         )
         {
             $this->eventDispatcher = $eventDispatcher;
@@ -107,7 +107,7 @@ class CidaasLoginService {
             
             $this->connection = $connection;
             $this->registerRoute = $registerRoute;
-            $this->restorer = $restorer;
+            $this->contextRestorer = $contextRestorer;
 
         }
 
