@@ -42,8 +42,7 @@ export default class CidaasInfo extends Plugin {
             let fixedEmail = this.email.replaceAll("+", "%2B")
             if (!this.infoShown) {
                 this.client.post('/cidaas/exists', JSON.stringify({
-                    email: this.email,
-                    _csrf_token: this.options.csrf
+                    email: this.email
                 }), this.handleExistsData.bind(this))
             } 
             else if (this.emailAuth) {

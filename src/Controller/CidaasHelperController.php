@@ -22,9 +22,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
-/**
- * @RouteScope(scopes={"storefront"})
- */
+#[Route(defaults: ['_routeScope' => ['storefront']])]
 
  class CidaasHelperController extends StorefrontController {
 

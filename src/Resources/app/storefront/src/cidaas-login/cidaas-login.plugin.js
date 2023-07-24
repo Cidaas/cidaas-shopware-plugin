@@ -29,8 +29,7 @@ export default class CidaasLogin extends Plugin {
                         let result = JSON.parse(res)
                         if (result.success) {
                             this.client.post('/cidaas/exists', JSON.stringify({
-                                email: this.email,
-                                _csrf_token: this.options.csrfExists
+                                email: this.email
                             }), (res2) => {
                                 let result2 = JSON.parse(res2)
                                 if (result2.exists) {
@@ -75,8 +74,7 @@ export default class CidaasLogin extends Plugin {
         //         this.email = $('#email').val()
         //         this.nextLoadingThingy.create()
         //         this.client.post('/cidaas/exists', JSON.stringify({
-        //             email: this.email,
-        //             _csrf_token: this.options.csrfExists
+        //             email: this.email
         //         }), (res) => {
         //             let result = JSON.parse(res)
         //             if (result.exists) {

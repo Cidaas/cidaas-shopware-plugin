@@ -1,2 +1,2 @@
-FROM dockware/dev:6.4.17.0
+FROM dockware/dev:6.5.2.0
 COPY . ./custom/plugins/cidaassso-main

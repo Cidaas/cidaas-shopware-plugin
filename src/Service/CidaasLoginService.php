@@ -13,7 +13,7 @@
 namespace Cidaas\OauthConnect\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Checkout\Customer\Event\CustomerBeforeLoginEvent;
 use Shopware\Core\Checkout\Customer\Event\CustomerLoginEvent;
@@ -26,11 +26,11 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\SalesChannel\ContextTokenResponse;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Shopware\Core\System\SalesChannel\Context\CartRestorer;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
@@ -76,14 +76,14 @@ class CidaasLoginService {
 
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
-        EntityRepositoryInterface $customerRepo,
-        SalesChannelContextRestorer $contextRestorer,
+        EntityRepository $customerRepo,
         SystemConfigService $sysConfig,
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
-        EntityRepositoryInterface $customerGroupRepo,
-        EntityRepositoryInterface $customerAddressRepo,
-        EntityRepositoryInterface $customerGroupTranslationRepo
+        EntityRepository $customerGroupRepo,
+        EntityRepository $customerAddressRepo,
+        EntityRepository $customerGroupTranslationRepo,
+        CartRestorer $contextRestorer
         )
         {
             $this->eventDispatcher = $eventDispatcher;
@@ -91,7 +91,6 @@ class CidaasLoginService {
             $this->customerGroupRepo = $customerGroupRepo;
             $this->customerAddressRepo = $customerAddressRepo;
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
-            $this->contextRestorer = $contextRestorer;
             $this->sysConfig = $sysConfig;
             $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
             $client = new Client();
@@ -108,6 +107,7 @@ class CidaasLoginService {
             
             $this->connection = $connection;
             $this->registerRoute = $registerRoute;
+            $this->restorer = $restorer;
 
         }
 
@@ -670,12 +670,17 @@ class CidaasLoginService {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         $adminToken = $this->getAdminToken();
+
         $queryBuilder = $this->connection->createQueryBuilder();
+
         $tmp_id=Uuid::fromHexToBytes($salutationId);
+
         $queryBuilder->select('salutation_key')
             ->from('salutation')
             ->where('id="'.$tmp_id.'"');
-        $salutationKey = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
+        $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
+        echo '<script>console.log('.json_encode($salutationKey).')</script>';
+
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [

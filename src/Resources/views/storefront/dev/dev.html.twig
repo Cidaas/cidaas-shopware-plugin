@@ -5,9 +5,6 @@
     <div data-cidaas-login 
         data-cidaas-login-options="{{
             {
-                'csrf': sw_csrf('cidaashelper.form', {"mode": "token"}),
-                'csrfExists': sw_csrf('cidaas.exists', {"mode": "token"}),
-                'csrfDev3': sw_csrf('cidaas.dev3', {"mode": "token"}),
                 'requestId': requestId,
                 'cidaas': cidaas
             }|json_encode
