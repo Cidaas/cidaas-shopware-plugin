@@ -42,14 +42,13 @@ export default class CidaasInfo extends Plugin {
             let fixedEmail = this.email.replaceAll("+", "%2B")
             if (!this.infoShown) {
                 this.client.post('/cidaas/exists', JSON.stringify({
-                    email: this.email,
-                    _csrf_token: this.options.csrf
+                    email: this.email
                 }), this.handleExistsData.bind(this))
             } 
             else if (this.emailAuth) {
                 let redirectUrl = this.cidaas.getEmailAuthUri(this.requestId, this.email)
                 window.location.href="/cidaas/login?redirect_login=email&email="+fixedEmail+"&requestId="+this.requestId
-                // this.nextLoadingThingy.remove()
+                
             }
             else {
                 this.infoShown=false;
@@ -74,7 +73,6 @@ export default class CidaasInfo extends Plugin {
         this.requestId = response.data.requestId
         let fixedEmail = this.email.replaceAll("+", "%2B")
         if (!userData.exists) {
-            // window.location.href="/cidaas/register?userIdHint="+this.email+'&type=email'
             let res = await this.cidaas.emailExists(this.email, this.requestId)
             if (res.success) { //
                 window.location.href="/cidaas/login?redirect_login=email&email="+fixedEmail+"&requestId="+this.requestId
@@ -83,9 +81,6 @@ export default class CidaasInfo extends Plugin {
             }
 
         } else if (userData.lastLogin === null) {
-            
-            // window.location.href=https://my-test.mainz05.de/identity/
-            // window.location.href=this.options.cidaasUrl+'/identity/password_forgot_init?userIdHint='+fixedEmail+'&requestId='+this.requestId+'&type=email&redirect_to='+this.redirectUrl
             this.nextLoadingThingy.remove();
             $('#emailContainer').hide()
             $('#buttonContainer').hide()
@@ -96,18 +91,6 @@ export default class CidaasInfo extends Plugin {
             $('#already').on('click', (evt) => {
                 window.location.href="/cidaas/login?redirect_login=email&email="+fixedEmail+"&requestId="+this.requestId
             })
-            
-            // this.client.get('/cidaas/anleitung', async (res) => {
-            //     $('#cidaasHeadline').text('Infos zur Anmeldung')
-            //     $('#cidaasContainer').addClass('col-md-6')
-            //     $('#cidaasContainer').removeClass('col-md-3')
-            //     $('#infoContainer').html(res)
-            //     $('#emailContainer').hide()
-            //     $('#infoContainer').show()
-            //     this.infoShown = true;
-            //     this.emailAuth = true;
-            //     this.nextLoadingThingy.remove()
-            // })
             
         } else {
             window.location.href="/cidaas/login?redirect_login=email&email="+fixedEmail+"&requestId="+this.requestId

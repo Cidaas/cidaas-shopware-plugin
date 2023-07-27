@@ -29,8 +29,7 @@ export default class CidaasLogin extends Plugin {
                         let result = JSON.parse(res)
                         if (result.success) {
                             this.client.post('/cidaas/exists', JSON.stringify({
-                                email: this.email,
-                                _csrf_token: this.options.csrfExists
+                                email: this.email
                             }), (res2) => {
                                 let result2 = JSON.parse(res2)
                                 if (result2.exists) {
@@ -69,36 +68,6 @@ export default class CidaasLogin extends Plugin {
                 $('#loginForm').trigger('submit')
             }
         })
-        // $('#loginForm').on('submit', evt => {
-        //     evt.preventDefault()
-        //     if (this.email === null) {
-        //         this.email = $('#email').val()
-        //         this.nextLoadingThingy.create()
-        //         this.client.post('/cidaas/exists', JSON.stringify({
-        //             email: this.email,
-        //             _csrf_token: this.options.csrfExists
-        //         }), (res) => {
-        //             let result = JSON.parse(res)
-        //             if (result.exists) {
-        //                 $('#emailContainer').hide()
-        //                 $('#passwordContainer').show()
-        //                 $('#nextButton').text('Login')
-        //                 this.nextLoadingThingy.remove()
-        //                 $('#password').focus()
-        //             } else {
-        //                 $('#emailContainer').hide()
-        //                 $('#nextButton').hide()
-        //                 this.nextLoadingThingy.remove()
-        //                 $('#complete').show()
-        //             }
-        //         })
-        //     } else if (this.password === null) {
-        //         this.password = $('#password').val()
-        //         $('#loginForm').attr('action', 'http://shop-test.local:9998/cidaas/dev3')
-        //     } else {
-        //         Document.getElementById('loginForm').submit();
-        //     }
-        // })
     }
 // ElementLoadingIndicatorUtil.create(this.mediaDiv)
     handleFormResponse(response) {

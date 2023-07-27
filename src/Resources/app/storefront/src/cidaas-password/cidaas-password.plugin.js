@@ -26,9 +26,7 @@ export default class CidaasPassword extends Plugin {
                 console.log(err, res)
             }
         })
-        this.client.post('/cidaas/generate', JSON.stringify({
-            _csrf_token: this.options.csrfGenerate
-        }), (res) => {
+        this.client.post('/cidaas/generate', {}, (res) => {
             let result = JSON.parse(res)
             this.clientId = result.clientId
             this.url = result.url
@@ -43,8 +41,7 @@ export default class CidaasPassword extends Plugin {
             this.client.post('/cidaas/changepassword', JSON.stringify({
                 newPassword: this.newPasswordInput.val(),
                 oldPassword: this.oldPasswordInput.val(),
-                confirmPassword: this.confirmPasswordInput.val(),
-                _csrf_token: this.options.csrf
+                confirmPassword: this.confirmPasswordInput.val()
             }), (res) => {
                 try {
                     let result = JSON.parse(res)
@@ -60,8 +57,7 @@ export default class CidaasPassword extends Plugin {
 
     sendSuccessInfo() {
         this.client.post('/cidaas/changepassword', JSON.stringify({
-            result: true,
-            _csrf_token: this.options.csrf
+            result: true
         }) ,(res) => {
             window.location.href="/account"
         })

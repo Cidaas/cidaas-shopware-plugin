@@ -3,8 +3,7 @@
         data-cidaas-email-change
         data-cidaas-email-change-options="{{
             {
-                'sub': context.customer.customFields.sub,
-                'csrf': sw_csrf('cidaas.emailform', {'mode': 'token'})
+                'sub': context.customer.customFields.sub
             }|json_encode
         }}"
     ></div>

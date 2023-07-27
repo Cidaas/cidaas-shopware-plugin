@@ -22,9 +22,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
-/**
- * @RouteScope(scopes={"storefront"})
- */
+#[Route(defaults: ['_routeScope' => ['storefront']])]
 
  class CidaasHelperController extends StorefrontController {
 
@@ -74,19 +72,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
      */
     public function form(Request $request, SalesChannelContext $context): Response
     {
-        // $email = $request->get('email');
-        // $response = $this->loginService->login($email, $context);
-        // $token = $response->getToken();
-        // $this->addCartErrors($this->cartService->getCart($token, $context));
-        // return $this->createActionResponse($request);
         return $this->json(array());
-
-        // return $this->json(array(
-        //     "dings" => "bums",
-        //     "email" => $email,
-        //     "text" => $text,
-        //     "response" => $response
-        // ));
     }
 
     /**
@@ -99,7 +85,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $sess = $request->getSession()->get('state');
         if ($state === $sess) {
             $token = $this->loginService->getAccessToken($code, $request->get('sw-sales-channel-absolute-base-url'));
-            // $request->getSession()->set('ding', $token);
             if (is_array($token)) {
                 if (isset($token['sub'])) {
                     $request->getSession()->set('_cidaas_token', $token['access_token']);
@@ -107,7 +92,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
                             if ($request->getSession()->get('redirect_to')) {
@@ -155,7 +139,6 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $request->getSession()->set('sub', $token->sub);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
                             if ($request->getSession()->get('redirect_to')) {
