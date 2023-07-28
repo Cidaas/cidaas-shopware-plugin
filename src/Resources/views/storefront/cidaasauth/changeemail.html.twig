@@ -1,18 +1,10 @@
 {% block changeemail %}
-    <div 
-        data-cidaas-email-change
-        data-cidaas-email-change-options="{{
-            {
-                'sub': context.customer.customFields.sub
-            }|json_encode
-        }}"
-    ></div>
     <div class="card account-email" id="accountMailContainer">
-        <form class="card-body" id="emailForm">
+        <form class="card-body" id="emailForm" >
             <div class="card-title">
                 E-Mail Adresse ändern
             </div>
-            <div class="form-row">
+            <div class="row g-2">
                 <div class="col form-group">
                     <label class="form-label"
                         for="personalMail">
@@ -55,6 +47,8 @@
                 </button>
             </div>
         </form>
+
+
         <div class="card-body" id="verifyThing" style="display: none;">
             <div class="card-title">
                 Änderung bestätigen
@@ -74,5 +68,6 @@
                 </div>
             </div>
         </div>
+        
     </div>
 {% endblock %}

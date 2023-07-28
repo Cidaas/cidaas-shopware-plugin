@@ -1,27 +1,25 @@
 {% sw_extends '@Storefront/storefront/page/account/profile/index.html.twig' %}
+
+
  {% block page_account_profile_credentials_change_mail %}
-    
     <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
         <a class="account-profile-change{% if not emailFormViolation %} collapsed{% endif %}"
             data-bs-toggle="collapse"
-            href="#profile-email-form"
+            data-bs-target="#profile-email-form"
             role="button"
             aria-expanded="{% if emailFormViolation %}true{% else %}false{% endif %}"
             aria-controls="profile-email-form">
             {{ "account.profileChangeEmail"|trans|sw_sanitize }}
         </a>
     </div>
+
 {% endblock %}
+
 {% block page_account_profile_credentials_change_password %}
-    {# <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
-        <a href="/cidaas/changepassword" target="_blank">
-           Passwort ändern 
-        </a>
-    </div> #}
     <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
         <a class="account-profile-change{% if not passwordFormViolation %} collapsed{% endif %}"
-            data-bs-toggle="collapse"
-            href="#profile-password-form"
+           data-bs-toggle="collapse"
+            data-bs-target="#profile-password-form"
             role="button"
             aria-expanded="{% if passwordFormViolation %}true{% else %}false{% endif %}"
             aria-controls="profile-password-form">
