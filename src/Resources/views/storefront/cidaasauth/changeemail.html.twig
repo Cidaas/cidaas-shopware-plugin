@@ -1,10 +1,9 @@
 {% block changeemail %}
-    <div 
+    <div
         data-cidaas-email-change
         data-cidaas-email-change-options="{{
             {
                 'sub': context.customer.customFields.sub,
-                'csrf': sw_csrf('cidaas.emailform', {'mode': 'token'})
             }|json_encode
         }}"
     ></div>
@@ -13,7 +12,7 @@
             <div class="card-title">
                 E-Mail Adresse ändern
             </div>
-            <div class="form-row">
+            <div class="row g-2">
                 <div class="col form-group">
                     <label class="form-label"
                         for="personalMail">

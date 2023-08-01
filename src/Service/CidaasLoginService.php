@@ -13,7 +13,7 @@
 namespace Cidaas\OauthConnect\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Checkout\Customer\Event\CustomerBeforeLoginEvent;
 use Shopware\Core\Checkout\Customer\Event\CustomerLoginEvent;
@@ -26,10 +26,10 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\System\SalesChannel\ContextTokenResponse;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Shopware\Core\System\SalesChannel\Context\CartRestorer;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 
@@ -76,14 +76,14 @@ class CidaasLoginService {
 
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
-        EntityRepositoryInterface $customerRepo,
-        SalesChannelContextRestorer $contextRestorer,
+        EntityRepository $customerRepo,
+        CartRestorer     $contextRestorer,
         SystemConfigService $sysConfig,
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
-        EntityRepositoryInterface $customerGroupRepo,
-        EntityRepositoryInterface $customerAddressRepo,
-        EntityRepositoryInterface $customerGroupTranslationRepo
+        EntityRepository $customerGroupRepo,
+        EntityRepository $customerAddressRepo,
+        EntityRepository $customerGroupTranslationRepo
         )
         {
             $this->eventDispatcher = $eventDispatcher;
@@ -91,7 +91,6 @@ class CidaasLoginService {
             $this->customerGroupRepo = $customerGroupRepo;
             $this->customerAddressRepo = $customerAddressRepo;
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
-            $this->contextRestorer = $contextRestorer;
             $this->sysConfig = $sysConfig;
             $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
             $client = new Client();
@@ -108,6 +107,7 @@ class CidaasLoginService {
             
             $this->connection = $connection;
             $this->registerRoute = $registerRoute;
+            $this->contextRestorer = $contextRestorer;
 
         }
 
@@ -300,44 +300,17 @@ class CidaasLoginService {
         $mitglied = false;
         $mitarbeiter = false;
         $mitarbeiterPromo = false;
-        // foreach($user['groups'] as $group) {
-        //     if ($group['groupId'] === 'mitglied')
-        //         $mitglied = true;
-        //     if ($group['groupId'] === 'mitarbeiter')
-        //         $mitarbeiter = true;
-        //     if ($group['groupId'] === 'mitarbeiter_promo')
-        //         $mitarbeiterPromo = true;
-        // }
-        // $mitgliederGroup = $this->getMitgliederGroup($context);
-        // $mitarbeiterGroup = $this->getMitarbeiterGroup($context);
-        // $mitarbeiterPromoGroup = $this->getMitarbeiterPromoGroup($context);
         $updateData = [
             'id' => $customer->getId(),
                 'lastLogin' => new \DateTimeImmutable(),
                 'customFields' => [
                     'sub' => $user['sub']]
         ];
-        // if ($mitglied || $mitarbeiter || $mitarbeiterPromo) {
-        //     if ($mitglied)
-        //         $updateData['groupId'] = $mitgliederGroup->getId();
-        //     if ($mitarbeiter)
-        //         $updateData['groupId'] = $mitarbeiterGroup->getId();
-        //     if ($mitarbeiterPromo)
-        //         $updateData['groupId'] = $mitarbeiterPromoGroup->getId();
-        //     // $updateData['groupId'] = $mitarbeiter ? $mitarbeiterGroup->getId() : ;
-        // } 
         if ($this->cfCustomerNumber) {
             if ($this->cfCustomerNumber !== '') {
                 $updateData['customerNumber'] = $user['customFields'][$this->cfCustomerNumber];    
             }
         }
-        // if (isset($user['customFields']['adressnummer'])) {
-        //     $updateData['customerNumber'] = $user['customFields']['adressnummer'];
-        // }
-        // if (!isset($user['customFields']['webshop_id'])) {
-        //     //TODO: set webshop_id
-        //     $this->setWebShopId($customer->getId(), $user['sub']);
-        // }
         $this->customerRepo->upsert([
             $updateData
         ], $context->getContext());
@@ -351,7 +324,8 @@ class CidaasLoginService {
         $response = $client->get($this->oAuthEndpoints->userinfo_endpoint, [
             'headers' => [
                 'content_type' => 'application/json',
-                'access_token' => $token
+                'Authorization' => 'Bearer '.$token
+                
             ]
         ]);
 
@@ -497,43 +471,6 @@ class CidaasLoginService {
                     $groups[] = $g['groupId'];
             }
         }
-
-        // foreach ($groups as $group) {
-            // if ($group === 'mitglied') {
-            //     $mg = $this->getMitgliederGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId'=>$mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //         return "mitglied";
-            //     }
-            // }
-            // if ($group === 'mitarbeiter') {
-            //     $mg = $this->getMitarbeiterGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId' => $mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //     }
-            // }
-            // if ($group === 'mitarbeiter_promo') {
-            //     $mg = $this->getMitarbeiterPromoGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId' => $mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //     }
-            // }
-        // }
         return;
     }
 
@@ -675,7 +612,7 @@ class CidaasLoginService {
         $queryBuilder->select('salutation_key')
             ->from('salutation')
             ->where('id="'.$tmp_id.'"');
-        $salutationKey = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
+            $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
