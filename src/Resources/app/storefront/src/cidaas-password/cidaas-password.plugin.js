@@ -1,12 +1,9 @@
 import Plugin from 'src/plugin-system/plugin.class';
-import DomAccess from 'src/helper/dom-access.helper';
 import HttpClient from 'src/service/http-client.service';
-import Debouncer from 'src/helper/debouncer.helper';
-import ElementLoadingIndicatorUtil from 'src/utility/loading-indicator/element-loading-indicator.util';
-import ButtonLoadingIndicatorUtil from 'src/utility/loading-indicator/button-loading-indicator.util';
 import CidaasUtil from '../util/cidaas-util';
 
 export default class CidaasPassword extends Plugin {
+
     init() {
         const profilePasswordForm = document.getElementById('profilePasswordForm');
         profilePasswordForm.addEventListener('submit', this.handleFormSubmit.bind(this));
@@ -24,14 +21,6 @@ export default class CidaasPassword extends Plugin {
             } catch (err) {
                 console.log(err, res);
             }
-        });
-
-        this.client.post('/cidaas/generate', {}, (res) => {
-            const result = JSON.parse(res);
-            this.clientId = result.clientId;
-            this.url = result.url;
-            this.state = result.state;
-            this.scope = "openid email profile";
         });
     }
 
