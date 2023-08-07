@@ -11,8 +11,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+
+use Shopware\Core\Checkout\Customer\SalesChannel\AccountService;
+
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractLogoutRoute;
+use Shopware\Core\Checkout\Customer\SalesChannel\AbstractListAddressRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
+
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Checkout\Customer\Exception\AddressNotFoundException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use GuzzleHttp\Client;
 
@@ -22,7 +30,6 @@ use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
-
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
@@ -32,6 +39,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     private $loginService;
     private $cartService;
     private $logoutRoute;
+    private $listAddressRoute;
     private const ADDRESS_TYPE_BILLING = 'billing';
     private const ADDRESS_TYPE_SHIPPING = 'shipping';
 
@@ -40,11 +48,15 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     public function __construct(
         CidaasLoginService $loginService, 
         CartService $cartService,
-        AbstractLogoutRoute $logoutRoute
+        AbstractLogoutRoute $logoutRoute,
+        AbstractListAddressRoute $listAddressRoute,
+        AccountService $accountService
         ) {
         $this->loginService = $loginService;
         $this->cartService = $cartService;
         $this->logoutRoute = $logoutRoute;
+        $this->listAddressRoute = $listAddressRoute;
+        $this->accountService = $accountService;
     }
 
     /**
@@ -428,53 +440,24 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $activeBillingAddress = $customer->getActiveBillingAddress();
         $activeBillingAddressId = $activeBillingAddress->get('id');
         $addressId =  $address->get('id');
+        $street =  $address->get('street');
+        $zipCode =  $address->get('zipcode');
+        $company =  $address->get('company');
+        $city =  $address->get('city');
         if($addressId === $activeBillingAddressId){
-            $street =  $address->get('street');
-            $zipCode =  $address->get('zipcode');
-            $company =  $address->get('company');
-            $city =  $address->get('city');
-            $res = $this->loginService->updateBillingAddress($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
-            if($res) {
-                // Assuming $object is your stdClass object
-                  $responseData = json_decode(json_encode($res), true);
-                   // Key exists in the array
-                  if(array_key_exists('success', $responseData)){
-                    if($responseData['success'] === true){
-                       $this->addFlash('success', 'Successfully updated Billing address');
-                    } elseif ($responseData['success'] === false){
-                      if (array_key_exists('error', $responseData)) {
-                              // Handle error data
-                              // Extract error details
-                              $error = $responseData['error']['error'];
-                              $this->addFlash('danger', 'Failed to Billing address: '.$error);
-                          } else {
-                              // No error information available
-                              error_log(json_encode($responseData));
-                              $this->addFlash('danger', 'Failed toBilling address for unknown reason. Please check error log for more details.');
-                          }
-                    } else {
-                        $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
-                    }
-                  } else {
-                      // Key does not exist in the array
-                      $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
-                  }
-          } else {
-              $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
-          }
+
+            $this->updateBillingAddressToCidaas($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
 
         } else {
-            return $this->redirectToRoute('frontend.account.profile.page');
+            $this->loginService->updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context);
         }
-          
-
         return $this->redirectToRoute('frontend.account.profile.page');
     }
 
      /**
      * @Route("/cidaas/address/default-{type}/{addressId}", name="frontend.account.address.set-default-address", methods={"POST"}, defaults={"_loginRequired"=true})
      */
-    public function switchDefaultAddresses(string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse
+    public function switchDefaultAddresses(Request $request, string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse
     {
         if (!Uuid::isValid($addressId)) {
             throw new InvalidUuidException($addressId);
@@ -482,13 +465,23 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
 
         try {
             if ($type === self::ADDRESS_TYPE_SHIPPING) {
-                error_log($addressId);
+
                 $address = $this->getById($addressId, $context, $customer);
-                error_log($address->get('street'));
-                // $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
+
+                $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
+
             } elseif ($type === self::ADDRESS_TYPE_BILLING) {
-                // $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
-                error_log($addressId);
+                $sub = $request->getSession()->get('sub');
+                $address = $this->getById($addressId, $context, $customer);
+                $addressId =  $address->get('id');
+                $street =  $address->get('street');
+                $zipCode =  $address->get('zipcode');
+                $company =  $address->get('company');
+                $city =  $address->get('city');
+                $this->updateBillingAddressToCidaas($street, $zipCode, $company, $city, $sub,$addressId, $context);
+
+                $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
+
             } else {
                 $this->addFlash('danger', 'Address not found');
             }
@@ -499,5 +492,58 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         return $this->redirectToRoute('frontend.account.profile.page');
     }
 
-   
+    private function updateBillingAddressToCidaas(string $street,string $zipCode, string $company, string $city, string $sub, string $activeBillingAddressId, SalesChannelContext $context){
+
+        $res = $this->loginService->updateBillingAddress($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
+
+        if($res) {
+            // Assuming $object is your stdClass object
+              $responseData = json_decode(json_encode($res), true);
+               // Key exists in the array
+              if(array_key_exists('success', $responseData)){
+                if($responseData['success'] === true){
+                   $this->addFlash('success', 'Successfully updated Billing address');
+                } elseif ($responseData['success'] === false){
+                  if (array_key_exists('error', $responseData)) {
+                          // Handle error data
+                          // Extract error details
+                          $error = $responseData['error']['error'];
+                          $this->addFlash('danger', 'Failed to Billing address: '.$error);
+                      } else {
+                          // No error information available
+                          error_log(json_encode($responseData));
+                          $this->addFlash('danger', 'Failed toBilling address for unknown reason. Please check error log for more details.');
+                      }
+                } else {
+                    $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+                }
+              } else {
+                  // Key does not exist in the array
+                  $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+              }
+      } else {
+          $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+      }
+    }
+
+
+
+    private function getById(string $addressId, SalesChannelContext $context, CustomerEntity $customer): CustomerAddressEntity
+    {
+        if (!Uuid::isValid($addressId)) {
+            throw new InvalidUuidException($addressId);
+        }
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('id', $addressId));
+        $criteria->addFilter(new EqualsFilter('customerId', $customer->getId()));
+
+        $address = $this->listAddressRoute->load($criteria, $context, $customer)->getAddressCollection()->get($addressId);
+
+        if (!$address) {
+            throw CustomerException::addressNotFound($addressId);
+        }
+
+        return $address;
+    }
  }

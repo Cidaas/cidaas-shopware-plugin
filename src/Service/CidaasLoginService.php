@@ -437,6 +437,7 @@ class CidaasLoginService {
                 'city' => $user['customFields']['billing_address_city'],
                 'zipcode' => $user['customFields']['billing_address_zipcode'],
                 "countryId" => $country,
+                "company" => $user['customFields']['company'],
             ]
         ], $context->getContext());
         
@@ -719,13 +720,28 @@ class CidaasLoginService {
                         'id' => $activeBillingAddressId,
                         'street' => $street,
                         'city' => $city,
-                        'zipcode' => $zipCode
+                        'zipcode' => $zipCode,
+                        'company' => $company
                     ]
                 ], $context->getContext());
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
+    }
+
+    public function updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context) {
+
+        $this->customerAddressRepo->update([
+            [
+                'id' => $addressId,
+                'street' => $street,
+                'city' => $city,
+                'zipcode' => $zipCode,
+                'company' => $company,
+            ]
+        ], $context->getContext());
+
     }
     
 }
