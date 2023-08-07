@@ -429,12 +429,15 @@ class CidaasLoginService {
         }
         $billingId = $customer->getDefaultBillingAddressId();
         $billing = $this->customerAddressRepo->search(new Criteria([$billingId]), $context->getContext())->first();
+        $country = $this->getCountryId($user['customFields']['billing_address_country']);
         $this->customerAddressRepo->update([
             [
                 'id' => $billing->getId(),
                 'street' => $user['customFields']['billing_address_street'],
                 'city' => $user['customFields']['billing_address_city'],
-                'zipcode' => $user['customFields']['billing_address_zipcode']
+                'zipcode' => $user['customFields']['billing_address_zipcode'],
+                "countryId" => $country,
+                "company" => $user['customFields']['company'],
             ]
         ], $context->getContext());
         
@@ -692,5 +695,53 @@ class CidaasLoginService {
         return json_decode($resp->getBody()->getContents());
     }
 
+    public function updateBillingAddress($street, $zipCode, $company, $city, $sub, $activeBillingAddressId, $context) {
+        $client = new Client();
+        $customer = $this->getCustomerBySub($sub, $context);
+        $adminToken = $this->getAdminToken();
+        try {
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+                'headers' => [
+                    'authorization' => 'Bearer '.$adminToken->access_token
+                ],
+                'form_params' => [
+                    'customFields' => [
+                        'billing_address_zipcode' => $zipCode ,
+                        'billing_address_street' => $street,
+                        'company' => $company,
+                        'billing_address_city' => $city
+                    ],
+                    'sub' => $sub,
+                    'provider' => 'self'
+                ]
+                ]);
+                $this->customerAddressRepo->update([
+                    [
+                        'id' => $activeBillingAddressId,
+                        'street' => $street,
+                        'city' => $city,
+                        'zipcode' => $zipCode,
+                        'company' => $company
+                    ]
+                ], $context->getContext());
+            return json_decode($response->getBody()->getContents());
+        } catch (ClientException $e) {
+            return json_decode($e->getResponse()->getBody()->getContents());
+        }
+    }
 
+    public function updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context) {
+
+        $this->customerAddressRepo->update([
+            [
+                'id' => $addressId,
+                'street' => $street,
+                'city' => $city,
+                'zipcode' => $zipCode,
+                'company' => $company,
+            ]
+        ], $context->getContext());
+
+    }
+    
 }
