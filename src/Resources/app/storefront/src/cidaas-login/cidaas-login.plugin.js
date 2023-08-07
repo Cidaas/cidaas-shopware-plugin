@@ -61,7 +61,6 @@ export default class CidaasLogin extends Plugin {
                 });
             } else if (this.password === null) {
                 this.password = document.querySelector('#password').value;
-                document.querySelector('#loginForm').setAttribute('action', 'https://my-test.mainz05.de/login-srv/login');
                 document.querySelector('#loginForm').dispatchEvent(new Event('submit'));
             }
         });
