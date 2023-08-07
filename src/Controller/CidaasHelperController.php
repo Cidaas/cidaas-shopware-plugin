@@ -18,7 +18,10 @@ use GuzzleHttp\Client;
 
 use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
-
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
+use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
 
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
@@ -29,6 +32,8 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     private $loginService;
     private $cartService;
     private $logoutRoute;
+    private const ADDRESS_TYPE_BILLING = 'billing';
+    private const ADDRESS_TYPE_SHIPPING = 'shipping';
 
     private $state;
 
@@ -409,4 +414,90 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
             )
         );
     }
+
+
+
+    /**
+     * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", options={"seo"="false"}, methods={"POST"}, defaults={"_loginRequired"=true})
+     */
+    public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response
+    {
+        /** @var RequestDataBag $address */
+        $address = $data->get('address');
+        $sub = $request->getSession()->get('sub');
+        $activeBillingAddress = $customer->getActiveBillingAddress();
+        $activeBillingAddressId = $activeBillingAddress->get('id');
+        $addressId =  $address->get('id');
+        if($addressId === $activeBillingAddressId){
+            $street =  $address->get('street');
+            $zipCode =  $address->get('zipcode');
+            $company =  $address->get('company');
+            $city =  $address->get('city');
+            $res = $this->loginService->updateBillingAddress($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
+            if($res) {
+                // Assuming $object is your stdClass object
+                  $responseData = json_decode(json_encode($res), true);
+                   // Key exists in the array
+                  if(array_key_exists('success', $responseData)){
+                    if($responseData['success'] === true){
+                       $this->addFlash('success', 'Successfully updated Billing address');
+                    } elseif ($responseData['success'] === false){
+                      if (array_key_exists('error', $responseData)) {
+                              // Handle error data
+                              // Extract error details
+                              $error = $responseData['error']['error'];
+                              $this->addFlash('danger', 'Failed to Billing address: '.$error);
+                          } else {
+                              // No error information available
+                              error_log(json_encode($responseData));
+                              $this->addFlash('danger', 'Failed toBilling address for unknown reason. Please check error log for more details.');
+                          }
+                    } else {
+                        $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+                    }
+                  } else {
+                      // Key does not exist in the array
+                      $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+                  }
+          } else {
+              $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+          }
+
+        } else {
+            return $this->redirectToRoute('frontend.account.profile.page');
+        }
+          
+
+        return $this->redirectToRoute('frontend.account.profile.page');
+    }
+
+     /**
+     * @Route("/cidaas/address/default-{type}/{addressId}", name="frontend.account.address.set-default-address", methods={"POST"}, defaults={"_loginRequired"=true})
+     */
+    public function switchDefaultAddresses(string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse
+    {
+        if (!Uuid::isValid($addressId)) {
+            throw new InvalidUuidException($addressId);
+        }
+
+        try {
+            if ($type === self::ADDRESS_TYPE_SHIPPING) {
+                error_log($addressId);
+                $address = $this->getById($addressId, $context, $customer);
+                error_log($address->get('street'));
+                // $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
+            } elseif ($type === self::ADDRESS_TYPE_BILLING) {
+                // $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
+                error_log($addressId);
+            } else {
+                $this->addFlash('danger', 'Address not found');
+            }
+        } catch (AddressNotFoundException) {
+            $this->addFlash('danger', 'Address not found');
+        }
+
+        return $this->redirectToRoute('frontend.account.profile.page');
+    }
+
+   
  }
