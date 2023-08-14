@@ -442,6 +442,18 @@ class CidaasLoginService {
         ], $context->getContext());
         
     }
+    public function updateCustomerFromCidaas($user, $context) {
+        $customer = $this->getCustomerBySub($user['sub'], $context);
+        $salutationId =  $salutation = $this->getSalutationId($user['customFields']['salutation']);
+        $this->customerRepo->update([
+            [
+                "id" => $customer->getId(),
+                'firstName' =>$user['given_name'],
+                'lastName' =>$user['family_name'],
+                'salutationId' => $salutationId,
+            ]
+        ], $context->getContext());
+    }
 
     public function checkWebshopId($user, $context) {
         $sub = $user['sub'];
@@ -695,10 +707,16 @@ class CidaasLoginService {
         return json_decode($resp->getBody()->getContents());
     }
 
-    public function updateBillingAddress($street, $zipCode, $company, $city, $sub, $activeBillingAddressId, $context) {
+    public function updateBillingAddress($address, $sub, $activeBillingAddressId, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         $adminToken = $this->getAdminToken();
+
+        $street =  $address->get('street');
+        $zipCode =  $address->get('zipcode');
+        $company =  $address->get('company');
+        $city =  $address->get('city');
+
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
@@ -715,13 +733,20 @@ class CidaasLoginService {
                     'provider' => 'self'
                 ]
                 ]);
+             
                 $this->customerAddressRepo->update([
                     [
                         'id' => $activeBillingAddressId,
-                        'street' => $street,
-                        'city' => $city,
-                        'zipcode' => $zipCode,
-                        'company' => $company
+                        'salutationId' => $address->get('salutationId'),
+                        'firstName' => $address->get('firstName'),
+                        'lastName' => $address->get('lastName'),
+                        'street' => $address->get('street'),
+                        'city' => $address->get('city'),
+                        'zipcode' => $address->get('zipcode'),
+                        'countryId' => $address->get('countryId'),
+                        'countryStateId' => $address->get('countryStateId') ?: null,
+                        'company' => $address->get('company'),
+                        'department' => $address->get('department') ?: null,
                     ]
                 ], $context->getContext());
             return json_decode($response->getBody()->getContents());
@@ -730,15 +755,20 @@ class CidaasLoginService {
         }
     }
 
-    public function updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context) {
-
+    public function updateAddressToShopware($address, $addressId, $context) {
         $this->customerAddressRepo->update([
             [
                 'id' => $addressId,
-                'street' => $street,
-                'city' => $city,
-                'zipcode' => $zipCode,
-                'company' => $company,
+                'salutationId' => $address->get('salutationId'),
+                'firstName' => $address->get('firstName'),
+                'lastName' => $address->get('lastName'),
+                'street' => $address->get('street'),
+                'city' => $address->get('city'),
+                'zipcode' => $address->get('zipcode'),
+                'countryId' => $address->get('countryId'),
+                'countryStateId' => $address->get('countryStateId') ?: null,
+                'company' => $address->get('company'),
+                'department' => $address->get('department') ?: null,
             ]
         ], $context->getContext());
 
