@@ -430,6 +430,13 @@ class CidaasLoginService {
         $billingId = $customer->getDefaultBillingAddressId();
         $billing = $this->customerAddressRepo->search(new Criteria([$billingId]), $context->getContext())->first();
         $country = $this->getCountryId($user['customFields']['billing_address_country']);
+
+        if (array_key_exists('company', $user['customFields'])) {
+            $company = $user['customFields']['company'];
+        } else {
+            $company  = "";
+        }
+
         $this->customerAddressRepo->update([
             [
                 'id' => $billing->getId(),
@@ -437,7 +444,7 @@ class CidaasLoginService {
                 'city' => $user['customFields']['billing_address_city'],
                 'zipcode' => $user['customFields']['billing_address_zipcode'],
                 "countryId" => $country,
-                "company" => $user['customFields']['company'],
+                "company" => $company,
             ]
         ], $context->getContext());
         
@@ -756,6 +763,7 @@ class CidaasLoginService {
     }
 
     public function updateAddressToShopware($address, $addressId, $context) {
+
         $this->customerAddressRepo->update([
             [
                 'id' => $addressId,
