@@ -37,7 +37,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\PlatformRequest;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
-
+use Shopware\Core\System\Country\CountryEntity;
+use Shopware\Core\System\Country\Exception\CountryNotFoundException;
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
 use Doctrine\DBAL\Connection;
@@ -51,6 +52,7 @@ class CidaasLoginService {
     private $customerGroupRepo;
     private $customerAddressRepo;
     private $customerGroupTranslationRepo;
+    private $countryRepository;
     private $contextRestorer;
     private $sysConfig;
 
@@ -83,7 +85,8 @@ class CidaasLoginService {
         AbstractRegisterRoute $registerRoute,
         EntityRepository $customerGroupRepo,
         EntityRepository $customerAddressRepo,
-        EntityRepository $customerGroupTranslationRepo
+        EntityRepository $customerGroupTranslationRepo,
+        EntityRepository $countryRepository
         )
         {
             $this->eventDispatcher = $eventDispatcher;
@@ -91,6 +94,7 @@ class CidaasLoginService {
             $this->customerGroupRepo = $customerGroupRepo;
             $this->customerAddressRepo = $customerAddressRepo;
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
+            $this->countryRepository = $countryRepository;
             $this->sysConfig = $sysConfig;
             $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
             $client = new Client();
@@ -714,6 +718,20 @@ class CidaasLoginService {
         return json_decode($resp->getBody()->getContents());
     }
 
+    private function getCountry(string $countryId){
+        /**
+         * @var CountryEntity|null $country
+         */
+        $country = $this->countryRepository->search(new Criteria([$countryId]), Context::createDefaultContext())->get($countryId);
+
+        if (!$country instanceof CountryEntity) {
+            throw new CountryNotFoundException($countryId);
+        }
+        return $country->name;
+    }
+
+    
+
     public function updateBillingAddress($address, $sub, $activeBillingAddressId, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
@@ -723,6 +741,10 @@ class CidaasLoginService {
         $zipCode =  $address->get('zipcode');
         $company =  $address->get('company');
         $city =  $address->get('city');
+
+        $countryId = $address->get('countryId');
+        $country = $this->getCountry($countryId);
+
 
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
@@ -734,7 +756,8 @@ class CidaasLoginService {
                         'billing_address_zipcode' => $zipCode ,
                         'billing_address_street' => $street,
                         'company' => $company,
-                        'billing_address_city' => $city
+                        'billing_address_city' => $city,
+                        'billing_address_country' => strtolower($country)
                     ],
                     'sub' => $sub,
                     'provider' => 'self'
