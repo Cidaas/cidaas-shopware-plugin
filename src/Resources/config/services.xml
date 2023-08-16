@@ -25,6 +25,7 @@
             <argument type="service" id="customer_group.repository" />
             <argument type="service" id="customer_address.repository" />
             <argument type="service" id="customer_group_translation.repository" />
+             <argument type="service" id="country.repository"/>
         </service>
     </services>
 </container>

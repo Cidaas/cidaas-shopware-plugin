@@ -37,7 +37,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\PlatformRequest;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
-
+use Shopware\Core\System\Country\CountryEntity;
+use Shopware\Core\System\Country\Exception\CountryNotFoundException;
 use Cidaas\OauthConnect\Util\CidaasStruct;
 
 use Doctrine\DBAL\Connection;
@@ -51,6 +52,7 @@ class CidaasLoginService {
     private $customerGroupRepo;
     private $customerAddressRepo;
     private $customerGroupTranslationRepo;
+    private $countryRepository;
     private $contextRestorer;
     private $sysConfig;
 
@@ -83,7 +85,8 @@ class CidaasLoginService {
         AbstractRegisterRoute $registerRoute,
         EntityRepository $customerGroupRepo,
         EntityRepository $customerAddressRepo,
-        EntityRepository $customerGroupTranslationRepo
+        EntityRepository $customerGroupTranslationRepo,
+        EntityRepository $countryRepository
         )
         {
             $this->eventDispatcher = $eventDispatcher;
@@ -91,6 +94,7 @@ class CidaasLoginService {
             $this->customerGroupRepo = $customerGroupRepo;
             $this->customerAddressRepo = $customerAddressRepo;
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
+            $this->countryRepository = $countryRepository;
             $this->sysConfig = $sysConfig;
             $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
             $client = new Client();
@@ -430,6 +434,13 @@ class CidaasLoginService {
         $billingId = $customer->getDefaultBillingAddressId();
         $billing = $this->customerAddressRepo->search(new Criteria([$billingId]), $context->getContext())->first();
         $country = $this->getCountryId($user['customFields']['billing_address_country']);
+
+        if (array_key_exists('company', $user['customFields'])) {
+            $company = $user['customFields']['company'];
+        } else {
+            $company  = "";
+        }
+
         $this->customerAddressRepo->update([
             [
                 'id' => $billing->getId(),
@@ -437,10 +448,22 @@ class CidaasLoginService {
                 'city' => $user['customFields']['billing_address_city'],
                 'zipcode' => $user['customFields']['billing_address_zipcode'],
                 "countryId" => $country,
-                "company" => $user['customFields']['company'],
+                "company" => $company,
             ]
         ], $context->getContext());
         
+    }
+    public function updateCustomerFromCidaas($user, $context) {
+        $customer = $this->getCustomerBySub($user['sub'], $context);
+        $salutationId =  $salutation = $this->getSalutationId($user['customFields']['salutation']);
+        $this->customerRepo->update([
+            [
+                "id" => $customer->getId(),
+                'firstName' =>$user['given_name'],
+                'lastName' =>$user['family_name'],
+                'salutationId' => $salutationId,
+            ]
+        ], $context->getContext());
     }
 
     public function checkWebshopId($user, $context) {
@@ -695,10 +718,34 @@ class CidaasLoginService {
         return json_decode($resp->getBody()->getContents());
     }
 
-    public function updateBillingAddress($street, $zipCode, $company, $city, $sub, $activeBillingAddressId, $context) {
+    private function getCountry(string $countryId){
+        /**
+         * @var CountryEntity|null $country
+         */
+        $country = $this->countryRepository->search(new Criteria([$countryId]), Context::createDefaultContext())->get($countryId);
+
+        if (!$country instanceof CountryEntity) {
+            throw new CountryNotFoundException($countryId);
+        }
+        return $country->name;
+    }
+
+    
+
+    public function updateBillingAddress($address, $sub, $activeBillingAddressId, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         $adminToken = $this->getAdminToken();
+
+        $street =  $address->get('street');
+        $zipCode =  $address->get('zipcode');
+        $company =  $address->get('company');
+        $city =  $address->get('city');
+
+        $countryId = $address->get('countryId');
+        $country = $this->getCountry($countryId);
+
+
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
@@ -709,19 +756,27 @@ class CidaasLoginService {
                         'billing_address_zipcode' => $zipCode ,
                         'billing_address_street' => $street,
                         'company' => $company,
-                        'billing_address_city' => $city
+                        'billing_address_city' => $city,
+                        'billing_address_country' => strtolower($country)
                     ],
                     'sub' => $sub,
                     'provider' => 'self'
                 ]
                 ]);
+             
                 $this->customerAddressRepo->update([
                     [
                         'id' => $activeBillingAddressId,
-                        'street' => $street,
-                        'city' => $city,
-                        'zipcode' => $zipCode,
-                        'company' => $company
+                        'salutationId' => $address->get('salutationId'),
+                        'firstName' => $address->get('firstName'),
+                        'lastName' => $address->get('lastName'),
+                        'street' => $address->get('street'),
+                        'city' => $address->get('city'),
+                        'zipcode' => $address->get('zipcode'),
+                        'countryId' => $address->get('countryId'),
+                        'countryStateId' => $address->get('countryStateId') ?: null,
+                        'company' => $address->get('company'),
+                        'department' => $address->get('department') ?: null,
                     ]
                 ], $context->getContext());
             return json_decode($response->getBody()->getContents());
@@ -730,15 +785,21 @@ class CidaasLoginService {
         }
     }
 
-    public function updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context) {
+    public function updateAddressToShopware($address, $addressId, $context) {
 
         $this->customerAddressRepo->update([
             [
                 'id' => $addressId,
-                'street' => $street,
-                'city' => $city,
-                'zipcode' => $zipCode,
-                'company' => $company,
+                'salutationId' => $address->get('salutationId'),
+                'firstName' => $address->get('firstName'),
+                'lastName' => $address->get('lastName'),
+                'street' => $address->get('street'),
+                'city' => $address->get('city'),
+                'zipcode' => $address->get('zipcode'),
+                'countryId' => $address->get('countryId'),
+                'countryStateId' => $address->get('countryStateId') ?: null,
+                'company' => $address->get('company'),
+                'department' => $address->get('department') ?: null,
             ]
         ], $context->getContext());
 

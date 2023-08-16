@@ -133,6 +133,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
                     $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token['sub'], $context);
                     $request->getSession()->set('sub', $token['sub']);
                     $token2 = $response->getToken();
@@ -180,6 +181,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
                     $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token->sub, $context);
                     $request->getSession()->set('sub', $token->sub);
                     $token2 = $response->getToken();
@@ -435,23 +437,23 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response
     {
         /** @var RequestDataBag $address */
+
         $address = $data->get('address');
         $sub = $request->getSession()->get('sub');
         $activeBillingAddress = $customer->getActiveBillingAddress();
         $activeBillingAddressId = $activeBillingAddress->get('id');
+
+      
         $addressId =  $address->get('id');
-        $street =  $address->get('street');
-        $zipCode =  $address->get('zipcode');
-        $company =  $address->get('company');
-        $city =  $address->get('city');
+
         if($addressId === $activeBillingAddressId){
 
-            $this->updateBillingAddressToCidaas($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
+            $this->updateBillingAddressToCidaas($address,  $sub, $activeBillingAddressId, $context);
 
         } else {
-            $this->loginService->updateAddressToShopware($street, $zipCode, $company, $city, $addressId, $context);
+            $this->loginService->updateAddressToShopware($address, $addressId, $context);
         }
-        return $this->redirectToRoute('frontend.account.profile.page');
+        return $this->redirectToRoute('frontend.account.address.page');
     }
 
      /**
@@ -474,11 +476,8 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 $sub = $request->getSession()->get('sub');
                 $address = $this->getById($addressId, $context, $customer);
                 $addressId =  $address->get('id');
-                $street =  $address->get('street');
-                $zipCode =  $address->get('zipcode');
-                $company =  $address->get('company');
-                $city =  $address->get('city');
-                $this->updateBillingAddressToCidaas($street, $zipCode, $company, $city, $sub,$addressId, $context);
+
+                $this->updateBillingAddressToCidaas($address, $sub,$addressId, $context);
 
                 $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
 
@@ -489,12 +488,12 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
             $this->addFlash('danger', 'Address not found');
         }
 
-        return $this->redirectToRoute('frontend.account.profile.page');
+        return $this->redirectToRoute('frontend.account.address.page');
     }
 
-    private function updateBillingAddressToCidaas(string $street,string $zipCode, string $company, string $city, string $sub, string $activeBillingAddressId, SalesChannelContext $context){
+    private function updateBillingAddressToCidaas($address, string $sub, string $activeBillingAddressId, SalesChannelContext $context){
 
-        $res = $this->loginService->updateBillingAddress($street, $zipCode, $company, $city, $sub,$activeBillingAddressId, $context);
+        $res = $this->loginService->updateBillingAddress($address, $sub, $activeBillingAddressId, $context);
 
         if($res) {
             // Assuming $object is your stdClass object
