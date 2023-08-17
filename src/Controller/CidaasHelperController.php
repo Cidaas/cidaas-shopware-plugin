@@ -429,29 +429,21 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         );
     }
 
-
-
     /**
      * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", options={"seo"="false"}, methods={"POST"}, defaults={"_loginRequired"=true})
      */
-    public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response
-    {
-        /** @var RequestDataBag $address */
-
-        $address = $data->get('address');
+    public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response {
+        
+        $addressData = $this->convertToCustomerAddressEntity($data);
         $sub = $request->getSession()->get('sub');
         $activeBillingAddress = $customer->getActiveBillingAddress();
         $activeBillingAddressId = $activeBillingAddress->get('id');
-
-      
-        $addressId =  $address->get('id');
+        $addressId =  $addressData->get('id');
 
         if($addressId === $activeBillingAddressId){
-
-            $this->updateBillingAddressToCidaas($address,  $sub, $activeBillingAddressId, $context);
-
+            $this->updateBillingAddressToCidaas($addressData, $sub, $context);
         } else {
-            $this->loginService->updateAddressToShopware($address, $addressId, $context);
+            $this->loginService->updateAddressToShopware($addressData, $context);
         }
         return $this->redirectToRoute('frontend.account.address.page');
     }
@@ -459,42 +451,29 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
      /**
      * @Route("/cidaas/address/default-{type}/{addressId}", name="frontend.account.address.set-default-address", methods={"POST"}, defaults={"_loginRequired"=true})
      */
-    public function switchDefaultAddresses(Request $request, string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse
-    {
+    public function switchDefaultAddresses(Request $request, string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse {
         if (!Uuid::isValid($addressId)) {
             throw new InvalidUuidException($addressId);
         }
-
         try {
             if ($type === self::ADDRESS_TYPE_SHIPPING) {
-
-                $address = $this->getById($addressId, $context, $customer);
-
                 $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
-
             } elseif ($type === self::ADDRESS_TYPE_BILLING) {
                 $sub = $request->getSession()->get('sub');
                 $address = $this->getById($addressId, $context, $customer);
-                $addressId =  $address->get('id');
-
-                $this->updateBillingAddressToCidaas($address, $sub,$addressId, $context);
-
+                $this->updateBillingAddressToCidaas($address, $sub, $context);
                 $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
-
             } else {
                 $this->addFlash('danger', 'Address not found');
             }
         } catch (AddressNotFoundException) {
             $this->addFlash('danger', 'Address not found');
         }
-
         return $this->redirectToRoute('frontend.account.address.page');
     }
 
-    private function updateBillingAddressToCidaas($address, string $sub, string $activeBillingAddressId, SalesChannelContext $context){
-
-        $res = $this->loginService->updateBillingAddress($address, $sub, $activeBillingAddressId, $context);
-
+    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context){
+        $res = $this->loginService->updateBillingAddress($address, $sub, $context);
         if($res) {
             // Assuming $object is your stdClass object
               $responseData = json_decode(json_encode($res), true);
@@ -507,42 +486,63 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                           // Handle error data
                           // Extract error details
                           $error = $responseData['error']['error'];
-                          $this->addFlash('danger', 'Failed to Billing address: '.$error);
+                          $this->addFlash('danger', 'Failed to update billing address: '.$error);
                       } else {
                           // No error information available
                           error_log(json_encode($responseData));
-                          $this->addFlash('danger', 'Failed toBilling address for unknown reason. Please check error log for more details.');
+                          $this->addFlash('danger', 'Failed to update billing address for unknown reason. Please check error log for more details.');
                       }
                 } else {
-                    $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+                    $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
                 }
               } else {
                   // Key does not exist in the array
-                  $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+                  $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
               }
       } else {
-          $this->addFlash('danger', 'Failed to Billing address for unknown reason.');
+          $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
       }
     }
 
 
 
-    private function getById(string $addressId, SalesChannelContext $context, CustomerEntity $customer): CustomerAddressEntity
-    {
+    private function getById(string $addressId, SalesChannelContext $context, CustomerEntity $customer): CustomerAddressEntity {
         if (!Uuid::isValid($addressId)) {
             throw new InvalidUuidException($addressId);
         }
-
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('id', $addressId));
         $criteria->addFilter(new EqualsFilter('customerId', $customer->getId()));
-
         $address = $this->listAddressRoute->load($criteria, $context, $customer)->getAddressCollection()->get($addressId);
-
         if (!$address) {
             throw CustomerException::addressNotFound($addressId);
         }
-
         return $address;
     }
+
+    public function convertToCustomerAddressEntity(RequestDataBag $data): CustomerAddressEntity {
+         /** @var RequestDataBag $address */
+
+        $address = $data->get('address');
+        $addressArray = [
+            'id' => $address->get('id'),
+            'salutationId' => $address->get('salutationId'),
+            'firstName' => $address->get('firstName'),
+            'lastName' => $address->get('lastName'),
+            'street' => $address->get('street'),
+            'city' => $address->get('city'),
+            'zipcode' => $address->get('zipcode'),
+            'countryId' => $address->get('countryId'),
+            'countryStateId' => $address->get('countryStateId'),
+            'company' => $address->get('company'),
+            'department' => $address->get('department')
+        ];
+
+        // Create a new CustomerAddressEntity instance
+        $addressEntity = new CustomerAddressEntity();
+        $addressEntity->assign($addressArray);
+
+        return $addressEntity;
+    }
+
  }

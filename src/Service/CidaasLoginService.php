@@ -730,21 +730,17 @@ class CidaasLoginService {
         return $country->name;
     }
 
-    
-
-    public function updateBillingAddress($address, $sub, $activeBillingAddressId, $context) {
+    public function updateBillingAddress($address, $sub, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         $adminToken = $this->getAdminToken();
-
         $street =  $address->get('street');
         $zipCode =  $address->get('zipcode');
         $company =  $address->get('company');
         $city =  $address->get('city');
-
         $countryId = $address->get('countryId');
         $country = $this->getCountry($countryId);
-
+        $addressId =  $address->get('id');
 
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
@@ -766,7 +762,7 @@ class CidaasLoginService {
              
                 $this->customerAddressRepo->update([
                     [
-                        'id' => $activeBillingAddressId,
+                        'id' => $addressId,
                         'salutationId' => $address->get('salutationId'),
                         'firstName' => $address->get('firstName'),
                         'lastName' => $address->get('lastName'),
@@ -785,8 +781,8 @@ class CidaasLoginService {
         }
     }
 
-    public function updateAddressToShopware($address, $addressId, $context) {
-
+    public function updateAddressToShopware($address, $context) {
+        $addressId =  $address->get('id');
         $this->customerAddressRepo->update([
             [
                 'id' => $addressId,
