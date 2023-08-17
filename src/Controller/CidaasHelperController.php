@@ -433,17 +433,17 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
      * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", options={"seo"="false"}, methods={"POST"}, defaults={"_loginRequired"=true})
      */
     public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response {
-        /** @var RequestDataBag $address */
-
-        $address = $data->get('address');
+        
+        $addressData = $this->convertToCustomerAddressEntity($data);
         $sub = $request->getSession()->get('sub');
         $activeBillingAddress = $customer->getActiveBillingAddress();
         $activeBillingAddressId = $activeBillingAddress->get('id');
-        $addressId =  $address->get('id');
+        $addressId =  $addressData->get('id');
+
         if($addressId === $activeBillingAddressId){
-            $this->updateBillingAddressToCidaas($address, $sub, $context);
+            $this->updateBillingAddressToCidaas($addressData, $sub, $context);
         } else {
-            $this->loginService->updateAddressToShopware($address, $context);
+            $this->loginService->updateAddressToShopware($addressData, $context);
         }
         return $this->redirectToRoute('frontend.account.address.page');
     }
@@ -472,7 +472,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         return $this->redirectToRoute('frontend.account.address.page');
     }
 
-    private function updateBillingAddressToCidaas($address, string $sub, SalesChannelContext $context){
+    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context){
         $res = $this->loginService->updateBillingAddress($address, $sub, $context);
         if($res) {
             // Assuming $object is your stdClass object
@@ -519,4 +519,30 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         }
         return $address;
     }
+
+    public function convertToCustomerAddressEntity(RequestDataBag $data): CustomerAddressEntity {
+         /** @var RequestDataBag $address */
+
+        $address = $data->get('address');
+        $addressArray = [
+            'id' => $address->get('id'),
+            'salutationId' => $address->get('salutationId'),
+            'firstName' => $address->get('firstName'),
+            'lastName' => $address->get('lastName'),
+            'street' => $address->get('street'),
+            'city' => $address->get('city'),
+            'zipcode' => $address->get('zipcode'),
+            'countryId' => $address->get('countryId'),
+            'countryStateId' => $address->get('countryStateId'),
+            'company' => $address->get('company'),
+            'department' => $address->get('department')
+        ];
+
+        // Create a new CustomerAddressEntity instance
+        $addressEntity = new CustomerAddressEntity();
+        $addressEntity->assign($addressArray);
+
+        return $addressEntity;
+    }
+
  }
