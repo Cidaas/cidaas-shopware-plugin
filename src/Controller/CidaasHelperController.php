@@ -342,7 +342,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
         $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
-        $this->addFlash('success', 'Passwort erfolgreich geändert');
+        $this->addFlash('success', 'Password has been changed.');
         return $this->json($res);
     }
 
