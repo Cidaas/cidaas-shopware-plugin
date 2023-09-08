@@ -342,7 +342,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
         $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
-        $this->addFlash('success', 'Passwort erfolgreich geändert');
+        $this->addFlash('success', 'Password has been changed.');
         return $this->json($res);
     }
 
@@ -543,6 +543,28 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         $addressEntity->assign($addressArray);
 
         return $addressEntity;
+    }
+
+
+    #[Route(path: '/checkout/register', name: 'frontend.checkout.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    public function checkoutRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+        /** @var string $redirect */
+        $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
+        $errorRoute = $request->attributes->get('_route');
+
+        if ($context->getCustomer() === null) {
+            return $this->redirectToRoute('cidaas.login');
+        } else {
+            return $this->redirectToRoute($redirect);
+        }
+
+        if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
+            return $this->redirectToRoute('frontend.checkout.cart.page');
+        }
+
+        return $this->renderStorefront(
+            '@Storefront/storefront/page/checkout/address/index.html.twig');
     }
 
  }
