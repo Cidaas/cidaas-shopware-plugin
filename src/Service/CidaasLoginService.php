@@ -300,44 +300,17 @@ class CidaasLoginService {
         $mitglied = false;
         $mitarbeiter = false;
         $mitarbeiterPromo = false;
-        // foreach($user['groups'] as $group) {
-        //     if ($group['groupId'] === 'mitglied')
-        //         $mitglied = true;
-        //     if ($group['groupId'] === 'mitarbeiter')
-        //         $mitarbeiter = true;
-        //     if ($group['groupId'] === 'mitarbeiter_promo')
-        //         $mitarbeiterPromo = true;
-        // }
-        // $mitgliederGroup = $this->getMitgliederGroup($context);
-        // $mitarbeiterGroup = $this->getMitarbeiterGroup($context);
-        // $mitarbeiterPromoGroup = $this->getMitarbeiterPromoGroup($context);
         $updateData = [
             'id' => $customer->getId(),
                 'lastLogin' => new \DateTimeImmutable(),
                 'customFields' => [
                     'sub' => $user['sub']]
         ];
-        // if ($mitglied || $mitarbeiter || $mitarbeiterPromo) {
-        //     if ($mitglied)
-        //         $updateData['groupId'] = $mitgliederGroup->getId();
-        //     if ($mitarbeiter)
-        //         $updateData['groupId'] = $mitarbeiterGroup->getId();
-        //     if ($mitarbeiterPromo)
-        //         $updateData['groupId'] = $mitarbeiterPromoGroup->getId();
-        //     // $updateData['groupId'] = $mitarbeiter ? $mitarbeiterGroup->getId() : ;
-        // } 
         if ($this->cfCustomerNumber) {
             if ($this->cfCustomerNumber !== '') {
                 $updateData['customerNumber'] = $user['customFields'][$this->cfCustomerNumber];    
             }
         }
-        // if (isset($user['customFields']['adressnummer'])) {
-        //     $updateData['customerNumber'] = $user['customFields']['adressnummer'];
-        // }
-        // if (!isset($user['customFields']['webshop_id'])) {
-        //     //TODO: set webshop_id
-        //     $this->setWebShopId($customer->getId(), $user['sub']);
-        // }
         $this->customerRepo->upsert([
             $updateData
         ], $context->getContext());
@@ -351,7 +324,7 @@ class CidaasLoginService {
         $response = $client->get($this->oAuthEndpoints->userinfo_endpoint, [
             'headers' => [
                 'content_type' => 'application/json',
-                'access_token' => $token
+                'Authorization' => 'Bearer '.$token
             ]
         ]);
 
@@ -497,43 +470,6 @@ class CidaasLoginService {
                     $groups[] = $g['groupId'];
             }
         }
-
-        // foreach ($groups as $group) {
-            // if ($group === 'mitglied') {
-            //     $mg = $this->getMitgliederGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId'=>$mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //         return "mitglied";
-            //     }
-            // }
-            // if ($group === 'mitarbeiter') {
-            //     $mg = $this->getMitarbeiterGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId' => $mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //     }
-            // }
-            // if ($group === 'mitarbeiter_promo') {
-            //     $mg = $this->getMitarbeiterPromoGroup($context);
-            //     if ($customer->getGroupId() !== $mg->getId()) {
-            //         $this->customerRepo->update([
-            //             [
-            //                 'id' => $customer->getId(),
-            //                 'groupId' => $mg->getId()
-            //             ]
-            //         ], $context->getContext());
-            //     }
-            // }
-        // }
         return;
     }
 
@@ -562,7 +498,7 @@ class CidaasLoginService {
 
     /**
      * The original code received throws error as wrong table being used to fetch the customerGroupId, name is not a part of the table customer_group.
-     * The name column is a part of the table customer_group_tranlsation where customer_group_id is a foreign key that is the pirmary key of the table customer_group.
+     * The name column is a part of the table customer_group_translation where customer_group_id is a foreign key that is the primary key of the table customer_group.
      * Due to the above reason previous return statement is commented
      */
     public function getGroupByName($name, SalesChannelContext $context) {
@@ -586,9 +522,6 @@ class CidaasLoginService {
             return $false;
         }
     }
-
-    // 'scopes' => "openid email profile"
-    // private
 
     private function generateRandomString($length = 10) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
