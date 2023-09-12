@@ -11,7 +11,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+use Shopware\Core\Checkout\Customer\SalesChannel\AccountService;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractLogoutRoute;
+use Shopware\Core\Checkout\Customer\SalesChannel\AbstractListAddressRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use GuzzleHttp\Client;
@@ -31,17 +33,24 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     private $loginService;
     private $cartService;
     private $logoutRoute;
+    private $listAddressRoute;
+    private const ADDRESS_TYPE_BILLING = 'billing';
+    private const ADDRESS_TYPE_SHIPPING = 'shipping';
 
     private $state;
 
     public function __construct(
         CidaasLoginService $loginService, 
         CartService $cartService,
-        AbstractLogoutRoute $logoutRoute
+        AbstractLogoutRoute $logoutRoute,
+        AbstractListAddressRoute $listAddressRoute,
+        AccountService $accountService
         ) {
         $this->loginService = $loginService;
         $this->cartService = $cartService;
         $this->logoutRoute = $logoutRoute;
+        $this->listAddressRoute = $listAddressRoute;
+        $this->accountService = $accountService;
     }
 
     /**
@@ -74,19 +83,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
      */
     public function form(Request $request, SalesChannelContext $context): Response
     {
-        // $email = $request->get('email');
-        // $response = $this->loginService->login($email, $context);
-        // $token = $response->getToken();
-        // $this->addCartErrors($this->cartService->getCart($token, $context));
-        // return $this->createActionResponse($request);
         return $this->json(array());
-
-        // return $this->json(array(
-        //     "dings" => "bums",
-        //     "email" => $email,
-        //     "text" => $text,
-        //     "response" => $response
-        // ));
     }
 
     /**
@@ -107,7 +104,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        // $data = $this->loginService->registerExistingUser($user, $context);
+        
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
                             if ($request->getSession()->get('redirect_to')) {
@@ -331,15 +328,14 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
     /**
      * @Route("/cidaas/changepassword", name="cidaas.changepassword", methods={"GET", "POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
      */
-    public function changepassword(Request $request, SalesChannelContext $context): Response
+    public function changePassword(Request $request, SalesChannelContext $context): Response
     {
-        //authz-srv/authz/?response_type=token&client_id=96d26174-49bb-4278-84db-e109c55144e4&viewtype=login&redirect_uri=https://my-test.mainz05.de/user-profile/changepassword
         $sub = $request->getSession()->get('sub');
         $token = $request->getSession()->get('_cidaas_token');
         $newPassword = $request->get('newPassword');
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
-        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
+        $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
         $this->addFlash('success', 'Passwort erfolgreich geändert');
         return $this->json($res);
     }
@@ -425,5 +421,28 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                 "state" => $state
             )
         );
+    }
+
+     /**
+     * @Route("/checkout/register", name="frontend.checkout.register.page", options={"seo"="false"}, methods={"GET"})
+     */
+    public function checkoutRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+        /** @var string $redirect */
+        $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
+        $errorRoute = $request->attributes->get('_route');
+
+        if ($context->getCustomer() === null) {
+            return $this->redirectToRoute('cidaas.login');
+        } else {
+            return $this->redirectToRoute($redirect);
+        }
+
+        if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
+            return $this->redirectToRoute('frontend.checkout.cart.page');
+        }
+
+        return $this->renderStorefront(
+            '@Storefront/storefront/page/checkout/address/index.html.twig');
     }
  }
