@@ -21,8 +21,16 @@ use GuzzleHttp\Client;
 use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
 
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Checkout\Customer\Exception\AddressNotFoundException;
 
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
+
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Cidaas\OauthConnect\Util\CidaasStruct;
+use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
 
 /**
  * @RouteScope(scopes={"storefront"})
@@ -129,6 +137,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
                     $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token['sub'], $context);
                     $request->getSession()->set('sub', $token['sub']);
                     $token2 = $response->getToken();
@@ -177,6 +186,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
                     $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token->sub, $context);
                     $request->getSession()->set('sub', $token->sub);
                     $token2 = $response->getToken();
@@ -444,5 +454,119 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
 
         return $this->renderStorefront(
             '@Storefront/storefront/page/checkout/address/index.html.twig');
+    }
+
+    /**
+     * @Route("/cidaas/update-address", name="frontend.account.address.edit.save", options={"seo"="false"}, methods={"POST"}, defaults={"_loginRequired"=true})
+     */
+    public function billingAddressUpdate(Request $request,RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer): Response {
+        
+        $addressData = $this->convertToCustomerAddressEntity($data);
+        $sub = $request->getSession()->get('sub');
+        $activeBillingAddress = $customer->getActiveBillingAddress();
+        $activeBillingAddressId = $activeBillingAddress->get('id');
+        $addressId =  $addressData->get('id');
+
+        if($addressId === $activeBillingAddressId){
+            $this->updateBillingAddressToCidaas($addressData, $sub, $context);
+        } else {
+            $this->loginService->updateAddressToShopware($addressData, $context);
+        }
+        return $this->redirectToRoute('frontend.account.address.page');
+    }
+
+     /**
+     * @Route("/cidaas/address/default-{type}/{addressId}", name="frontend.account.address.set-default-address", methods={"POST"}, defaults={"_loginRequired"=true})
+     */
+    public function switchDefaultAddresses(Request $request, string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer): RedirectResponse {
+        if (!Uuid::isValid($addressId)) {
+            throw new InvalidUuidException($addressId);
+        }
+        try {
+            if ($type === self::ADDRESS_TYPE_SHIPPING) {
+                $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
+            } elseif ($type === self::ADDRESS_TYPE_BILLING) {
+                $sub = $request->getSession()->get('sub');
+                $address = $this->getById($addressId, $context, $customer);
+                $this->updateBillingAddressToCidaas($address, $sub, $context);
+                $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
+            } else {
+                $this->addFlash('danger', 'Address not found');
+            }
+        } catch (AddressNotFoundException $exception) {
+            $this->addFlash('danger', 'Address not found');
+        }
+        return $this->redirectToRoute('frontend.account.address.page');
+    }
+
+    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context){
+        $res = $this->loginService->updateBillingAddress($address, $sub, $context);
+        if($res) {
+            // Assuming $object is your stdClass object
+              $responseData = json_decode(json_encode($res), true);
+               // Key exists in the array
+              if(array_key_exists('success', $responseData)){
+                if($responseData['success'] === true){
+                   $this->addFlash('success', 'Successfully updated Billing address');
+                } elseif ($responseData['success'] === false){
+                  if (array_key_exists('error', $responseData)) {
+                          $error = $responseData['error']['error'];
+                          $this->addFlash('danger', 'Failed to update billing address: '.$error);
+                      } else {
+                          // No error information available
+                          error_log(json_encode($responseData));
+                          $this->addFlash('danger', 'Failed to update billing address for unknown reason. Please check error log for more details.');
+                      }
+                } else {
+                    $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
+                }
+              } else {
+                  // Key does not exist in the array
+                  $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
+              }
+      } else {
+          $this->addFlash('danger', 'Failed to update billing address for unknown reason.');
+      }
+    }
+
+
+
+    private function getById(string $addressId, SalesChannelContext $context, CustomerEntity $customer): CustomerAddressEntity {
+        if (!Uuid::isValid($addressId)) {
+            throw new InvalidUuidException($addressId);
+        }
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('id', $addressId));
+        $criteria->addFilter(new EqualsFilter('customerId', $customer->getId()));
+        $address = $this->listAddressRoute->load($criteria, $context, $customer)->getAddressCollection()->get($addressId);
+        if (!$address) {
+            throw CustomerException::addressNotFound($addressId);
+        }
+        return $address;
+    }
+
+    public function convertToCustomerAddressEntity(RequestDataBag $data): CustomerAddressEntity {
+         /** @var RequestDataBag $address */
+
+        $address = $data->get('address');
+        $addressArray = [
+            'id' => $address->get('id'),
+            'salutationId' => $address->get('salutationId'),
+            'firstName' => $address->get('firstName'),
+            'lastName' => $address->get('lastName'),
+            'street' => $address->get('street'),
+            'city' => $address->get('city'),
+            'zipcode' => $address->get('zipcode'),
+            'countryId' => $address->get('countryId'),
+            'countryStateId' => $address->get('countryStateId'),
+            'company' => $address->get('company'),
+            'department' => $address->get('department')
+        ];
+
+        // Create a new CustomerAddressEntity instance
+        $addressEntity = new CustomerAddressEntity();
+        $addressEntity->assign($addressArray);
+
+        return $addressEntity;
     }
  }
