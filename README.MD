@@ -2,7 +2,7 @@
 
 ## About cidaas:
 [cidaas](https://www.cidaas.com)
- is a fast and secure Cloud Identity & Access Management solution that standardises what’s important and simplifies what’s complex.
+ is a fast and secure Cloud Identity & Access Management solution that standardizes what’s important and simplifies what’s complex.
 
 ## Feature set includes:
 * Single Sign On (SSO) based on OAuth 2.0, OpenID Connect, SAML 2.0 
