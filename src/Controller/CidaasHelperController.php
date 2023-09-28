@@ -572,10 +572,30 @@ use Shopware\Core\Framework\Routing\RoutingException;
  
          $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
  
-        //  return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
-        //     ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+         return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
+            ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+        );
+    }
 
-
+    #[Route(path: '/guest/register', name: 'cidaas.guest.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    public function guestRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+         /** @var string $redirect */
+         $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
+         $errorRoute = $request->attributes->get('_route');
+ 
+         if ($context->getCustomer()) {
+             return $this->redirectToRoute($redirect);
+         }
+ 
+         if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
+             return $this->redirectToRoute('frontend.checkout.cart.page');
+         }
+ 
+         $page = $this->registerPageLoader->load($request, $context);
+ 
+         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
+ 
          return $this->renderStorefront(
             '@Storefront/storefront/page/checkout/address/index.html.twig',
             ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
@@ -650,19 +670,5 @@ use Shopware\Core\Framework\Routing\RoutingException;
 
         return new Response();
     }
-
-   
-
-    // #[Route(defaults: ['_routeScope' => ['storefront']])]
-    // /**
-    //  * @Route ("/guest/checkout", name="frontend.cidaas.guest", methods={"GET"})
-    //  */
-    // public function guestPage(Request $request, SalesChannelContext $salesChannelContext): Response
-    // {
-
-    //     return $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig", []);
-    // }
-
-    
 
  }
