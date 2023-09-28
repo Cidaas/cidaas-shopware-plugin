@@ -572,6 +572,10 @@ use Shopware\Core\Framework\Routing\RoutingException;
  
          $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
  
+        //  return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
+        //     ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+
+
          return $this->renderStorefront(
             '@Storefront/storefront/page/checkout/address/index.html.twig',
             ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
@@ -655,11 +659,8 @@ use Shopware\Core\Framework\Routing\RoutingException;
     //  */
     // public function guestPage(Request $request, SalesChannelContext $salesChannelContext): Response
     // {
-    //     $name = "MageSpark HelloWorld Plugin";
 
-    //     return $this->renderStorefront("@CidaasOauthConnect/storefront/page/hello-world.html.twig", [
-    //         "name" => $name
-    //     ]);
+    //     return $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig", []);
     // }
 
     

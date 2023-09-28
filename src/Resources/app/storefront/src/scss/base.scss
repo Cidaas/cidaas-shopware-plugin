@@ -1,0 +1,66 @@
+.guest-img {
+    width: 40%;
+    mix-blend-mode: multiply;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+
+}
+
+.text-center{
+    margin-top: 30%;
+}
+
+.button-cidaas{
+    background-color: #FDE43C;
+    border: none;
+    font-weight: 600;
+    font-size: 18px;
+    color: #000000;
+}
+
+.button-guest {
+    background-color: #000000;
+    color: #FDE43C;
+    font-weight: 600;
+    font-size: 18px;
+}
+.button-cidaas:hover {
+    background-color: #FDE43C;
+    color: #000000;
+  }
+.button-guest:hover {
+    background-color: #000000;
+    color: #FDE43C;
+  }
+
+.guest-p1 {
+    padding: 10px 110px;
+}
+@media screen and (max-width: 768px) {
+    .guest-img {
+        display: none;
+    }
+    .text-center{
+        margin-top: 0%;
+    }
+
+    .guest-p1 {
+        padding: 10px 70px;
+    }
+}
+
+
+
+@media (max-width: 320px) {
+    .guest-btn {
+        text-align: center;
+        position: relative;
+        margin-top: 20px;
+
+    }
+    .guest-p1 {
+        padding: 10px 70px;
+    }
+
+}
