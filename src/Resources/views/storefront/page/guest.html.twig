@@ -4,25 +4,14 @@
    {% block guest_section %}
       
     <div class="container">
-        <div class="row mt-5">
-            <div class="col-lg-6">
-                <div class="guest-main">
-                    <img class="guest-img" src="{{ asset('bundles/cidaasoauthconnect/assets/images/guest.png') }}">
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="guest-btn">
-                    <div class="text-center">
-                            <h3 class="font-weight-bold">EINLOGGEN / BVB-ACCOUNT <br />ERSTELLEN</h3>
-                            <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="/cidaas/login?redirect_to=frontend.checkout.confirm.page">Als Fan
-                            fortfahren</a>
+        <div class="row mt-2">
+                <div class="guest-btn guest-block">
+                            <h3 class="font-weight-bold">Login/Register an account</h3>
+                            <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="/cidaas/login?redirect_to=frontend.checkout.confirm.page">Continue with account</a>
 
-                            <h3 class="font-weight-bold mt-5">OHNE BVB-ACCOUNT</h3>
-                            <a class="btn btn-primary mt-2 guest-p1 button-guest" href="{{ path('cidaas.guest.register.page') }}">Als
-                            Gast fortfahren</a>
+                            <h3 class="font-weight-bold mt-5">Without account </h3>
+                            <a class="btn btn-primary mt-2 guest-p1 button-guest" href="{{ path('cidaas.guest.register.page') }}">Continue as guest</a>
 
-                    </div>
-                </div>
             </div>
         </div>
     </div>

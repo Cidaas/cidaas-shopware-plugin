@@ -16,33 +16,40 @@
 
 }
 
+.guest-block{
+    margin: 0 auto;
+    width: 100%;
+    text-align: center;
+    margin-top: 5%;
+}
+
 .text-center {
     margin-top: 30%;
 }
 
 .button-cidaas {
-    background-color: #FDE43C;
+    background-color: #0b539b;
     border: none;
     font-weight: 600;
     font-size: 18px;
-    color: #000000;
+    color: #ffffff;
 }
 
 .button-guest {
-    background-color: #000000;
-    color: #FDE43C;
+    background: white;
+    color: #0b539b;
     font-weight: 600;
     font-size: 18px;
 }
 
 .button-cidaas:hover {
-    background-color: #FDE43C;
-    color: #000000;
+    background-color: #0b539b;
+    color: #ffffff;
 }
 
 .button-guest:hover {
-    background-color: #000000;
-    color: #FDE43C;
+    background: white;
+    color: #0b539b;
 }
 
 .guest-p1 {
@@ -63,7 +70,7 @@
     }
 
     .guest-p1 {
-        padding: 10px 70px;
+        padding: 10px 50px;
     }
 }
 
@@ -78,7 +85,7 @@
     }
 
     .guest-p1 {
-        padding: 10px 70px;
+        padding: 10px 40px;
     }
 
 }
