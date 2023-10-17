@@ -14,6 +14,7 @@ use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 
 use Shopware\Core\Checkout\Customer\SalesChannel\AccountService;
 
+use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractLogoutRoute;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractListAddressRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
@@ -31,6 +32,10 @@ use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
 use Cidaas\OauthConnect\Util\CidaasStruct;
+
+use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedHook;
+use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoader;
+use Shopware\Core\Framework\Routing\RoutingException;
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 
@@ -50,7 +55,9 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         CartService $cartService,
         AbstractLogoutRoute $logoutRoute,
         AbstractListAddressRoute $listAddressRoute,
-        AccountService $accountService
+        AccountService $accountService,
+        private readonly CheckoutRegisterPageLoader $registerPageLoader,
+        private readonly AbstractRegisterRoute $registerRoute
         ) {
         $this->loginService = $loginService;
         $this->cartService = $cartService;
@@ -82,6 +89,7 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
             }
             return $this->redirectTo('cidaas.login');
         }
+        return $this->forwardToRoute('frontend.home.page');
     }
 
     /**
@@ -545,26 +553,122 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
         return $addressEntity;
     }
 
-
     #[Route(path: '/checkout/register', name: 'frontend.checkout.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
     public function checkoutRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
     {
-        /** @var string $redirect */
-        $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
-        $errorRoute = $request->attributes->get('_route');
+         /** @var string $redirect */
+         $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
+         $errorRoute = $request->attributes->get('_route');
+ 
+         if ($context->getCustomer()) {
+             return $this->redirectToRoute($redirect);
+         }
+ 
+         if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
+             return $this->redirectToRoute('frontend.checkout.cart.page');
+         }
+ 
+         $page = $this->registerPageLoader->load($request, $context);
+ 
+         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
+ 
+         return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
+            ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+        );
+    }
 
-        if ($context->getCustomer() === null) {
-            return $this->redirectToRoute('cidaas.login');
-        } else {
-            return $this->redirectToRoute($redirect);
+    #[Route(path: '/guest/register', name: 'cidaas.guest.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    public function guestRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+         /** @var string $redirect */
+         $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
+         $errorRoute = $request->attributes->get('_route');
+ 
+         if ($context->getCustomer()) {
+             return $this->redirectToRoute($redirect);
+         }
+ 
+         if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
+             return $this->redirectToRoute('frontend.checkout.cart.page');
+         }
+ 
+         $page = $this->registerPageLoader->load($request, $context);
+ 
+         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
+ 
+         return $this->renderStorefront(
+            '@Storefront/storefront/page/checkout/address/index.html.twig',
+            ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+        );
+    }
+    
+    #[Route(path: '/account/register', name: 'frontend.account.register.save', defaults: ['_captcha' => true], methods: ['POST'])]
+    public function register(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+        if ($context->getCustomer()) {
+            return $this->redirectToRoute('frontend.account.home.page');
         }
 
-        if ($this->cartService->getCart($context->getToken(), $context)->getLineItems()->count() === 0) {
-            return $this->redirectToRoute('frontend.checkout.cart.page');
+        try {
+            if (!$data->has('differentShippingAddress')) {
+                $data->remove('shippingAddress');
+            }
+
+            $data->set('storefrontUrl', $this->loginService->getConfirmUrl($context, $request));
+
+            $data = $this->loginService->prepareAffiliateTracking($data, $request->getSession());
+
+            $data->set('guest', true);
+
+            $this->registerRoute->register(
+                $data->toRequestDataBag(),
+                $context,
+                false,
+                $this->loginService->getAdditionalRegisterValidationDefinitions($data, $context)
+            );
+        } catch (ConstraintViolationException $formViolations) {
+            if (!$request->request->has('errorRoute')) {
+                throw RoutingException::missingRequestParameter('errorRoute');
+            }
+
+            if (empty($request->request->get('errorRoute'))) {
+                $request->request->set('errorRoute', 'frontend.account.register.page');
+            }
+
+            $params = $this->loginService->decodeParam($request, 'errorParameters');
+
+            // this is to show the correct form because we have different usecases (account/register||checkout/register)
+            return $this->forwardToRoute($request->get('errorRoute'), ['formViolations' => $formViolations], $params);
         }
 
-        return $this->renderStorefront(
-            '@Storefront/storefront/page/checkout/address/index.html.twig');
+        if ($this->loginService->isDoubleOptIn($data, $context)) {
+            return $this->redirectToRoute('frontend.account.register.page');
+        }
+
+        return $this->createActionResponse($request);
+    }
+
+    public  function createActionResponse(Request $request): Response
+    {
+        if ($request->get('redirectTo') || $request->get('redirectTo') === '') {
+            $params = $this->decodeParam($request, 'redirectParameters');
+
+            $redirectTo = $request->get('redirectTo');
+
+            if ($redirectTo) {
+                return $this->redirectToRoute($redirectTo, $params);
+            }
+
+            return $this->redirectToRoute('frontend.home.page', $params);
+        }
+
+        if ($request->get('forwardTo')) {
+            $params = $this->decodeParam($request, 'forwardParameters');
+
+            return $this->forwardToRoute($request->get('forwardTo'), [], $params);
+        }
+
+        return new Response();
     }
 
  }
