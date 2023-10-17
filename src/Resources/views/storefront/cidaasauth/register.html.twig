@@ -13,12 +13,8 @@
                 <form action="{{ path('frontend.account.register.save') }}"
                       class="register-form"
                       method="post"
-                      data-form-csrf-handler="true"
+                      data-form-submit-loader="true"
                       data-form-validation="true">
-
-                    {% block component_account_register_form_csrf %}
-                        {{ sw_csrf('frontend.account.register.save') }}
-                    {% endblock %}
 
                     {% block component_account_register_redirect %}
                         <input type="hidden"
@@ -31,13 +27,15 @@
                     {% endblock %}
 
                     {% block component_account_register_create_account %}
-                    
+                        <input type="hidden"
+                           name="createCustomerAccount"
+                           value="1">
                     {% endblock %}
 
                     {% block component_account_register_form_action %}
                         <input type="hidden"
                                name="errorRoute"
-                               value="frontend.account.register.page"/>
+                               value="{{ errorRoute ?: 'frontend.account.register.page' }}">
 
                         <input type="hidden"
                                name="errorParameters"
@@ -133,99 +131,15 @@
                                 {% endset %}
 
                                 {% set formGroupPassword %}
-                                    {% block component_account_register_personal_password %}
-                                        <span class="js-form-field-toggle-guest-mode">
-                                            {% block component_account_register_personal_password_label %}
-                                                <label class="form-label"
-                                                       for="personalPassword">
-                                                    {{ "account.personalPasswordLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
-                                                </label>
-                                            {% endblock %}
-
-                                            {% block component_account_register_personal_password_input %}
-                                                <input type="password"
-                                                       class="form-control{% if formViolations.getViolations('/password') is not empty %} is-invalid{% endif %}"
-                                                       autocomplete="new-password"
-                                                       id="personalPassword"
-                                                       placeholder="{{ "account.personalPasswordPlaceholder"|trans|striptags }}"
-                                                       name="password"
-                                                       minlength="{{ config('core.loginRegistration.passwordMinLength') }}"
-                                                       {% if config('core.loginRegistration.requirePasswordConfirmation') %}
-                                                       data-form-validation-equal="newPassword"
-                                                       {% endif %}
-                                                       {% if config('core.loginRegistration.passwordMinLength') != 0 %}
-                                                       data-form-validation-length="{{ config('core.loginRegistration.passwordMinLength') }}"
-                                                       data-form-validation-length-message=" {{ "account.personalPasswordDescription"|trans({
-                                                           '%minLength%': config('core.loginRegistration.passwordMinLength')
-                                                       })|sw_sanitize }}"
-                                                       {% endif %}
-                                                       required="required">
-                                            {% endblock %}
-
-                                            {% block component_account_register_personal_password_description %}
-                                                {% if config('core.loginRegistration.passwordMinLength') != 0 %}
-                                                    <small class="form-text js-validation-message"
-                                                           data-form-validation-length-text="true">
-                                                        {{ "account.personalPasswordDescription"|trans({
-                                                            '%minLength%': config('core.loginRegistration.passwordMinLength')
-                                                        })|sw_sanitize }}
-                                                    </small>
-                                                {% endif %}
-                                            {% endblock %}
-
-                                            {% block component_account_register_personal_password_input_error %}
-                                                {% if formViolations.getViolations('/password') is not empty %}
-                                                    {% sw_include '@Storefront/storefront/utilities/form-violation.html.twig' with {
-                                                        violationPath: '/password'
-                                                    } %}
-                                                {% endif %}
-                                            {% endblock %}
-                                        </span>
-                                    {% endblock %}
+                                  
                                 {% endset %}
 
                                 {% set formGroupPasswordConfirmation %}
-                                    {% block component_account_register_personal_password_confirmation %}
-                                        <span class="js-form-field-toggle-guest-mode">
-                                            {% block component_account_register_personal_password_confirmation_label %}
-                                                <label class="form-label"
-                                                       for="personalPasswordConfirmation">
-                                                    {{ "account.personalPasswordConfirmationLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
-                                                </label>
-                                            {% endblock %}
-
-                                            {% block component_account_register_personal_password_confirmation_input %}
-                                                <input type="password"
-                                                       class="form-control{% if formViolations.getViolations('/password') is not empty or formViolations.getViolations('/passwordConfirmation') is not empty %} is-invalid{% endif %}"
-                                                       autocomplete="new-password"
-                                                       id="personalPasswordConfirmation"
-                                                       placeholder="{{ "account.personalPasswordConfirmationPlaceholder"|trans|striptags }}"
-                                                       name="passwordConfirmation"
-                                                       minlength="{{ config('core.loginRegistration.passwordMinLength') }}"
-                                                       data-form-validation-equal="newPassword"
-                                                       data-form-validation-equal-message="{{ "account.personalPasswordConfirmationInvalidMessage"|trans|striptags }}"
-                                                       required="required">
-                                            {% endblock %}
-
-                                            {% block component_account_register_personal_password_confirmation_input_error %}
-                                                {% if formViolations.getViolations('/password') is not empty %}
-                                                    {% sw_include '@Storefront/storefront/utilities/form-violation.html.twig' with {
-                                                        violationPath: '/password'
-                                                    } %}
-                                                {% endif %}
-
-                                                {% if formViolations.getViolations('/passwordConfirmation') is not empty %}
-                                                    {% sw_include '@Storefront/storefront/utilities/form-violation.html.twig' with {
-                                                        violationPath: '/passwordConfirmation'
-                                                    } %}
-                                                {% endif %}
-                                            {% endblock %}
-                                        </span>
-                                    {% endblock %}
+                                   
                                 {% endset %}
 
                                 {% block component_account_register_personal_account_fields %}
-                                    <div class="{{ formRowClass }}">
+                                    <div class="row g-2">
                                         <div class="form-group col-sm-6">
                                             {{ formGroupMail }}
                                         </div>
@@ -276,10 +190,10 @@
                                 {% block component_account_register_address_different_shipping %}
                                     <div>
                                         {% block component_account_register_address_different_shipping_control %}
-                                            <div class="{{ formCheckboxWrapperClass }} register-different-shipping">
+                                            <div class="form-check register-different-shipping">
                                                 {% block component_account_register_address_different_shipping_input %}
                                                     <input type="checkbox"
-                                                           class="{{ formCheckInputClass }} js-different-shipping-checkbox"
+                                                           class="form-check-input js-different-shipping-checkbox"
                                                            name="differentShippingAddress"
                                                            value="1"
                                                            id="differentShippingAddress"
@@ -358,7 +272,7 @@
                     {% endblock %}
 
                     {% block component_account_register_submit %}
-                        <div class="register-submit">
+                        <div class="register-submit d-grid col-md-6 offset-md-6">
                             <button type="submit"
                                     class="btn btn-primary btn-lg">
                                 {{ "account.registerSubmit"|trans|sw_sanitize }}
