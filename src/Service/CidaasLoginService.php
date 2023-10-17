@@ -188,6 +188,7 @@ class CidaasLoginService {
     public function getCustomerBySub($sub, $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.customFields.sub', $sub));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customers = $this->customerRepo->search($criteria, $context->getContext());
         if ($customers->count() !== 1) {
             throw new BadCredentialsException();
@@ -198,6 +199,8 @@ class CidaasLoginService {
     public function getCustomerByEmail($email, $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.email', $email));
+        $criteria->addFilter(new EqualsFilter('customer.active', 1));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customer = $this->customerRepo->search($criteria, $context->getContext())->first();
         return $customer;
     }
@@ -217,6 +220,8 @@ class CidaasLoginService {
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.email', $email));
+        $criteria->addFilter(new EqualsFilter('customer.active', 1));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customers = $this->customerRepo->search($criteria, $context->getContext());
         if ($customers->count() < 1) {
             return array(

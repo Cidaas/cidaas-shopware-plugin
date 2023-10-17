@@ -6,6 +6,12 @@
 .checkout-main {
     margin-right: 1%;
 }
+.register-guest-control{
+    display: none;
+    input {
+        display: none;
+    }
+}
 
 .guest-img {
     width: 40%;

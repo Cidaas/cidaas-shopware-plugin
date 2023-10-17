@@ -1,4 +1,4 @@
-{% sw_extends '@CidaasOauthConnect/storefront/page/checkout/address/index.html.twig' %}
+{% sw_extends '@Storefront/storefront/page/checkout/_page.html.twig' %}
 
 {% block base_header %}
     {% sw_include '@Storefront/storefront/layout/header/header-minimal.html.twig' %}
@@ -17,7 +17,7 @@
         {% block page_checkout_address_login_toggle %}
             <div class="register-login-collapse-toogle">
                 {% sw_icon 'avatar' %}
-                <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page"">
+             <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page"">
                     <strong>{{ "checkout.addressLoginToggle"|trans|sw_sanitize }}</strong> </a>
             </div>
         {% endblock %}
@@ -29,10 +29,10 @@
                 {% endblock %}
             </div>
         {% endblock %}
-        
+
         {% block page_checkout_address_register %}
             {% block page_checkout_address_register_card %}
-                {% sw_include '@CidaasHelper/storefront/cidaasauth/register.html.twig' with {
+                {% sw_include '@CidaasHelper/storefront/page/checkout/address/register.html.twig' with {
                     'cardTitle': "checkout.addressRegisterCardTitle"|trans|sw_sanitize
                 } %}
             {% endblock %}
@@ -41,7 +41,32 @@
 {% endblock %}
 
 {% block page_checkout_aside_summary %}
-      {{ parent() }}
+    {{ parent() }}
+
+    {% block page_checkout_address_products %}
+        <div class="checkout-aside-products">
+            {% block page_checkout_address_products_header %}
+                <h2 class="checkout-aside-product-header">
+                    {{ "checkout.cartHeader"|trans|sw_sanitize }}
+                </h2>
+            {% endblock %}
+
+            {% block page_checkout_address_products_list %}
+                <div class="checkout-aside-product-list">
+                    {% block page_checkout_address_product_list_container %}
+                        {% for lineItem in page.cart.lineItems %}
+                            {% block page_checkout_address_product_summary_item %}
+                                {% sw_include '@Storefront/storefront/component/line-item/line-item.html.twig' with {
+                                    displayMode: 'offcanvas',
+                                    showQuantitySelect: false
+                                } %}
+                            {% endblock %}
+                        {% endfor %}
+                    {% endblock %}
+                </div>
+            {% endblock %}
+        </div>
+    {% endblock %}
 {% endblock %}
 
 {% block base_footer %}
