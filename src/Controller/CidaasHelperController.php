@@ -79,7 +79,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
         return $this->renderStorefront("@CidaasHelper/storefront/dev/dev.html.twig", []);
     }
 
-    // Redirect all account login stuff
+   // Redirect all account login stuff
     /**
      * @Route("/account/login", name="frontend.account.login.page")
      */
@@ -93,6 +93,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
             }
             return $this->redirectTo('cidaas.login');
         }
+        return $this->forwardToRoute('frontend.home.page');
     }
 
     /**
