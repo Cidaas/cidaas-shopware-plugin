@@ -45,7 +45,14 @@ use Cidaas\OauthConnect\Util\CidaasStruct;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\FetchMode;
 
-
+use Shopware\Storefront\Framework\AffiliateTracking\AffiliateTrackingListener;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Shopware\Storefront\Framework\Routing\RequestTransformer;
+use Shopware\Core\System\SalesChannel\Aggregate\SalesChannelDomain\SalesChannelDomainEntity;
+use Shopware\Core\Content\Newsletter\Exception\SalesChannelDomainNotFoundException;
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
+use Shopware\Core\Framework\Validation\DataValidationDefinition;
+use Symfony\Component\HttpFoundation\Request;
 class CidaasLoginService {
 
     private $eventDispatcher;
@@ -181,6 +188,7 @@ class CidaasLoginService {
     public function getCustomerBySub($sub, $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.customFields.sub', $sub));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customers = $this->customerRepo->search($criteria, $context->getContext());
         if ($customers->count() !== 1) {
             throw new BadCredentialsException();
@@ -191,6 +199,8 @@ class CidaasLoginService {
     public function getCustomerByEmail($email, $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.email', $email));
+        $criteria->addFilter(new EqualsFilter('customer.active', 1));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customer = $this->customerRepo->search($criteria, $context->getContext())->first();
         return $customer;
     }
@@ -210,6 +220,8 @@ class CidaasLoginService {
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.email', $email));
+        $criteria->addFilter(new EqualsFilter('customer.active', 1));
+        $criteria->addFilter(new EqualsFilter('customer.guest', 0));
         $customers = $this->customerRepo->search($criteria, $context->getContext());
         if ($customers->count() < 1) {
             return array(
@@ -797,6 +809,116 @@ class CidaasLoginService {
             ]
         ], $context->getContext());
 
+    }
+
+    public function prepareAffiliateTracking(RequestDataBag $data, SessionInterface $session): DataBag
+    {
+        $affiliateCode = $session->get(AffiliateTrackingListener::AFFILIATE_CODE_KEY);
+        $campaignCode = $session->get(AffiliateTrackingListener::CAMPAIGN_CODE_KEY);
+        if ($affiliateCode !== null && $campaignCode !== null) {
+            $data->add([
+                AffiliateTrackingListener::AFFILIATE_CODE_KEY => $affiliateCode,
+                AffiliateTrackingListener::CAMPAIGN_CODE_KEY => $campaignCode,
+            ]);
+        }
+
+        return $data;
+    }
+
+    public function getConfirmUrl(SalesChannelContext $context, Request $request): string
+    {
+        /** @var string $domainUrl */
+        $domainUrl = $this->sysConfig
+            ->get('core.loginRegistration.doubleOptInDomain', $context->getSalesChannel()->getId());
+
+        if ($domainUrl) {
+            return $domainUrl;
+        }
+
+        $domainUrl = $request->attributes->get(RequestTransformer::STOREFRONT_URL);
+
+        if ($domainUrl) {
+            return $domainUrl;
+        }
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('salesChannelId', $context->getSalesChannel()->getId()));
+        $criteria->setLimit(1);
+
+        /** @var SalesChannelDomainEntity|null $domain */
+        $domain = $this->domainRepository
+            ->search($criteria, $context->getContext())
+            ->first();
+
+        if (!$domain) {
+            throw new SalesChannelDomainNotFoundException($context->getSalesChannel());
+        }
+
+        return $domain->getUrl();
+    }
+
+     /**
+     * @return array<string, mixed>
+     */
+    public function decodeParam(Request $request, string $param): array {
+        $params = $request->get($param);
+
+        if (\is_string($params)) {
+            $params = json_decode($params, true);
+        }
+
+        if (empty($params)) {
+            $params = [];
+        }
+
+        return $params;
+    }
+
+    public function isDoubleOptIn(DataBag $data, SalesChannelContext $context): bool{
+        $creatueCustomerAccount = $data->getBoolean('createCustomerAccount');
+
+        $configKey = $creatueCustomerAccount
+            ? 'core.loginRegistration.doubleOptInRegistration'
+            : 'core.loginRegistration.doubleOptInGuestOrder';
+
+        $doubleOptInRequired = $this->sysConfig
+            ->get($configKey, $context->getSalesChannel()->getId());
+
+        if (!$doubleOptInRequired) {
+            return false;
+        }
+
+        if ($creatueCustomerAccount) {
+            $this->addFlash(self::SUCCESS, $this->trans('account.optInRegistrationAlert'));
+
+            return true;
+        }
+
+        $this->addFlash(self::SUCCESS, $this->trans('account.optInGuestAlert'));
+
+        return true;
+    }
+
+    public function getAdditionalRegisterValidationDefinitions(DataBag $data, SalesChannelContext $context): DataValidationDefinition {
+        $definition = new DataValidationDefinition('storefront.confirmation');
+
+        if ($this->sysConfig->get('core.loginRegistration.requireEmailConfirmation', $context->getSalesChannel()->getId())) {
+            $definition->add('emailConfirmation', new NotBlank(), new EqualTo([
+                'value' => $data->get('email'),
+            ]));
+        }
+
+        if ($data->has('guest')) {
+            return $definition;
+        }
+
+        if ($this->sysConfig->get('core.loginRegistration.requirePasswordConfirmation', $context->getSalesChannel()->getId())) {
+            $definition->add('passwordConfirmation', new NotBlank(), new EqualTo([
+                'value' => $data->get('password'),
+            ]));
+        }
+
+        return $definition;
     }
 
 
