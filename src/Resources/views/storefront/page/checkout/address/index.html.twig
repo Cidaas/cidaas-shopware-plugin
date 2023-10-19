@@ -10,27 +10,15 @@
     {% block page_checkout_address %}
         {% block page_checkout_address_header %}
             <h1 class="address-main-header">
-                Anmelden oder Registrieren
+                {{ "checkout.addressHeader"|trans|sw_sanitize }}
             </h1>
         {% endblock %}
 
         {% block page_checkout_address_login_toggle %}
-            <br />
-            <div class="row justify-content-md-center align-items-center">
-                <div class="col-md-4">
-                    <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page">
-                        <button type="button" class="btn-primary btn btn-buy">
-                            Ich bin bereits Kunde
-                        </button>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="/cidaas/register?redirect_to=frontend.checkout.confirm.page">
-                        <button type="button" class="btn-primary btn btn-buy">
-                            Ich möchte mich registrieren
-                        </button>
-                    </a>
-                </div>
+            <div class="register-login-collapse-toogle">
+                {% sw_icon 'avatar' %}
+             <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page"">
+                    <strong>{{ "checkout.addressLoginToggle"|trans|sw_sanitize }}</strong> </a>
             </div>
         {% endblock %}
 
@@ -44,7 +32,9 @@
 
         {% block page_checkout_address_register %}
             {% block page_checkout_address_register_card %}
-                
+                {% sw_include '@CidaasHelper/storefront/page/checkout/address/register.html.twig' with {
+                    'cardTitle': "checkout.addressRegisterCardTitle"|trans|sw_sanitize
+                } %}
             {% endblock %}
         {% endblock %}
     {% endblock %}
@@ -66,7 +56,10 @@
                     {% block page_checkout_address_product_list_container %}
                         {% for lineItem in page.cart.lineItems %}
                             {% block page_checkout_address_product_summary_item %}
-                                {% sw_include '@Storefront/storefront/page/checkout/checkout-aside-item.html.twig' %}
+                                {% sw_include '@Storefront/storefront/component/line-item/line-item.html.twig' with {
+                                    displayMode: 'offcanvas',
+                                    showQuantitySelect: false
+                                } %}
                             {% endblock %}
                         {% endfor %}
                     {% endblock %}
