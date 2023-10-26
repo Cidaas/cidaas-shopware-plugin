@@ -32,5 +32,8 @@
             <argument type="service" id="customer_group_translation.repository" />
              <argument type="service" id="country.repository"/>
         </service>
+        <service id="Cidaas\OauthConnect\Subscriber\CustomerGroupSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
     </services>
 </container>

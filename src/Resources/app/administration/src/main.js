@@ -1,0 +1,1 @@
+import './module/sw-settings-customer-group';
