@@ -1,5 +1,306 @@
+<!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
 {% block sw_settings_customer_group_detail %}
-    <sw-page class="sw-settings-customer-group-detail">
-      {% parent %}
-    </sw-page>
+<sw-page class="sw-settings-customer-group-detail">
+
+    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+    {% block sw_settings_customer_group_detail_search_bar %}
+    <template #search-bar></template>
+    {% endblock %}
+
+    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+    {% block sw_settings_customer_group_detail_smart_bar_header %}
+    <template #smart-bar-header>
+        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+        {% block sw_settings_customer_group_detail_smart_bar_header_title %}
+        <h2>
+            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+            {% block sw_settings_customer_group_detail_smart_bar_header_title_text %}
+            {{ placeholder(customerGroup, 'name', $tc('sw-settings-customer-group.detail.placeholderNewCustomerGroup')) }}
+            {% endblock %}
+        </h2>
+        {% endblock %}
+    </template>
+    {% endblock %}
+
+    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+    {% block sw_settings_customer_group_detail_language_switch %}
+    <template #language-switch>
+        <sw-language-switch
+            :disabled="customerGroupId == null"
+            @on-change="onChangeLanguage"
+        />
+    </template>
+    {% endblock %}
+
+    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+    {% block sw_settings_customer_group_detail_actions %}
+    <template #smart-bar-actions>
+        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+        {% block sw_settings_customer_group_detail_actions_cancel %}
+        <sw-button
+            v-tooltip.bottom="tooltipCancel"
+            class="sw-settings-customer-group-detail__cancel"
+            @click="onCancel"
+        >
+            {{ $tc('sw-settings-customer-group.general.buttonCancel') }}
+        </sw-button>
+        {% endblock %}
+
+        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+        {% block sw_settings_customer_group_detail_actions_save %}
+        <sw-button-process
+            {% if VUE3 %}
+            v-model:processSuccess="isSaveSuccessful"
+            {% else %}
+            v-model="isSaveSuccessful"
+            {% endif %}
+            v-tooltip.bottom="tooltipSave"
+            class="sw-settings-customer-group-detail__save"
+            variant="primary"
+            :is-loading="isLoading"
+            :disabled="!allowSave"
+            @click="onSave"
+        >
+            {{ $tc('sw-settings-customer-group.general.buttonSave') }}
+        </sw-button-process>
+        {% endblock %}
+    </template>
+    {% endblock %}
+
+    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+    {% block sw_settings_customer_group_detail_cardview %}
+    <template #content>
+        <sw-card-view>
+            <sw-skeleton v-if="isLoading" />
+
+            <template v-else>
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_settings_customer_group_detail_content_language_info %}
+                <sw-language-info :entity-description="entityDescription" />
+                {% endblock %}
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_settings_customer_group_detail_content_card %}
+                <sw-card
+                    :is-loading="isLoading"
+                    :title="$tc('sw-settings-customer-group.detail.cardTitle')"
+                    position-identifier="sw-settings-customer-group-detail-content"
+                >
+                    <template v-if="!isLoading">
+                        <sw-container
+                            columns="repeat(2, minmax(250px, 1fr))"
+                            gap="0px 30px"
+                        >
+                            <!-- eslint-disable sw-deprecation-rules/no-twigjs-blocks,vue/attributes-order -->
+                            {% block sw_settings_customer_group_detail_content_card_name %}
+                            <sw-text-field
+                                {% if VUE3 %}
+                                v-model:value="customerGroup.name"
+                                name="sw-field--customerGroup-name"
+                                {% else %}
+                                v-model="customerGroup.name"
+                                {% endif %}
+                                class="sw-settings-customer-group-detail__name"
+                                required
+                                validation="required"
+                                :label="$tc('sw-settings-customer-group.detail.fieldNameLabel')"
+                                :error="customerGroupNameError"
+                                :placeholder="placeholder(customerGroup, 'name', $tc('sw-settings-customer-group.detail.placeholderName'))"
+                                :disabled="!acl.can('customer_groups.editor')"
+                            />
+                            {% endblock %}
+
+                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                            {% block sw_settings_customer_group_detail_content_card_display_gross %}
+                            <sw-boolean-radio-group
+                                {% if VUE3 %}
+                                v-model:value="customerGroup.displayGross"
+                                {% else %}
+                                v-model="customerGroup.displayGross"
+                                {% endif %}
+                                bordered
+                                :label="$tc('sw-settings-customer-group.detail.fieldDisplayGrossLabel')"
+                                :label-option-true="$tc('sw-settings-customer-group.detail.fieldDisplayGrossValues', true)"
+                                :label-option-false="$tc('sw-settings-customer-group.detail.fieldDisplayGrossValues', false)"
+                                :disabled="!acl.can('customer_groups.editor')"
+                            />
+                            {% endblock %}
+
+                            <!-- eslint-disable sw-deprecation-rules/no-twigjs-blocks,vue/attributes-order -->
+                            {% block sw_settings_customer_group_detail_content_card_registration_form %}
+                            <sw-switch-field
+                                {% if VUE3 %}
+                                v-model:value="customerGroup.registrationActive"
+                                name="sw-field--customerGroup-registrationActive"
+                                {% else %}
+                                v-model="customerGroup.registrationActive"
+                                {% endif %}
+                                class="sw-settings-customer-group-detail__registration-form-switch"
+                                :label="$tc('sw-settings-customer-group.detail.registrationForm')"
+                                :disabled="!acl.can('customer_groups.editor')"
+                            />
+                            {% endblock %}
+                        </sw-container>
+                    </template>
+                </sw-card>
+                {% endblock %}
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_settings_customer_group_detail_content_registration_card %}
+                <sw-card
+                    v-if="customerGroup && customerGroup.registrationActive"
+                    position-identifier="sw-settings-customer-group-detail-content-registration-card"
+                    :is-loading="isLoading"
+                    :title="$tc('sw-settings-customer-group.registration.formTitle')"
+                >
+                    <div class="sw-settings-customer-group-detail-content-registration-card__info-text">
+                        {{ $tc('sw-settings-customer-group.registration.infoText') }}
+                    </div>
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_card_title %}
+                    <sw-text-field
+                        {% if VUE3 %}
+                        v-model:value="customerGroup.registrationTitle"
+                        name="sw-field--customerGroup-registrationTitle"
+                        {% else %}
+                        v-model="customerGroup.registrationTitle"
+                        {% endif %}
+                        required
+                        validation="required"
+                        :label="$tc('sw-settings-customer-group.registration.title')"
+                        :placeholder="placeholder(customerGroup, 'registrationTitle', $tc('sw-settings-customer-group.registration.placeholderTitle'))"
+                        :error="registrationTitleError"
+                        :disabled="!acl.can('customer_groups.editor')"
+                    />
+                    {% endblock %}
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_card_introduction %}
+                    <sw-text-editor
+                        v-model="customerGroup.registrationIntroduction"
+                        :label="$tc('sw-settings-customer-group.registration.introduction')"
+                        :placeholder="placeholder(customerGroup, 'registrationIntroduction', $tc('sw-settings-customer-group.registration.placeholderIntroduction'))"
+                        :disabled="!acl.can('customer_groups.editor')"
+                        sanitize-input
+                        sanitize-field-name="customer_group_translation.registrationIntroduction"
+                    />
+                    {% endblock %}
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_card_seo_meta_description %}
+                    <sw-textarea-field
+                        {% if VUE3 %}
+                        v-model:value="customerGroup.registrationSeoMetaDescription"
+                        name="sw-field--customerGroup-registrationSeoMetaDescription"
+                        {% else %}
+                        v-model="customerGroup.registrationSeoMetaDescription"
+                        {% endif %}
+                        :label="$tc('sw-settings-customer-group.registration.seoMetaDescription')"
+                        :placeholder="placeholder(customerGroup, 'registrationSeoMetaDescription', $tc('sw-settings-customer-group.registration.placeholderSeoMetaDescription'))"
+                        :disabled="!acl.can('customer_groups.editor')"
+                    />
+                    {% endblock %}
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_card_only_companies_can_register %}
+                    <sw-switch-field
+                        {% if VUE3 %}
+                        v-model:value="customerGroup.registrationOnlyCompanyRegistration"
+                        name="sw-field--customerGroup-registrationOnlyCompanyRegistration"
+                        {% else %}
+                        v-model="customerGroup.registrationOnlyCompanyRegistration"
+                        {% endif %}
+                        :label="$tc('sw-settings-customer-group.registration.onlyCompaniesCanRegister')"
+                        :help-text="$tc('sw-settings-customer-group.registration.onlyCompaniesCanRegisterHelpText')"
+                        :disabled="!acl.can('customer_groups.editor')"
+                    />
+                    {% endblock %}
+
+                </sw-card>
+                {% endblock %}
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_settings_customer_group_detail_content_registration_url_card %}
+                <sw-card
+                    v-if="customerGroup && customerGroup.registrationActive"
+                    position-identifier="sw-settings-customer-group-detail-content-registration-url-card"
+                    :is-loading="isLoading"
+                    :title="$tc('sw-settings-customer-group.registration.linkUrlsTitle')"
+                >
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_url_card_sales_channel %}
+                    <sw-entity-multi-select
+                        {% if VUE3 %}
+                        v-model:entityCollection="customerGroup.registrationSalesChannels"
+                        name="sw-field--customerGroup-registrationSalesChannels"
+                        {% else %}
+                        v-model="customerGroup.registrationSalesChannels"
+                        {% endif %}
+                        class="sw-settings-customer-group-detail__sales-channel"
+                        :label="$tc('sw-settings-customer-group.registration.availabilitySalesChannel')"
+                        :disabled="!acl.can('customer_groups.editor')"
+                    />
+                    {% endblock %}
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_technical_urls %}
+                    <sw-text-field
+                        v-if="customerGroupId"
+                        {% if VUE3 %}
+                        v-model:value="technicalUrl"
+                        name="sw-field--technicalUrl"
+                        {% else %}
+                        v-model="technicalUrl"
+                        {% endif %}
+                        :label="$tc('sw-settings-customer-group.registration.technicalUrl')"
+                        :copyable="true"
+                        :disabled="true"
+                        :help-text="$tc('sw-settings-customer-group.registration.technicalUrlHelpText')"
+                    />
+                    {% endblock %}
+
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_settings_customer_group_detail_content_registration_url_card_seo_url %}
+                    <div
+                        v-for="seoUrl in seoUrls"
+                        :key="seoUrl.id"
+                    >
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_settings_customer_group_detail_content_registration_url_card_seo_url_inner %}
+                        <!-- eslint-disable vue/valid-v-model -->
+                        <sw-text-field
+                            :value="getSeoUrl(seoUrl)"
+                            :label="$tc('sw-settings-customer-group.registration.seoUrlLabel', 0, { salesChannelName: seoUrl.salesChannel.translated.name})"
+                            :copyable="true"
+                            :disabled="true"
+                        />
+                        {% endblock %}
+                    </div>
+                    {% endblock %}
+                </sw-card>
+                {% endblock %}
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_settings_customer_group_detail_custom_field_sets %}
+                <sw-card
+                    v-if="showCustomFields"
+                    position-identifier="sw-settings-customer-group-detail-custom-field-sets"
+                    :title="$tc('sw-settings-custom-field.general.mainMenuItemGeneral')"
+                    :is-loading="isLoading"
+                >
+                    <sw-custom-field-set-renderer
+                        :entity="customerGroup"
+                        :disabled="!acl.can('customer_groups.editor')"
+                        :sets="customFieldSets"
+                    />
+                </sw-card>
+                {% endblock %}
+            </template>
+        </sw-card-view>
+    </template>
+    {% endblock %}
+
+</sw-page>
 {% endblock %}
