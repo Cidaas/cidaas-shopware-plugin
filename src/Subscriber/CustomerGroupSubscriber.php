@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare( strict_types = 1 );
 
 namespace Cidaas\OauthConnect\Subscriber;
 
@@ -8,49 +8,42 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Cidaas\OauthConnect\Service\CidaasLoginService;
 
-class CustomerGroupSubscriber implements EventSubscriberInterface
-{
-    private $customerGroupTranslationRepo;
+class CustomerGroupSubscriber implements EventSubscriberInterface {
+    private $loginService;
 
     public function __construct(
-        EntityRepository $customerGroupTranslationRepo
+        private readonly EntityRepository $customerGroupRepository,
+        CidaasLoginService $loginService
     ) {
-        $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
+        $this->loginService = $loginService;
     }
 
-    public static function getSubscribedEvents(): array
-    {
+    public static function getSubscribedEvents(): array {
         return [
             'customer_group.written' => 'onCustomerGroupWritten',
         ];
     }
 
-    public function onCustomerGroupWritten(EntityWrittenEvent $event)
-    {
-         $writtenEntities = $event->getWriteResults();
+    public function onCustomerGroupWritten( EntityWrittenEvent $event ) {
+        // Your code to handle the event here
+        foreach ( $event->getWriteResults() as $writeResult ) {
+            // Check if the event is related to a customer group
+            if ( $writeResult->getEntityName() === 'customer_group' ) {
+                // Get the customer group ID from the event
+                $customerGroupId = $writeResult->getPrimaryKey();
 
-         foreach ($writtenEntities as $entity) {
-             // Check if the entity is a customer group
-             if ($entity->getEntityName() === 'customer_group') {
-                 // Get the customer group data
-                 $customerGroupData = $entity->getPayload(); 
-             }
-         }
+                // Fetch the customer group data from the repository
+                $criteria = new Criteria();
+                $criteria->addFilter( new EqualsFilter( 'id', $customerGroupId ) );
+                $customerGroup = $this->customerGroupRepository->search( $criteria, $event->getContext() )->first();
 
-         $criteria = new Criteria();
-         $criteria->addFilter(new EqualsFilter('id', $id));
-         $customerGroupName = $this->customerGroupTranslationRepo->search($criteria, Shopware\Context::createDefaultContext())->first();
-         error_log($customerGroup->getTranslation('name'));
-         
-        //  $this->createUrls('aa9b4ad2128946abb182a698b1056ca5', $event->getContext());
-    }
-
-    private function createUrls(string $id, Context $context): void
-    {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('id', $id));
-        $customerGroupName = $this->customerGroupTranslationRepo->search($criteria, Shopware\Context::createDefaultContext())->first();
-        error_log($customerGroup->getTranslation('name'));
+                // get the customer group name
+                $customerGroupName = $customerGroup->getTranslation( 'name' );
+                $res =  $this->loginService->createCustomerGroup( $customerGroupId, $customerGroupName );
+                error_log( json_encode( $res ) );
+            }
+        }
     }
 }

@@ -929,5 +929,31 @@ class CidaasLoginService {
 
         return $definition;
     }
+
+
+    public function createCustomerGroup($customerGroupId, $customerGroupName) {
+        $client = new Client();
+        $adminToken = $this->getAdminToken();
+
+        try {
+            $response = $client->post($this->cidaasUrl.'/groups-srv/usergroup', [
+                'headers' => [
+                    'authorization' => 'Bearer '.$adminToken->access_token
+                ],
+                'json' => [
+                    'groupType' => 'Shopware',
+                    'groupId' => $customerGroupId,
+                    'groupName' => $customerGroupName,
+                    'memberProfileVisibility' => 'public',
+                    'noneMemberProfileVisibility' => 'none',
+                    'parentId' => 'root',
+                    'groupOwner' => 'client',
+                ]
+                ]);
+            return json_decode($response->getBody()->getContents());
+        } catch (ClientException $e) {
+            return json_decode($e->getResponse()->getBody()->getContents());
+        }
+    }
     
 }
