@@ -119,6 +119,7 @@ use Shopware\Core\Framework\Routing\RoutingException;
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -167,6 +168,7 @@ use Shopware\Core\Framework\Routing\RoutingException;
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -343,7 +345,6 @@ use Shopware\Core\Framework\Routing\RoutingException;
      */
     public function changepassword(Request $request, SalesChannelContext $context): Response
     {
-        //authz-srv/authz/?response_type=token&client_id=96d26174-49bb-4278-84db-e109c55144e4&viewtype=login&redirect_uri=https://my-test.mainz05.de/user-profile/changepassword
         $sub = $request->getSession()->get('sub');
         $token = $request->getSession()->get('_cidaas_token');
         $newPassword = $request->get('newPassword');

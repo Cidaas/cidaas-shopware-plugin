@@ -59,7 +59,7 @@ class CidaasLoginService {
 
     private $eventDispatcher;
     private $customerRepo;
-    private $customerGroupRepo;
+    private $customerGroupRepository;
     private $customerAddressRepo;
     private $customerGroupTranslationRepo;
     private $countryRepository;
@@ -93,7 +93,7 @@ class CidaasLoginService {
         SystemConfigService $sysConfig,
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
-        EntityRepository $customerGroupRepo,
+        EntityRepository $customerGroupRepository,
         EntityRepository $customerAddressRepo,
         EntityRepository $customerGroupTranslationRepo,
         EntityRepository $countryRepository
@@ -101,7 +101,7 @@ class CidaasLoginService {
         {
             $this->eventDispatcher = $eventDispatcher;
             $this->customerRepo = $customerRepo;
-            $this->customerGroupRepo = $customerGroupRepo;
+            $this->customerGroupRepository = $customerGroupRepository;
             $this->customerAddressRepo = $customerAddressRepo;
             $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
             $this->countryRepository = $countryRepository;
@@ -260,7 +260,7 @@ class CidaasLoginService {
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint 
-            . '?scope='. urlencode("openid email profile group") .'&response_type=code'
+            . '?scope='. urlencode("openid email profile groups") .'&response_type=code'
             . '&approval_prompt=auto&redirect_uri='. urlencode($redirectUri) 
             . '&client_id='.$this->clientId . '&state='.$state;
         if ($email !== null) {
@@ -492,50 +492,81 @@ class CidaasLoginService {
     }
 
     public function checkCustomerGroups($user, $context) {
-        $groups = [];
+        $cidaasCustomerGroupName = "";
+        $cidaasCustomerGroupId = "";
+        $cidaasCustomerGroups = [];
         $customer = $this->getCustomerBySub($user['sub'], $context);
-        if (array_key_exists('groups', $user) && count($user['groups'])<2) {
-            $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
-            if($customer->getGroupId() !== $stdGroup->getCustomerGroupId()) {
-                $this->customerRepo->update([
-                    [
-                        'id' => $customer->getId(),
-                        'groupId' => $this->defaultGroup
-                    ]
-                ], $context->getContext());
+        // get default group data 
+        $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
+        // check user group length less equal to two 
+        if (isset($user['groups']) && is_array($user['groups'])&& count($user['groups']) > 0) {
+            foreach ($user['groups'] as $group) {
+                if ($group['groupId'] !== 'CIDAAS_USERS' && $group['groupType'] === 'Shopware' ){  // get cidaas group info array data which is not equal to  CIDAAS_USERS group And GroupType is equal to Shopware
+                    $cidaasCustomerGroups[] = $group;
+                }
             }
         }
 
-        if (array_key_exists('groups', $user)) {
-            foreach($user['groups'] as $g) {
-                if ($g['groupId'] !== 'CIDAAS_USERS')
-                    $groups[] = $g['groupId'];
+        $cidaasCustomerGroupName = $cidaasCustomerGroups[0]['groupName'];
+        $cidaasCustomerGroupId = $cidaasCustomerGroups[0]['groupId'];
+        
+        if($cidaasCustomerGroupName){
+            // check the group is exits or not in shopware 
+           $customGroup = $this->getGroupByName($cidaasCustomerGroupName, $context);
+          if($customGroup){
+            if($customGroup->getCustomerGroupId() !== $stdGroup->getCustomerGroupId()) {
+                //  update customer with new cidaas group 
+                $this->customerRepo->update([
+                    [
+                        'id' => $customer->getId(),
+                        'groupId' => $customGroup->getCustomerGroupId()
+                    ]
+                ], $context->getContext());
+            } else {
+                //  update customer with default customer group
+                    $this->customerRepo->update([
+                        [
+                            'id' => $customer->getId(),
+                            'groupId' => $this->defaultGroup
+                        ]
+                    ], $context->getContext());
             }
+          }
+        } else {
+             //  update customer with default customer group
+             $this->customerRepo->update([
+                [
+                    'id' => $customer->getId(),
+                    'groupId' => $stdGroup->getCustomerGroupId()
+                ]
+            ], $context->getContext());
         }
         return;
     }
 
+
+
     public function getCustomerGroups(SalesChannelContext $context) {
-        $cg = $this->customerGroupRepo->search(new Criteria(), $context->getContext());
+        $cg = $this->customerGroupRepository->search(new Criteria(), $context->getContext());
         return $cg;
     }
 
     public function getMitgliederGroup(SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter("name", "Mitglieder"));
-        return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
     }
 
     public function getMitarbeiterPromoGroup(SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter("name", "MitarbeiterPromo"));
-        return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
     }
     
     public function getMitarbeiterGroup(SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('name', 'Mitarbeiter'));
-        return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
     }
 
     /**
@@ -546,7 +577,7 @@ class CidaasLoginService {
     public function getGroupByName($name, SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('name', $name));
-        // return $this->customerGroupRepo->search($criteria, $context->getContext())->first();
+        // return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
         return $this->customerGroupTranslationRepo->search($criteria, $context->getContext())->first();
     }
 
@@ -564,9 +595,6 @@ class CidaasLoginService {
             return $false;
         }
     }
-
-    // 'scopes' => "openid email profile"
-    // private
 
     private function generateRandomString($length = 10) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
