@@ -15,6 +15,11 @@
 
 ## Shopware extension to connect to [cidaas](https://www.cidaas.com) by Widas ID
 
+# Cidaas Shopware Plugin versions
+
+   # [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   # [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
+
 ## Author
 
 [Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
