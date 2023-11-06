@@ -494,18 +494,21 @@ class CidaasLoginService {
     public function checkCustomerGroups($user, $context) {
         $cidaasCustomerGroupName = "";
         $cidaasCustomerGroupId = "";
+        $cidaasCustomerGroups = [];
         $customer = $this->getCustomerBySub($user['sub'], $context);
         // get default group data 
         $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
         // check user group length less equal to two 
-        if (isset($user['groups']) && is_array($user['groups'])&& count($user['groups']) <= 2) {
+        if (isset($user['groups']) && is_array($user['groups'])&& count($user['groups']) > 0) {
             foreach ($user['groups'] as $group) {
-                if ($group['groupId'] !== 'CIDAAS_USERS'){  // get cidaas group info data which is not equal to  CIDAAS_USERS group
-                    $cidaasCustomerGroupName = $group['groupName'];
-                    $cidaasCustomerGroupId = $group['groupId']; 
+                if ($group['groupId'] !== 'CIDAAS_USERS' && $group['groupType'] === 'Shopware' ){  // get cidaas group info array data which is not equal to  CIDAAS_USERS group And GroupType is equal to Shopware
+                    $cidaasCustomerGroups[] = $group;
                 }
             }
         }
+
+        $cidaasCustomerGroupName = $cidaasCustomerGroups[0]['groupName'];
+        $cidaasCustomerGroupId = $cidaasCustomerGroups[0]['groupId'];
         
         if($cidaasCustomerGroupName){
             // check the group is exits or not in shopware 
