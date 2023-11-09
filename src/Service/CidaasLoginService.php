@@ -506,11 +506,10 @@ class CidaasLoginService {
                 }
             }
         }
-
-        $cidaasCustomerGroupName = $cidaasCustomerGroups[0]['groupName'];
-        $cidaasCustomerGroupId = $cidaasCustomerGroups[0]['groupId'];
-        
-        if($cidaasCustomerGroupName){
+       
+        if(count($cidaasCustomerGroups) > 0){
+            $cidaasCustomerGroupName = $cidaasCustomerGroups[0]['groupName'];
+            $cidaasCustomerGroupId = $cidaasCustomerGroups[0]['groupId'];
             // check the group is exits or not in shopware 
            $customGroup = $this->getGroupByName($cidaasCustomerGroupName, $context);
           if($customGroup){
