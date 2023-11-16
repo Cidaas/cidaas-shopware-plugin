@@ -57,7 +57,7 @@ In this section,
 - We will introduce you to the cidaas plugin for Shopware
 - Demonstrate the steps to install the plugin and
 - Login into the cidaas Shopware user interface.
-- Customer group assignment with Cidaas 
+- Customer group assignment is coming in the next version
 
 If you are here, we assume you are already using Shopware and would like to add the cidaas extension to your e-commerce website for authentication.
 
@@ -87,9 +87,9 @@ This installation will help you use cidaas login functionalities and authenticat
  - Activate the plugin for the configuration 
    
   ![1](docs/docs-images/1.png)
-  ![2](2.png)
-  ![3](3.png)
-  ![4](4.png)
+  ![2](docs/docs-images/2.png)
+  ![3](docs/docs-images/3.png)
+  ![4](docs/docs-images/4.png)
 
 
  **Navigate to the cidaas admin dashboard and fill in the details of the cidaas Plugin Config.**
@@ -102,11 +102,11 @@ Note: We required two cidass application configuration for shopware plugin
 
 **3**. Click on **App settings > Create a new app** to create an app (OAuth2 Client) in Shopware.
 
-![cre_app](uploads/a2eda6c64616d2d1eceef829f60da24a/cre_app.png)
+![cre_app](docs/docs-images/5.png)
  
 **4**. Fill in the app details and select Single page in App type and Click on Next.
 
-   ![app_details](uploads/4856fd26adb4c611941a71460c156914/app_details.png)
+![app_details](docs/docs-images/6.png)
 
 **5**. Fill in the app settings with the following details:
  - The scopes to be added include openid, email,roles,cidaas:register, and profile.
@@ -114,7 +114,7 @@ Note: We required two cidass application configuration for shopware plugin
  - Set your domain names for Redirect and Logout URLs.
  - Click on Next
  
- ![app_settings](uploads/86b1fb7277779cd6e162ee486c0ed9c3/app_settings.png)
+ ![app_settings](docs/docs-images/7.png)
 
 **6**. Fill in company details and click on save
  
@@ -125,7 +125,7 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 
 **7**. Navigate to App settings and click on the edit icon of the newly created application.
 
-![edit_app](uploads/13da5aabc41dfc9ddb208a22738564f6/edit_app.png)
+![edit_app](docs/docs-images/8.png)
 
 **8**. Scroll down to the company details section and click on Advance settings.
 
@@ -133,7 +133,7 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 
   Also, select feasible communication medium verification to verify the users.
 
-![registration_](uploads/fc40c0588c52fec2812200d6dcce246e/registration_.png)
+![registration_](docs/docs-images/9.png)
 
  Kindly check [here](https://cidaas.stoplight.io/docs/cidaas-iam/branches/master/e8ce45afc47ba-user-field-settings) for more information on registration fields.
 
@@ -142,9 +142,9 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
  - Click on Next
  - Fill in company details and click on save
  
-![non](uploads/4c10c0f249eda90e82f1ca9c8d00a3a4/non.png)
-![scope](uploads/ab776ae3f2521e23525e1d377377232f/scope.png)
-![Screenshot_2023-07-27_at_1.06.53_PM](uploads/75f8670348107413811bf01c60b5bf70/Screenshot_2023-07-27_at_1.06.53_PM.png)
+![non](docs/docs-images/10.png)
+![scope](docs/docs-images/11.png)
+![submit](docs/docs-images/12.png)
 
 **11**. Next, you need to copy the below details to configure the cidaas into shopware.
 
@@ -152,27 +152,26 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 * Copy the Client ID, Client Secret of both Single page and Non-interactive applications 
 * Base URL endpoint will be your Domain URL example- https://your_domain.de
  
-![data_copy](uploads/b543c99e8a75b500c9730047b6136ce6/data_copy.png)
-![Screenshot_2023-07-27_at_1.16.53_PM](uploads/81821833fcf73c305ae7ddbaccc3df91/Screenshot_2023-07-27_at_1.16.53_PM.png)
+![data_copy](docs/docs-images/13.png)
+![data_copy-0](docs/docs-images/14.png)
 
 
 
 
 **12**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
 
- ![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
+![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
 
 **13**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
-![j](uploads/fc593951efeff30ee9d7ba270712e5fe/j.png)
+![j](docs/docs-images/15.png)
 
 **14**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
 
-![pluggin_active](uploads/f2d6ab372d43f17da899823939f160e4/pluggin_active.png)
+![plugin_active](docs/docs-images/16.png)
 
 Note:- In a new user instance, a first-time customer-user/end-user has to create an account and register by filling in the details.
 
 # **Customer group assignment with Cidaas**
-- The customer groups allow you to define whether the prices in the store are displayed net or gross.
-- These below  steps will help you use cidaas customer group functionalities setup with Shopware 
+- upcoming in next version
 
 
