@@ -2,7 +2,7 @@
 
 ## About cidaas:
 [cidaas](https://www.cidaas.com)
- is a fast and secure Cloud Identity & Access Management solution that standardises what’s important and simplifies what’s complex.
+ is a fast and secure Cloud Identity & Access Management solution that standardizes what’s important and simplifies what’s complex.
 
 ## Feature set includes:
 * Single Sign On (SSO) based on OAuth 2.0, OpenID Connect, SAML 2.0 
@@ -182,7 +182,7 @@ This field is used to confirm the password entered by the user during the regist
 - Definition: The "company_name" field in Shopware is a data container designated for storing the name of the company associated with a specific entity, such as a customer or business account.
 - Purpose : The purpose of the "company_name" field is to accurately identify and associate the respective company information within the Shopware system
 
-To ensure a seamless customer experience and accurate order processing in Shopware, it is imperative to create these fields in the Cidass system
+To guarantee a seamless customer experience and ensure accurate order processing in Shopware, it is essential to create these fields in the Cidass system and set them as mandatory.
 
 ![registration_](docs/docs-images/9.png)
 
@@ -206,14 +206,12 @@ To ensure a seamless customer experience and accurate order processing in Shopwa
 ![data_copy](docs/docs-images/13.png)
 ![data_copy-0](docs/docs-images/14.png)
 
-
-
-
 **11**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
 
 ![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
 
 **12**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
+
 ![j](docs/docs-images/15.png)
 
 **13**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
@@ -221,6 +219,36 @@ To ensure a seamless customer experience and accurate order processing in Shopwa
 ![plugin_active](docs/docs-images/16.png)
 
 Note:- In a new user instance, a first-time customer-user/end-user has to create an account and register by filling in the details.
+
+# How does Shopware synchronize data with Cidaas?
+
+The process begins with the application initiating an OAuth flow, prompting the user to authorize a request. Within this process, the client includes the OpenID Connect scope along with scopes for any additional user information needed.
+
+Upon processing the request, the client receives both an access token and an ID token issued by Cidaas (the authorization server). This ID token contains claims with user information, facilitating a seamless Single Sign-On (SSO) experience by delivering the ID token from Cidaas to the client. Subsequently, the client can contact a specific endpoint on Cidaas, known as the UserInfo endpoint, to obtain the remaining claims about the user.
+
+During login, if any of the aforementioned fields are missing for a user, the system redirects to the "register_additional_info" page to add those missing details.
+
+The user info includes data such as sub, given_name, family_name, salutation, company, email, billing_address_street, billing_address_zipcode, and billing_address_city.
+
+To determine whether the Cidaas user exists in Shopware, we store the "sub" parameter in the Shopware database under the customfields object.
+
+After login, the system retrieves the user data and checks if the user exists in the Shopware database using the unique Sub parameter. If the user exists, the user info data is updated with the corresponding Shopware data, such as address and customer details. If the user doesn't exist, the system performs an upsert and maps the Cidaas user data to Shopware with the specified format.
+
+In the Shopware storefront, when the user updates their profile and address, the system concurrently updates the same data in Cidaas using the Cidaas update user API endpoint.
+
+- **Profile data update from Shopware to Cidaas**
+  - Email
+  - Password
+  - First Name
+  - Last Name
+  - Salutation
+
+- **Address data update from Shopware to Cidaas (only Billing address is stored in Cidaas)**
+  - billing_address_street
+  - billing_address_zipcode
+  - billing_address_city
+  - company
+  - billing_address_country
 
 # **Customer group assignment with Cidaas**
 - upcoming in next version
