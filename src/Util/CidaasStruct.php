@@ -4,54 +4,49 @@ namespace Cidaas\OauthConnect\Util;
 
 use Shopware\Core\Framework\Struct\Struct;
 
-class CidaasStruct extends Struct 
-{   
+class CidaasStruct extends Struct  {
+
     private $state;
     private $authCode;
     private $customerId;
     private $sub;
 
-    public function __construct(String $state, ?String $authCode=null, ?String $customerId=null, ?String $sub=null)
-    {
+    public function __construct( String $state, ?String $authCode = null, ?String $customerId = null, ?String $sub = null ) {
         $this->state = $state;
         $this->authCode = $authCode;
         $this->customerId = $customerId;
         $this->sub = $sub;
     }
 
-    public function getState(): ?String
-    {
+    public function getState(): ?String {
         return $this->state;
     }
-    public function setState(?String $state): void
-    {
+
+    public function setState( ?String $state ): void {
         $this->state = $state;
     }
 
-    public function getAuthCode(): ?String
-    {
+    public function getAuthCode(): ?String {
         return $this->authCode;
     }
-    public function setAuthCode(?String $authCode): void
-    {
+
+    public function setAuthCode( ?String $authCode ): void {
         $this->authCode = $authCode;
     }
 
-    public function getCustomerId(): ?String
-    {
+    public function getCustomerId(): ?String {
         return $this->customerId;
     }
-    public function setCustomerId(?String $customerId): void
-    {
+
+    public function setCustomerId( ?String $customerId ): void {
         $this->customerId = $customerId;
     }
 
-    public function getSub(): ?String
-    {
+    public function getSub(): ?String {
         return $this->sub;
     }
-    public function setSub(?String $sub): void
-    {
+
+    public function setSub( ?String $sub ): void {
         $this->sub = $sub;
     }
 }
