@@ -85,8 +85,8 @@ This installation will help you use cidaas login functionalities and authenticat
  - Upload the Shopware extension plugin.
  - Click on that Apps and install and activate the cidaas for the Shopware plugin.
  - Activate the plugin for the configuration 
-    
-  ![1](1.png)
+   
+  ![1](docs/docs-images/1.png)
   ![2](2.png)
   ![3](3.png)
   ![4](4.png)
