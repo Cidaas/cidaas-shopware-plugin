@@ -10,10 +10,19 @@
 * Passwordless Authentication 
 * Social Login (e.g. Facebook, Google, LinkedIn and more) as well as Enterprise Identity Provider (e.g. SAML or AD) 
 * Security in Machine-to-Machine (M2M) and IoT
+* Guest user Login 
+* Address data Sync and update with Cidaas 
+* Profile data Sync and update with Cidaas
+* Change Email and Password functionalities
 
 # Cidaas SSO plugin
 
-## Shopware extension to connect to [cidaas](https://www.cidaas.com) by Widas ID
+This is a shopware 6 plugin that allows you to integrate your store into the cidaas platform for single sign on (SSO), multi factor
+
+# Cidaas Shopware Plugin versions
+
+   ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   ## [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
 ## Author
 
@@ -77,9 +86,7 @@ The overall process includes:
 
 This installation will help you use cidaas login functionalities and authentication methods for user management on your website.
 
-**1**. Download the cidaas plugin from the [ Shopware store](https://www.cidaas.com/shopware-plugin/) or the plugin manager on your Shopware admin site.
-
-**2**. Click on Extension from the sidebar menu.
+**1**. Click on Extension from the sidebar menu.
 
  - Select My Extensions from the drop-down list,
  - Upload the Shopware extension plugin.
@@ -100,15 +107,15 @@ Note: We required two cidass application configuration for shopware plugin
 - Cidaas Single page client application for Login, Register and get User profile functionality.
 - Cidaas Non-interactive client application for updating profile and Change email functionality. 
 
-**3**. Click on **App settings > Create a new app** to create an app (OAuth2 Client) in Shopware.
+**2**. Click on **App settings > Create a new app** to create an app (OAuth2 Client) in Shopware.
 
 ![cre_app](docs/docs-images/5.png)
  
-**4**. Fill in the app details and select Single page in App type and Click on Next.
+**3**. Fill in the app details and select Single page in App type and Click on Next.
 
 ![app_details](docs/docs-images/6.png)
 
-**5**. Fill in the app settings with the following details:
+**4**. Fill in the app settings with the following details:
  - The scopes to be added include openid, email,roles,cidaas:register, and profile.
  - Set the value for Hosted Page Group as "default".
  - Set your domain names for Redirect and Logout URLs.
@@ -116,20 +123,20 @@ Note: We required two cidass application configuration for shopware plugin
  
  ![app_settings](docs/docs-images/7.png)
 
-**6**. Fill in company details and click on save
+**5**. Fill in company details and click on save
  
 Note:- You have successfully created your app, the next step is to add the registration fields for the app.
 For more cidaas Client Configuration please refer to our docs [link](https://cidaas.stoplight.io/docs/cidaas-iam/branches/master/288aa0f48e2fc-app-management)
 
 **To add registration fields**
 
-**7**. Navigate to App settings and click on the edit icon of the newly created application.
+**6**. Navigate to App settings and click on the edit icon of the newly created application.
 
 ![edit_app](docs/docs-images/8.png)
 
-**8**. Scroll down to the company details section and click on Advance settings.
+**7**. Scroll down to the company details section and click on Advance settings.
 
-**9**. Go to the Registration field section and select the desired, allowed, and required registration fields.
+**8**. Go to the Registration field section and select the desired, allowed, and required registration fields.
 
   Also, select feasible communication medium verification to verify the users.
 
@@ -137,7 +144,7 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 
  Kindly check [here](https://cidaas.stoplight.io/docs/cidaas-iam/branches/master/e8ce45afc47ba-user-field-settings) for more information on registration fields.
 
-**10**. Create the Non-interactive app with the following details:
+**9**. Create the Non-interactive app with the following details:
  - The scopes to be added include only cidaas:users_write.
  - Click on Next
  - Fill in company details and click on save
@@ -146,7 +153,7 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 ![scope](docs/docs-images/11.png)
 ![submit](docs/docs-images/12.png)
 
-**11**. Next, you need to copy the below details to configure the cidaas into shopware.
+**10**. Next, you need to copy the below details to configure the cidaas into shopware.
 
 * Navigate to App settings.
 * Copy the Client ID, Client Secret of both Single page and Non-interactive applications 
@@ -158,14 +165,14 @@ For more cidaas Client Configuration please refer to our docs [link](https://cid
 
 
 
-**12**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
+**11**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
 
 ![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
 
-**13**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
+**12**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
 ![j](docs/docs-images/15.png)
 
-**14**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
+**13**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
 
 ![plugin_active](docs/docs-images/16.png)
 
