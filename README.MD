@@ -159,28 +159,28 @@ The password field is necessary for securing customer accounts and protecting se
 This field is used to confirm the password entered by the user during the registration or password change process. It helps prevent errors and ensures that the customer has entered the correct password by requiring them to confirm it.
 
 **billing_address_street**:
-Definition: This field captures the street address of the customer's billing information.
-Purpose: It is crucial for generating accurate invoices and ensuring the correct delivery of physical goods.
+- Definition: This field captures the street address of the customer's billing information.
+- Purpose: It is crucial for generating accurate invoices and ensuring the correct delivery of physical goods.
 
 **billing_address_city**:
-Definition: This field captures the city of the customer's billing address.
-Purpose: Helps in identifying the customer's location for taxation purposes and provides essential information for shipping.
+- Definition: This field captures the city of the customer's billing address.
+- Purpose: Helps in identifying the customer's location for taxation purposes and provides essential information for shipping.
 
 **salutation**:
-Definition: This field captures the salutation or title (e.g., Mr., Mrs., Dr.) associated with the customer.
-Purpose: Adds a personal touch to communications and is often used for formal addressing in documentation.
+- Definition: This field captures the salutation or title (e.g., Mr., Mrs., Dr.) associated with the customer.
+- Purpose: Adds a personal touch to communications and is often used for formal addressing in documentation.
 
 **country**:
-Definition: This field captures the customer's country information.
-Purpose: Necessary for determining applicable taxes, shipping costs, and complying with regional regulations.
+- Definition: This field captures the customer's country information.
+- Purpose: Necessary for determining applicable taxes, shipping costs, and complying with regional regulations.
 
 **billing_address_zipcode**:
-Definition: This field captures the postal code or ZIP code of the customer's billing address.
-Purpose: Essential for precise location identification, shipping calculations, and compliance with postal regulations.
+- Definition: This field captures the postal code or ZIP code of the customer's billing address.
+- Purpose: Essential for precise location identification, shipping calculations, and compliance with postal regulations.
 
 **company_name**:
-Definition: The "company_name" field in Shopware is a data container designated for storing the name of the company associated with a specific entity, such as a customer or business account.
-Purpose : The purpose of the "company_name" field is to accurately identify and associate the respective company information within the Shopware system
+- Definition: The "company_name" field in Shopware is a data container designated for storing the name of the company associated with a specific entity, such as a customer or business account.
+- Purpose : The purpose of the "company_name" field is to accurately identify and associate the respective company information within the Shopware system
 
 To ensure a seamless customer experience and accurate order processing in Shopware, it is imperative to create these fields in the Cidass system
 
