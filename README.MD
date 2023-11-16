@@ -143,42 +143,42 @@ Also, select feasible communication medium verification to verify the users.
 
 In Shopware, the specified fields are essential components for managing customer information and processing orders. Each field serves a specific purpose in capturing and organizing relevant data. Here's a brief explanation of each field:
 
-# Email: 
+**Email**: 
 This field is essential for creating unique user accounts and establishing communication with customers. It serves as a primary identifier and contact point for order confirmations, password recovery, and other important notifications.
 
-# Given Name (First Name): 
+**Given Name (First Name)**: 
 The given name field is used to store the customer's first name. This information personalizes the shopping experience and is often used in communications such as greetings and personalized messages.
 
-# Family Name (Last Name): 
+**Family Name (Last Name)**: 
 Similar to the given name, the family name field is crucial for personalization and proper identification of customers. It is often used in formal communications and is an integral part of the customer's profile.
 
-# Password: 
+**Password**: 
 The password field is necessary for securing customer accounts and protecting sensitive information. It ensures that only authorized users can access their accounts and make purchases. It is crucial to enforce password policies to enhance security.
 
-# Password Echo (Password Confirmation): 
+**Password Echo (Password Confirmation)**: 
 This field is used to confirm the password entered by the user during the registration or password change process. It helps prevent errors and ensures that the customer has entered the correct password by requiring them to confirm it.
 
-# billing_address_street:
+**billing_address_street**:
 Definition: This field captures the street address of the customer's billing information.
 Purpose: It is crucial for generating accurate invoices and ensuring the correct delivery of physical goods.
 
-# billing_address_city:
+**billing_address_city**:
 Definition: This field captures the city of the customer's billing address.
 Purpose: Helps in identifying the customer's location for taxation purposes and provides essential information for shipping.
 
-# salutation:
+**salutation**:
 Definition: This field captures the salutation or title (e.g., Mr., Mrs., Dr.) associated with the customer.
 Purpose: Adds a personal touch to communications and is often used for formal addressing in documentation.
 
-# country:
+**country**:
 Definition: This field captures the customer's country information.
 Purpose: Necessary for determining applicable taxes, shipping costs, and complying with regional regulations.
 
-# billing_address_zipcode:
+**billing_address_zipcode**:
 Definition: This field captures the postal code or ZIP code of the customer's billing address.
 Purpose: Essential for precise location identification, shipping calculations, and compliance with postal regulations.
 
-# company_name:
+**company_name**:
 Definition: The "company_name" field in Shopware is a data container designated for storing the name of the company associated with a specific entity, such as a customer or business account.
 Purpose : The purpose of the "company_name" field is to accurately identify and associate the respective company information within the Shopware system
 
