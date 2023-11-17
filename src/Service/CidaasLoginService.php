@@ -22,7 +22,6 @@ use GuzzleHttp\Exception\ClientException;
 use Shopware\Core\System\SalesChannel\Context\CartRestorer;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
@@ -31,19 +30,15 @@ use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Country\Exception\CountryNotFoundException;
 use Cidaas\OauthConnect\Util\CidaasStruct;
-
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\FetchMode;
-
 use Symfony\Component\HttpFoundation\Request;
 use Shopware\Storefront\Framework\AffiliateTracking\AffiliateTrackingListener;
 use Shopware\Core\System\SalesChannel\Aggregate\SalesChannelDomain\SalesChannelDomainEntity;
 use Shopware\Core\Framework\Validation\DataValidationDefinition;
 use Shopware\Core\Content\Newsletter\Exception\SalesChannelDomainNotFoundException;
 use Shopware\Storefront\Framework\Routing\RequestTransformer;
-
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-
 
 class CidaasLoginService {
 
@@ -55,23 +50,17 @@ class CidaasLoginService {
     private $countryRepository;
     private $contextRestorer;
     private $sysConfig;
-
     private $wellKnown = '/.well-known/openid-configuration';
     private $wellKnownUrl;
     private $oAuthEndpoints;
     private $client;
-
     private $connection;
-
     private $registerRoute;
-
     private $clientId;
     private $clientSecret;
     private $nonInteractiveClientId;
     private $nonInteractiveClientSecret;
-
     private $cidaasUrl;
-
     private $state = '';
     private $cfCustomerNumber = '';
     private $defaultGroup = '';
@@ -425,7 +414,7 @@ class CidaasLoginService {
         return null;
     }
 
-    public function checkCustomerData($user, $context) {
+    public function updateAddressData($user, $context) {
         $customer = $this->getCustomerBySub($user['sub'], $context);
         if ($customer->getEmail() !== $user['email']) {
             $this->customerRepo->update([
@@ -533,36 +522,6 @@ class CidaasLoginService {
         return;
     }
 
-
-
-    public function getCustomerGroups(SalesChannelContext $context) {
-        $cg = $this->customerGroupRepository->search(new Criteria(), $context->getContext());
-        return $cg;
-    }
-
-    public function getMitgliederGroup(SalesChannelContext $context) {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter("name", "Mitglieder"));
-        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
-    }
-
-    public function getMitarbeiterPromoGroup(SalesChannelContext $context) {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter("name", "MitarbeiterPromo"));
-        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
-    }
-    
-    public function getMitarbeiterGroup(SalesChannelContext $context) {
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('name', 'Mitarbeiter'));
-        return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
-    }
-
-    /**
-     * The original code received throws error as wrong table being used to fetch the customerGroupId, name is not a part of the table customer_group.
-     * The name column is a part of the table customer_group_tranlsation where customer_group_id is a foreign key that is the pirmary key of the table customer_group.
-     * Due to the above reason previous return statement is commented
-     */
     public function getGroupByName($name, SalesChannelContext $context) {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('name', $name));
@@ -945,6 +904,11 @@ class CidaasLoginService {
         }
 
         return $definition;
+    }
+
+    public function getSubFromCustomFields(CustomerEntity $customer): string {
+        $customField = $customer->get('customFields');
+        return $customField['sub'];
     }
     
 }
