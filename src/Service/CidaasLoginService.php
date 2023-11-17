@@ -414,7 +414,7 @@ class CidaasLoginService {
         return null;
     }
 
-    public function checkCustomerData($user, $context) {
+    public function updateAddressData($user, $context) {
         $customer = $this->getCustomerBySub($user['sub'], $context);
         if ($customer->getEmail() !== $user['email']) {
             $this->customerRepo->update([

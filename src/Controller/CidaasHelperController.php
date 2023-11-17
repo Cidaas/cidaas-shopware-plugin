@@ -146,7 +146,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
-                    $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateAddressData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token['sub'], $context);
                     $request->getSession()->set('sub', $token['sub']);
@@ -194,7 +194,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
-                    $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateAddressData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token->sub, $context);
                     $request->getSession()->set('sub', $token->sub);
@@ -222,32 +222,33 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         return $this->forwardToRoute('frontend.home.page');
     }
 
-    /**
-     * @Route("/cidaas/logout", name="cidaas.logout", methods={"GET"})
-     */
-    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag)
+
+    #[Route(path: '/account/logout', name: 'frontend.account.logout.page', methods: ['GET'])]
+    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
     {
-        $token = $request->getSession()->get('_cidaas_token');
-        $this->loginService->endSession($token);
         if ($context->getCustomer() === null) {
-            return $this->redirectToRoute('frontend.home.page');
+            return $this->redirectToRoute('frontend.account.login.page');
         }
-        $this->logoutRoute->logout($context, $dataBag);
-        $salesChannelId = $context->getSalesChannel()->getId();
-        if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
-            $request->getSession()->invalidate();
+        try {
+            $token = $request->getSession()->get('_cidaas_token');
+            if($token){
+                $this->loginService->endSession($token);
+            }
+            $this->logoutRoute->logout($context, $dataBag);
+            $salesChannelId = $context->getSalesChannel()->getId();
+            if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
+               $request->getSession()->invalidate();
+            }
+            $request->getSession()->remove('state');
+            $request->getSession()->remove('_cidaas_token');
+            $request->getSession()->remove('sub');
+            $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
+            $parameters = [];
+        } catch (ConstraintViolationException $formViolations) {
+            $parameters = ['formViolations' => $formViolations];
         }
-        if ($request->query->get('silent')) {
-            return $this->redirectToRoute('frontend.home.page');
-        }
-        if ($request->query->get('session')) {
-            $this->addFlash('warning', 'Deine Sitzung ist abgelaufen, bitte melde dich erneut an.');
-        }
-        $this->addFlash('success', $this->trans('account.logoutSucceeded'));
-        $request->getSession()->remove('state');
-        $request->getSession()->remove('_cidaas_token');
-        $request->getSession()->remove('sub');
-        return $this->redirectToRoute('frontend.home.page');
+
+        return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
     /**
