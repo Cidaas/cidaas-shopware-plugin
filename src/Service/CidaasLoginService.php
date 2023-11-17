@@ -1,15 +1,5 @@
 <?php declare(strict_types = 1);
 
-/**
- *  needed data:
- *  Env => settings
- *  storename=StoreId => settings
- *  shared Secret => settings
- *  api_user => WS{storeId}._.1
- *  api_user_pw => settings
- */
-
-
 namespace Cidaas\OauthConnect\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
