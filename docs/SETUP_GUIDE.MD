@@ -9,10 +9,10 @@
 
 1. clone the shopware plugin repository from remote. Link to the repository is [here](https://gitlab.widas.de/cidaas-public-devkits/cidaas-plugins/cidaas-shopware-plugin)
 2. change the directory to the shopware-plugin folder or you can run the command `cd shopware-plugin`
-3. run the command `docker compose up`. This may take a while to startup up container. Once done you will notice the log as shared below
+3. run the command `docker compose up --build`. This may take a while to startup up container. Once done you will notice the log as shared below
 
 ```ssh
-WOHOOO, dockware/dev:6.4.17.0 IS READY :) - let's get started
+WOHOOO, dockware/dev:6.5.4.0 IS READY :) - let's get started
 -----------------------------------------------------
 DOCKWARE CHANGELOG: /var/www/CHANGELOG.md
 PHP: PHP 7.4.33 (cli) (built: Feb 14 2023 18:30:50) ( NTS )

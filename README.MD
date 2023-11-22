@@ -31,7 +31,7 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
 
 ## Author
 
-[Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
+[Cidaas](https://www.cidaas.com) by Widas ID in cooperation with [Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
 
 ## Requirements / Installation
 
