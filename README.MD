@@ -24,10 +24,6 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
    ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
    ## [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
-# Cidaas Shopware Plugin versions
-
-   # [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
-   # [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
 ## Author
 
