@@ -251,6 +251,8 @@ In the Shopware storefront, when the user updates their profile and address, the
   - company
   - billing_address_country
 
+  We don't send empty values. If I send a new billing address with no company, the company does not get removed.
+
 # **Customer group assignment with Cidaas**
 - upcoming in next version
 
