@@ -209,15 +209,15 @@ To guarantee a seamless customer experience and ensure accurate order processing
 
 **11**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
 
-![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
+![config](docs/docs-images/15.png)
 
 **12**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
 
-![j](docs/docs-images/15.png)
+![j](docs/docs-images/16.png)
 
 **13**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
 
-![plugin_active](docs/docs-images/16.png)
+![plugin_active](docs/docs-images/17.png)
 
 Note:- In a new user instance, a first-time customer-user/end-user has to create an account and register by filling in the details.
 
