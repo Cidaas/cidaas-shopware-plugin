@@ -164,13 +164,13 @@ class CidaasLoginService {
     {
         if ($email !== null) {
             $event = new CustomerBeforeLoginEvent($context, $email);
-            $this->eventDispatcher($event);
+            $this->eventDispatcher->dispatch($event);
         }
         try {
             $customer = $this->getCustomerBySub($sub, $context);
         }
-        catch (BadCredentialsException $ex) {
-            throw new UnauthorizedHttpException('json', $exception->getMessage());
+        catch (BadCredentialsException $e) {
+            throw new UnauthorizedHttpException('json', $e->getMessage());
         }
         $context = $this->contextRestorer->restore($customer->getId(), $context);
         $newToken = $context->getToken();
