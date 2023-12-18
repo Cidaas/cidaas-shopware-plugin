@@ -5,7 +5,7 @@
         {% if not context.customer.guest %}
             <div class="card-footer account-aside-footer">
                 {% block page_account_sidebar_logout %}
-                    <a href="{{ path('cidaas.logout') }}"
+                  <a href="{{ path('frontend.account.logout.page') }}"
                         class="btn btn-link account-aside-btn">
                         {% sw_icon 'log-out' %}
                         {{ "account.logout"|trans|sw_sanitize }}

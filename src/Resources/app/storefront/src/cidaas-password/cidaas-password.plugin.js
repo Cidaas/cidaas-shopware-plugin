@@ -49,7 +49,7 @@ export default class CidaasPassword extends Plugin {
                 try {
                     let result = JSON.parse(res)
                     if (result.success) {
-                        window.location.href="/account"
+                        window.location.href = "/account/logout";
                     }
                 } catch (err) {
                     
