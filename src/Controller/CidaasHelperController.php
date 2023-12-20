@@ -125,6 +125,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -146,7 +147,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
-                    $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateAddressData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token['sub'], $context);
                     $request->getSession()->set('sub', $token['sub']);
@@ -173,6 +174,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -194,7 +196,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
                     $this->loginService->checkWebshopId($user, $context);
-                    $this->loginService->checkCustomerData($user, $context);
+                    $this->loginService->updateAddressData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token->sub, $context);
                     $request->getSession()->set('sub', $token->sub);
@@ -222,32 +224,33 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         return $this->forwardToRoute('frontend.home.page');
     }
 
-    /**
-     * @Route("/cidaas/logout", name="cidaas.logout", methods={"GET"})
-     */
-    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag)
+
+    #[Route(path: '/account/logout', name: 'frontend.account.logout.page', methods: ['GET'])]
+    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
     {
-        $token = $request->getSession()->get('_cidaas_token');
-        $this->loginService->endSession($token);
         if ($context->getCustomer() === null) {
-            return $this->redirectToRoute('frontend.home.page');
+            return $this->redirectToRoute('frontend.account.login.page');
         }
-        $this->logoutRoute->logout($context, $dataBag);
-        $salesChannelId = $context->getSalesChannel()->getId();
-        if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
-            $request->getSession()->invalidate();
+        try {
+            $token = $request->getSession()->get('_cidaas_token');
+            if($token){
+                $this->loginService->endSession($token);
+            }
+            $this->logoutRoute->logout($context, $dataBag);
+            $salesChannelId = $context->getSalesChannel()->getId();
+            if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
+               $request->getSession()->invalidate();
+            }
+            $request->getSession()->remove('state');
+            $request->getSession()->remove('_cidaas_token');
+            $request->getSession()->remove('sub');
+            $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
+            $parameters = [];
+        } catch (ConstraintViolationException $formViolations) {
+            $parameters = ['formViolations' => $formViolations];
         }
-        if ($request->query->get('silent')) {
-            return $this->redirectToRoute('frontend.home.page');
-        }
-        if ($request->query->get('session')) {
-            $this->addFlash('warning', 'Deine Sitzung ist abgelaufen, bitte melde dich erneut an.');
-        }
-        $this->addFlash('success', $this->trans('account.logoutSucceeded'));
-        $request->getSession()->remove('state');
-        $request->getSession()->remove('_cidaas_token');
-        $request->getSession()->remove('sub');
-        return $this->redirectToRoute('frontend.home.page');
+
+        return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
     /**
@@ -349,7 +352,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
      */
     public function changepassword(Request $request, SalesChannelContext $context): Response
     {
-        //authz-srv/authz/?response_type=token&client_id=96d26174-49bb-4278-84db-e109c55144e4&viewtype=login&redirect_uri=https://my-test.mainz05.de/user-profile/changepassword
         $sub = $request->getSession()->get('sub');
         $token = $request->getSession()->get('_cidaas_token');
         $newPassword = $request->get('newPassword');

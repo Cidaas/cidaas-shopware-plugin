@@ -3,7 +3,7 @@
   "description": "Cidaas SSO - OpenID Connect",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "authors": [
     {
       "name": "Joshua Kopp",

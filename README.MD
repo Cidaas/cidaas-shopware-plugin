@@ -24,9 +24,10 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
    ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
    ## [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
+
 ## Author
 
-[Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
+[Cidaas](https://www.cidaas.com) by Widas ID in cooperation with [Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
 
 ## Requirements / Installation
 
@@ -208,15 +209,15 @@ To guarantee a seamless customer experience and ensure accurate order processing
 
 **11**. Navigate to the Shopware dashboard > Extensions > My extensions > My plugin > click on configure.
 
-![config](uploads/e6d1ed869e32b65d3ee07acc12bbf8df/config.png)
+![config](docs/docs-images/15.png)
 
 **12**. Enter the details on Cidaas OAuth2 Connect Configuration page. Select Sales Channel, provide values for the fields, and Save.
 
-![j](docs/docs-images/15.png)
+![j](docs/docs-images/16.png)
 
 **13**. Once the plugin is active, the login with cidaas button will appear on your store end user login page. Your customer-user/end-user can now login with cidaas.
 
-![plugin_active](docs/docs-images/16.png)
+![plugin_active](docs/docs-images/17.png)
 
 Note:- In a new user instance, a first-time customer-user/end-user has to create an account and register by filling in the details.
 
@@ -249,6 +250,8 @@ In the Shopware storefront, when the user updates their profile and address, the
   - billing_address_city
   - company
   - billing_address_country
+
+  We don't send empty values. If I send a new billing address with no company, the company does not get removed.
 
 # **Customer group assignment with Cidaas**
 - upcoming in next version
