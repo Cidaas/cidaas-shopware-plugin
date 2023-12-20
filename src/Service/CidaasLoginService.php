@@ -921,5 +921,8 @@ class CidaasLoginService {
         return $definition;
     }
 
-
+    public function getSubFromCustomFields(CustomerEntity $customer): string {
+        $customField = $customer->get('customFields');
+        return $customField['sub'];
+    }
 }
