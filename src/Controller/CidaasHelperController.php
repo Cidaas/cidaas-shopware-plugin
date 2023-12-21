@@ -133,9 +133,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-        
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -182,9 +182,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     $request->getSession()->set('sub', $token->sub);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
