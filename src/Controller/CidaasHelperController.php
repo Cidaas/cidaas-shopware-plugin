@@ -377,10 +377,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         );
     }
 
-     /**
-     * @Route("/cidaas/update-profile", name="frontend.account.profile.save", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
-     */
-    public function updateProfile(Request $request, SalesChannelContext $context): Response
+
+    #[Route(path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: ['_loginRequired' => true], methods: ['POST'])]
+    public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response
     {
         $sub = $request->getSession()->get('sub');
         $firstName = $request->get('firstName');
@@ -393,6 +392,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                  // Key exists in the array
                 if(array_key_exists('success', $responseData)){
                   if($responseData['success'] === true){
+                    $this->updateCustomerProfileRoute->change($data, $context, $customer);
                      $this->addFlash('success', 'Successfully updated profile');
                   } elseif ($responseData['success'] === false){
                     if (array_key_exists('error', $responseData)) {
