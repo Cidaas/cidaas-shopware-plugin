@@ -16,7 +16,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Checkout\Customer\Exception\AddressNotFoundException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-use GuzzleHttp\Client;
 use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
@@ -24,8 +23,6 @@ use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Customer\CustomerException;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
-use Cidaas\OauthConnect\Util\CidaasStruct;
-use Shopware\Core\Framework\Routing\RoutingException;
 use Shopware\Storefront\Page\Address\AddressEditorModalStruct;
 use Shopware\Storefront\Page\Address\Listing\AddressBookWidgetLoadedHook;
 use Shopware\Storefront\Page\Address\Listing\AddressListingPageLoader;
@@ -40,7 +37,6 @@ class CidaasAddressController extends StorefrontController {
 
     private const ADDRESS_TYPE_BILLING = 'billing';
     private const ADDRESS_TYPE_SHIPPING = 'shipping';
-    private $state;
 
     public function __construct(
         private readonly CidaasLoginService $loginService,
@@ -128,6 +124,7 @@ class CidaasAddressController extends StorefrontController {
     }
 
     // Get customer ID based on address ID
+
     private function getById( string $addressId, SalesChannelContext $context, CustomerEntity $customer ): CustomerAddressEntity {
         if ( !Uuid::isValid( $addressId ) ) {
             throw new InvalidUuidException( $addressId );

@@ -9,36 +9,19 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\Checkout\Customer\Exception\AddressNotFoundException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-use GuzzleHttp\Client;
 use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Core\Framework\Validation\DataBag\DataBag;
-use Shopware\Core\Checkout\Customer\CustomerEntity;
-use Shopware\Core\Checkout\Customer\CustomerException;
-use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
-use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
-use Cidaas\OauthConnect\Util\CidaasStruct;
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedHook;
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoader;
 use Shopware\Core\Framework\Routing\RoutingException;
-use Shopware\Storefront\Page\Address\AddressEditorModalStruct;
-use Shopware\Storefront\Page\Address\Listing\AddressBookWidgetLoadedHook;
-use Shopware\Core\Checkout\Cart\Exception\CustomerNotLoggedInException;
-use Shopware\Core\Checkout\Cart\Order\Transformer\CustomerTransformer;
 
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 
  class CidaasRegisterController extends StorefrontController {
-
-    private $state;
 
     public function __construct(
         private readonly CidaasLoginService $loginService, 
