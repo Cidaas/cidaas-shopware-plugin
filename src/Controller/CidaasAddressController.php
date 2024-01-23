@@ -49,7 +49,7 @@ class CidaasAddressController extends StorefrontController {
     }
 
     // Update billing address to Cidaas
-    #[ Route( path: '/cidaas/update-address', name: 'frontend.account.address.edit.save', options: [ 'seo' => false ], defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
+    #[Route( path: '/cidaas/update-address', name: 'frontend.account.address.edit.save', options: [ 'seo' => false ], defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
 
     public function billingAddressUpdate( Request $request, RequestDataBag $data, SalesChannelContext $context,  CustomerEntity $customer ): Response {
 
@@ -68,7 +68,7 @@ class CidaasAddressController extends StorefrontController {
     }
 
     // Select the address and update based on the selection of billing and shipping addresses
-    #[ Route( path: '/cidaas/address/default-{type}/{addressId}', name: 'frontend.account.address.set-default-address', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
+    #[Route( path: '/cidaas/address/default-{type}/{addressId}', name: 'frontend.account.address.set-default-address', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
 
     public function switchDefaultAddresses( Request $request, string $type, string $addressId, SalesChannelContext $context, CustomerEntity $customer ): RedirectResponse {
         if ( !Uuid::isValid( $addressId ) ) {
@@ -165,7 +165,7 @@ class CidaasAddressController extends StorefrontController {
     }
 
     // update address-book through pop up while checkout the cart
-    #[ Route( path: '/widgets/account/address-book', name: 'frontend.account.addressbook', options: [ 'seo' => true ], defaults: [ 'XmlHttpRequest' => true, '_loginRequired' => true, '_loginRequiredAllowGuest' => true ], methods: [ 'POST' ] ) ]
+    #[Route( path: '/widgets/account/address-book', name: 'frontend.account.addressbook', options: [ 'seo' => true ], defaults: [ 'XmlHttpRequest' => true, '_loginRequired' => true, '_loginRequiredAllowGuest' => true ], methods: [ 'POST' ] ) ]
 
     public function addressBook( Request $request, RequestDataBag $dataBag, SalesChannelContext $context, CustomerEntity $customer ): Response {
         $viewData = new AddressEditorModalStruct();
