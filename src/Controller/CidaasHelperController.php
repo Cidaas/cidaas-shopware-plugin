@@ -18,7 +18,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRoute;
 
-#[ Route( defaults: [ '_routeScope' => [ 'storefront' ] ] ) ]
+#[Route( defaults: [ '_routeScope' => [ 'storefront' ] ] ) ]
 
 class CidaasHelperController extends StorefrontController {
 
@@ -30,17 +30,8 @@ class CidaasHelperController extends StorefrontController {
     ) {
     }
 
-    #[ Route( path: '/cidaashelper/dev', methods: [ 'GET' ] ) ]
-
-    public function dev( Request $req ): Response {
-        $sess = $req->getSession();
-        return $this->renderStorefront( '@CidaasHelper/storefront/dev/dev.html.twig', [] );
-    }
-
-    // Redirect all account login stuff
-
-    #[ Route( path: '/account/login', name: 'frontend.account.login.page' ) ]
-
+    // Redirect all account login 
+    #[Route( path: '/account/login', name: 'frontend.account.login.page' ) ]
     public function loginRedirect( Request $request ): Response {
         if ( $request->get( 'redirectTo' ) ) {
             if ( $request->get( 'redirectParameters' ) ) {
@@ -53,14 +44,7 @@ class CidaasHelperController extends StorefrontController {
         return $this->forwardToRoute( 'frontend.home.page' );
     }
 
-    #[ Route( path: '/cidaashelper/form', name: 'cidaashelper.form', options: [ 'seo' => false ], methods: [ 'POST' ] ) ]
-
-    public function form(): Response {
-        return $this->json( array() );
-    }
-
-    #[ Route( path: '/cidaas/redirect', name: 'cidaas.redirect', options: [ 'seo' => false ], methods: [ 'GET' ] ) ]
-
+    #[Route( path: '/cidaas/redirect', name: 'cidaas.redirect', options: [ 'seo' => false ], methods: [ 'GET' ] ) ]
     public function cidaasRedirect( Request $request, SalesChannelContext $context ) {
         $code = $request->query->get( 'code' );
         $state = $request->query->get( 'state' );
@@ -175,8 +159,7 @@ class CidaasHelperController extends StorefrontController {
         return $this->forwardToRoute( 'frontend.home.page' );
     }
 
-    #[ Route( path: '/account/logout', name: 'frontend.account.logout.page', methods: [ 'GET' ] ) ]
-
+    #[Route( path: '/account/logout', name: 'frontend.account.logout.page', methods: [ 'GET' ] ) ]
     public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
         if ( $context->getCustomer() === null ) {
             return $this->redirectToRoute( 'frontend.account.login.page' );
@@ -203,16 +186,14 @@ class CidaasHelperController extends StorefrontController {
         return $this->redirectToRoute( 'frontend.account.login.page', $parameters );
     }
 
-    #[ Route( path: '/cidaas/exists', name: 'cidaas.exists', options: [ 'seo' => false ], defaults: [ '_noStore' => true ], methods: [ 'POST' ] ) ]
-
+    #[Route( path: '/cidaas/exists', name: 'cidaas.exists', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function exists( Request $request, SalesChannelContext $context ): Response {
         $email = $request->get( 'email' );
         $exists = $this->loginService->customerExistsByEmail( $email, $context );
         return $this->json( $exists );
     }
 
-    #[ Route( path: '/cidaas/authuri/{email}', name: 'cidaas.authuri', options: [ 'seo' => false ], defaults: [ '_noStore' => true ], methods: [ 'GET' ] ) ]
-
+    #[Route( path: '/cidaas/authuri/{email}', name: 'cidaas.authuri', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
     public function authuri( Request $request, $email ): Response {
         if ( $request->getSession()->get( 'state' ) ) {
             $state = $request->getSession()->get( 'state' );
@@ -223,8 +204,7 @@ class CidaasHelperController extends StorefrontController {
         ) );
     }
 
-    #[ Route( path: '/cidaas/lastlogin/{customerId}', name: 'cidaas.lastlogin', options: [ 'seo' => false ], defaults: [ '_noStore' => true ], methods: [ 'GET' ] ) ]
-
+    #[Route( path: '/cidaas/lastlogin/{customerId}', name: 'cidaas.lastlogin', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
     public function lastLogin( Request $request, SalesChannelContext $context, $customerId ): Response {
         $lastLogin = $this->loginService->getLastLogin( $customerId, $context );
         return $this->json( array(
@@ -232,8 +212,7 @@ class CidaasHelperController extends StorefrontController {
         ) );
     }
 
-    #[ Route( path: '/cidaas/login', name: 'cidaas.login', options: [ 'seo' => false ], defaults: [ '_noStore' => true ], methods: [ 'GET' ] ) ]
-
+    #[Route( path: '/cidaas/login', name: 'cidaas.login', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
     public function cidaasLogin( Request $request, SalesChannelContext $context ): Response {
         if ( $request->query->get( 'redirect_to' ) ) {
             $request->getSession()->set( 'redirect_to', $request->query->get( 'redirect_to' ) );
@@ -254,41 +233,19 @@ class CidaasHelperController extends StorefrontController {
         return new RedirectResponse( $red );
     }
 
-    #[ Route( path: '/cidaas/login', name: 'cidaas.identity' ) ]
-
-    public function identityLogin( Request $request, SalesChannelContext $context ): Response {
-        if ( $request->query->get( 'error' ) ) {
-            if ( $request->query->get( 'error' ) === 'invalid_username_password' ) {
-                $this->addFlash( 'danger', 'Falsche E-Mail oder Passwort' );
-            } else {
-                $this->addFlash( 'danger', 'Fehler bei der Anmeldung' );
-            }
-        }
-        $requestId = $request->query->get( 'requestId' );
-        $cidaasUrl = $this->loginService->getCidaasUrl();
-        return $this->renderStorefront( '@CidaasHelper/storefront/dev/dev.html.twig', [
-            'requestId' => $requestId,
-            'cidaas' => $cidaasUrl
-        ] );
+    #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET', 'POST' ] ) ]
+    public function changepassword( Request $request, SalesChannelContext $context ): Response {
+        $sub = $request->getSession()->get( 'sub' );
+        $token = $request->getSession()->get( '_cidaas_token' );
+        $newPassword = $request->get( 'newPassword' );
+        $confirmPassword = $request->get( 'confirmPassword' );
+        $oldPassword = $request->get( 'oldPassword' );
+        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $token );
+        $this->addFlash( 'success', 'Password has been changed.' );
+        return $this->json( $res );
     }
 
-
-    #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], methods: [ 'GET','POST' ] ) ]
-
-    public function changepassword(Request $request, SalesChannelContext $context): Response
-    {
-        $sub = $request->getSession()->get('sub');
-        $token = $request->getSession()->get('_cidaas_token');
-        $newPassword = $request->get('newPassword');
-        $confirmPassword = $request->get('confirmPassword');
-        $oldPassword = $request->get('oldPassword');
-        $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
-        $this->addFlash('success', 'Password has been changed.');
-        return $this->json($res);
-    }
-
-    #[ Route( path: '/cidaas/emailform', name: 'cidaas.emailform', options: [ 'seo' => false ],defaults: ['XmlHttpRequest' => true], methods: [ 'POST' ] ) ]
-
+    #[Route( path: '/cidaas/emailform', name: 'cidaas.emailform', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function emailForm( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $email = $request->get( 'email' );
@@ -299,8 +256,7 @@ class CidaasHelperController extends StorefrontController {
         );
     }
 
-    #[ Route( path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
-
+    #[Route( path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
     public function updateProfile( Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $firstName = $request->get( 'firstName' );
@@ -339,18 +295,15 @@ class CidaasHelperController extends StorefrontController {
         return $this->redirectToRoute( 'frontend.account.profile.page' );
     }
 
-
-    #[ Route( path: '/cidaas/url', name: 'cidaas.url', options: [ 'seo' => false ],defaults: ['XmlHttpRequest' => true], methods: [ 'GET' ] ) ]
-    public function getUrl(Request $request): Response
-    {
-        return $this->json(array(
-            "url" => $this->loginService->getCidaasUrl()
-        ));
+    #[Route( path: '/cidaas/url', name: 'cidaas.url', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
+    public function getUrl( Request $request ): Response {
+        return $this->json( array(
+            'url' => $this->loginService->getCidaasUrl()
+        ) );
     }
 
-    #[ Route( path: '/cidaas/generate', name: 'cidaas.generate', options: [ 'seo' => false ], methods: [ 'POST' ] ) ]
-
-    public function generateRequest( Request $request, SalesChannelContext $context ): Response {
+    #[Route( path: '/cidaas/generate', name: 'cidaas.generate', options: [ 'seo' => false ],defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
+    public function generateRequest( Request $request ): Response {
         $clientId = $this->loginService->getSysConfig( 'CidaasHelper.config.clientId' );
         $url = $request->get( 'sw-sales-channel-absolute-base-url' ).'/cidaas/redirect';
         $state = $request->getSession()->get( 'state' );
