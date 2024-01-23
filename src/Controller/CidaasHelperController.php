@@ -81,16 +81,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $this->updateCustomerProfileRoute = $updateCustomerProfileRoute;
     }
 
-    /**
-     * @Route("/cidaashelper/dev", methods={"GET"})
-     */
-    public function dev(Request $req): Response
-    {
-        $sess = $req->getSession();
-        return $this->renderStorefront("@CidaasHelper/storefront/dev/dev.html.twig", []);
-    }
 
-   // Redirect all account login stuff
+    // Redirect all account login stuff
     /**
      * @Route("/account/login", name="frontend.account.login.page")
      */
@@ -105,14 +97,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             return $this->redirectTo('cidaas.login');
         }
         return $this->forwardToRoute('frontend.home.page');
-    }
-
-    /**
-     * @Route("/cidaashelper/form", name="cidaashelper.form", methods={"POST"},options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
-     */
-    public function form(Request $request, SalesChannelContext $context): Response
-    {
-        return $this->json(array());
     }
 
     /**
@@ -338,25 +322,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url')));
     }
 
-    /**
-     * @Route("/cidaas/identity/login", name="cidaas.identity.login")
-     */
-    public function identityLogin(Request $request, SalesChannelContext $context): Response
-    {
-        if ($request->query->get('error')) {
-            if ($request->query->get('error') === 'invalid_username_password') {
-                $this->addFlash('danger', 'Falsche E-Mail oder Passwort');
-            } else {
-                $this->addFlash('danger', 'Fehler bei der Anmeldung');
-            }
-        }
-        $requestId = $request->query->get('requestId');
-        $cidaasUrl = $this->loginService->getCidaasUrl();
-        return $this->renderStorefront("@CidaasHelper/storefront/dev/dev.html.twig", [
-            'requestId' => $requestId,
-            'cidaas' => $cidaasUrl
-        ]);
-    }
 
     /**
      * @Route("/cidaas/changepassword", name="cidaas.changepassword", methods={"GET", "POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
