@@ -145,7 +145,7 @@ class CidaasLoginService {
     {
         if ($email !== null) {
             $event = new CustomerBeforeLoginEvent($context, $email);
-            $this->eventDispatcher($event);
+            $this->eventDispatcher->dispatch($event);
         }
         try {
             $customer = $this->getCustomerBySub($sub, $context);
