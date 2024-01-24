@@ -150,8 +150,8 @@ class CidaasLoginService {
         try {
             $customer = $this->getCustomerBySub($sub, $context);
         }
-        catch (BadCredentialsException $ex) {
-            throw new UnauthorizedHttpException('json', $exception->getMessage());
+        catch (BadCredentialsException $e) {
+            throw new UnauthorizedHttpException('json', $e->getMessage());
         }
         $context = $this->contextRestorer->restore($customer->getId(), $context);
         $newToken = $context->getToken();
