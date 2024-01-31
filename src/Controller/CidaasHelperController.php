@@ -53,8 +53,9 @@ class CidaasHelperController extends StorefrontController {
             $token = $this->loginService->getAccessToken( $code, $request->get( 'sw-sales-channel-absolute-base-url' ) );
             if ( is_array( $token ) ) {
                 if ( isset( $token[ 'sub' ] ) ) {
-                    $request->getSession()->set( '_cidaas_token', $token[ 'access_token' ] );
+                    $request->getSession()->set( 'access_token', $token[ 'access_token' ] );
                     $request->getSession()->set( 'sub', $token[ 'sub' ] );
+                    $request->getSession()->set( 'refresh_token', $token[ 'refresh_token' ] );
                     $user = $this->loginService->getAccountFromCidaas( $token[ 'access_token' ] );
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
@@ -103,8 +104,9 @@ class CidaasHelperController extends StorefrontController {
                 }
             } else if ( is_object( $token ) ) {
                 if ( isset( $token->sub ) ) {
-                    $request->getSession()->set( '_cidaas_token', $token->access_token );
+                    $request->getSession()->set( 'access_token', $token->access_token );
                     $request->getSession()->set( 'sub', $token->sub );
+                    $request->getSession()->set( 'refresh_token', $token->refresh_token );
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
@@ -165,7 +167,7 @@ class CidaasHelperController extends StorefrontController {
             return $this->redirectToRoute( 'frontend.account.login.page' );
         }
         try {
-            $token = $request->getSession()->get( '_cidaas_token' );
+            $token = $request->getSession()->get( 'access_token' );
             if ( $token ) {
                 $this->loginService->endSession( $token );
             }
@@ -175,7 +177,7 @@ class CidaasHelperController extends StorefrontController {
                 $request->getSession()->invalidate();
             }
             $request->getSession()->remove( 'state' );
-            $request->getSession()->remove( '_cidaas_token' );
+            $request->getSession()->remove( 'access_token' );
             $request->getSession()->remove( 'sub' );
             $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
@@ -236,7 +238,7 @@ class CidaasHelperController extends StorefrontController {
     #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET', 'POST' ] ) ]
     public function changepassword( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
-        $token = $request->getSession()->get( '_cidaas_token' );
+        $token = $request->getSession()->get( 'access_token' );
         $newPassword = $request->get( 'newPassword' );
         $confirmPassword = $request->get( 'confirmPassword' );
         $oldPassword = $request->get( 'oldPassword' );

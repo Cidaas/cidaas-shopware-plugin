@@ -239,7 +239,7 @@ class CidaasLoginService {
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint 
-            . '?scope='. urlencode("openid email profile groups") .'&response_type=code'
+            . '?scope='. urlencode("openid offline_access email profile groups") .'&response_type=code'
             . '&approval_prompt=auto&redirect_uri='. urlencode($redirectUri) 
             . '&client_id='.$this->clientId . '&state='.$state;
         if ($email !== null) {
@@ -253,7 +253,7 @@ class CidaasLoginService {
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
-            . urlencode("openid email profile") . '&client_id='.$this->clientId
+            . urlencode("openid offline_access email profile groups") . '&client_id='.$this->clientId
             . '&response_type=code&approval_prompt=auto&redirect_uri='
             . urlencode($redirectUri)
             . '&view_type=register'
@@ -910,5 +910,55 @@ class CidaasLoginService {
         $customField = $customer->get('customFields');
         return $customField['sub'];
     }
+
+    // check expired token
+    function isTokenExpired($token) {
+        $payload = json_decode(base64_decode(explode('.', $token)[1]), true);
     
+        // Check if the 'exp' claim exists in the payload
+        if (isset($payload['exp'])) {
+            // Calculate the expiration timestamp based on 'exp' claim
+            $expirationTimestamp = $payload['exp'];
+    
+            // Calculate the current timestamp
+            $currentTimestamp = time();
+    
+            // Check if the token has expired
+            if ($currentTimestamp > $expirationTimestamp) {
+                // Token has expired
+                return true;
+            } else {
+                // Token is still valid
+                return false;
+            }
+        } else {
+            // 'exp' claim not found in the payload
+            return false;
+        }
+    }
+
+    // Renew token 
+    public function renewAccessToken(Request $request)
+    {
+        $client = new Client();
+        $refreshToken = $request->getSession()->get( 'refresh_token' );
+        try {
+            $response = $client->post($this->oAuthEndpoints->token_endpoint, [
+                'form_params' => [
+                    'grant_type' => 'refresh_token',
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'refresh_token' => $refreshToken,
+                ],
+                'headers' => [
+                    'content_type' => 'application/json'
+                ]
+            ]);
+        } 
+        catch (ClientException $e) {
+            $msg = \json_decode($e->getResponse()->getBody()->getContents());
+            return $msg;
+        }
+        return json_decode($response->getBody()->getContents(), true);
+    }
 }
