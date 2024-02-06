@@ -17,26 +17,28 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractListAddressRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use GuzzleHttp\Client;
-
 use Cidaas\OauthConnect\Service\CidaasLoginService;
 use Shopware\Core\Framework\Uuid\Uuid;
-
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Checkout\Customer\Exception\AddressNotFoundException;
-
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
-
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Cidaas\OauthConnect\Util\CidaasStruct;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
-
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedHook;
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoader;
 use Shopware\Core\Framework\Routing\RoutingException;
-
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
+
+use Shopware\Storefront\Page\Address\AddressEditorModalStruct;
+use Shopware\Storefront\Page\Address\Listing\AddressListingPageLoader;
+use Shopware\Storefront\Page\Address\Listing\AddressBookWidgetLoadedHook;
+use Shopware\Core\Framework\Feature;
+use Shopware\Core\Checkout\Customer\SalesChannel\AbstractUpsertAddressRoute;
+use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRoute;
+
 /**
  * @RouteScope(scopes={"storefront"})
  */
@@ -51,6 +53,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
     private const ADDRESS_TYPE_SHIPPING = 'shipping';
 
     private $state;
+    private AddressListingPageLoader $addressListingPageLoader;
+    private AbstractUpsertAddressRoute $updateAddressRoute;
+    private AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute;
 
     public function __construct(
         CidaasLoginService $loginService, 
@@ -59,7 +64,10 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
         AbstractListAddressRoute $listAddressRoute,
         AccountService $accountService,
         CheckoutRegisterPageLoader $registerPageLoader,
-        AbstractRegisterRoute $registerRoute
+        AbstractRegisterRoute $registerRoute,
+        AddressListingPageLoader $addressListingPageLoader,
+        AbstractUpsertAddressRoute $updateAddressRoute,
+        AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
         ) {
         $this->loginService = $loginService;
         $this->cartService = $cartService;
@@ -68,6 +76,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
         $this->accountService = $accountService;
         $this->registerPageLoader = $registerPageLoader;
         $this->registerRoute = $registerRoute;
+        $this->addressListingPageLoader = $addressListingPageLoader;
+        $this->updateAddressRoute = $updateAddressRoute;
+        $this->updateCustomerProfileRoute = $updateCustomerProfileRoute;
     }
 
     /**
@@ -122,9 +133,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-        
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -171,9 +182,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
                     $request->getSession()->set('sub', $token->sub);
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        // $data = $this->loginService->registerExistingUser($user, $context);
                         try {
                             $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
+                            $this->loginService->checkCustomerGroups($user, $context);
                             if ($request->getSession()->get('redirect_to')) {
                                 $target = $request->getSession()->get('redirect_to');
                                 $request->getSession()->remove('redirect_to');
@@ -224,31 +235,33 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
     }
 
     /**
-     * @Route("/cidaas/logout", name="cidaas.logout", methods={"GET"})
+     * @Route("/account/logout", name="frontend.account.logout.page", methods={"GET"})
      */
-    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag)
+    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
     {
-        $token = $request->getSession()->get('_cidaas_token');
-        $this->loginService->endSession($token);
         if ($context->getCustomer() === null) {
-            return $this->redirectToRoute('frontend.home.page');
+            return $this->redirectToRoute('frontend.account.login.page');
         }
-        $this->logoutRoute->logout($context, $dataBag);
-        $salesChannelId = $context->getSalesChannel()->getId();
-        if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
-            $request->getSession()->invalidate();
+        try {
+            $token = $request->getSession()->get('_cidaas_token');
+            if($token){
+                $this->loginService->endSession($token);
+            }
+            $this->logoutRoute->logout($context, $dataBag);
+            $salesChannelId = $context->getSalesChannel()->getId();
+            if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
+               $request->getSession()->invalidate();
+            }
+            $request->getSession()->remove('state');
+            $request->getSession()->remove('_cidaas_token');
+            $request->getSession()->remove('sub');
+            $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
+            $parameters = [];
+        } catch (ConstraintViolationException $formViolations) {
+            $parameters = ['formViolations' => $formViolations];
         }
-        if ($request->query->get('silent')) {
-            return $this->redirectToRoute('frontend.home.page');
-        }
-        if ($request->query->get('session')) {
-            $this->addFlash('warning', 'Deine Sitzung ist abgelaufen, bitte melde dich erneut an.');
-        }
-        $this->addFlash('success', $this->trans('account.logoutSucceeded'));
-        $request->getSession()->remove('state');
-        $request->getSession()->remove('_cidaas_token');
-        $request->getSession()->remove('sub');
-        return $this->redirectToRoute('frontend.home.page');
+
+        return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
     /**
@@ -376,9 +389,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
     }
 
      /**
-     * @Route("/cidaas/update-profile", name="frontend.account.profile.save", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
+     * @Route("/cidaas/update-profile", name="frontend.account.profile.save", methods={"POST"}, options={"seo"="false"}, defaults={"_loginRequired"=true})
      */
-    public function updateProfile(Request $request, SalesChannelContext $context): Response
+    public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response
     {
         $sub = $request->getSession()->get('sub');
         $firstName = $request->get('firstName');
@@ -391,6 +404,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
                  // Key exists in the array
                 if(array_key_exists('success', $responseData)){
                   if($responseData['success'] === true){
+                     $this->updateCustomerProfileRoute->change($data, $context, $customer);
                      $this->addFlash('success', 'Successfully updated profile');
                   } elseif ($responseData['success'] === false){
                     if (array_key_exists('error', $responseData)) {
@@ -679,5 +693,195 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
         }
 
         return new Response();
+    }
+
+    /**
+    * @Route("/widgets/account/address-book", name="frontend.account.addressbook", options={"seo"=true}, methods={"POST"}, defaults={"XmlHttpRequest"=true, "_loginRequired"=true, "_loginRequiredAllowGuest"=true})
+    */
+    public function addressBook(Request $request, RequestDataBag $dataBag, SalesChannelContext $context, CustomerEntity $customer): Response
+    {
+        $viewData = new AddressEditorModalStruct();
+        $params = [];
+
+        try {
+            $this->handleChangeableAddresses($viewData, $dataBag, $context, $customer);
+            $this->handleAddressCreation($viewData, $dataBag, $context, $customer);
+            $this->handleAddressSelection($viewData, $dataBag, $context, $customer);
+
+            $page = $this->addressListingPageLoader->load($request, $context, $customer);
+
+            $this->hook(new AddressBookWidgetLoadedHook($page, $context));
+
+            $viewData->setPage($page);
+            if (Feature::isActive('FEATURE_NEXT_15957')) {
+                $this->handleCustomerVatIds($dataBag, $context, $customer);
+            }
+        } catch (ConstraintViolationException $formViolations) {
+            $params['formViolations'] = $formViolations;
+            $params['postedData'] = $dataBag->get('address');
+        } catch (\Exception $exception) {
+            $viewData->setSuccess(false);
+            $viewData->setMessages([
+                'type' => self::DANGER,
+                'text' => $this->trans('error.message-default'),
+            ]);
+        }
+
+        if ($request->get('redirectTo') || $request->get('forwardTo')) {
+            return $this->createActionResponse($request);
+        }
+        $params = array_merge($params, $viewData->getVars());
+
+        $response = $this->renderStorefront(
+            '@Storefront/storefront/component/address/address-editor-modal.html.twig',
+            $params
+        );
+
+        $response->headers->set('x-robots-tag', 'noindex');
+
+        return $response;
+    }
+
+    private function handleAddressCreation(
+        AddressEditorModalStruct $viewData,
+        RequestDataBag $dataBag,
+        SalesChannelContext $context,
+        CustomerEntity $customer
+    ): void {
+        /** @var DataBag|null $addressData */
+        $addressData = $dataBag->get('address');
+
+        if ($addressData === null) {
+            return;
+        }
+
+        $response = $this->updateAddressRoute->upsert(
+            $addressData->get('id'),
+            $addressData->toRequestDataBag(),
+            $context,
+            $customer
+        );
+
+        $addressId = $response->getAddress()->getId();
+
+        $addressType = null;
+
+        if ($viewData->isChangeBilling()) {
+            $addressType = self::ADDRESS_TYPE_BILLING;
+        } elseif ($viewData->isChangeShipping()) {
+            $addressType = self::ADDRESS_TYPE_SHIPPING;
+        }
+
+        // prepare data to set newly created address as customers default
+        if ($addressType) {
+            $dataBag->set('selectAddress', new RequestDataBag([
+                'id' => $addressId,
+                'type' => $addressType,
+            ]));
+        }
+
+        $viewData->setAddressId($addressId);
+        $viewData->setSuccess(true);
+        $viewData->setMessages(['type' => 'success', 'text' => $this->trans('account.addressSaved')]);
+    }
+
+    private function handleChangeableAddresses(
+        AddressEditorModalStruct $viewData,
+        RequestDataBag $dataBag,
+        SalesChannelContext $context,
+        CustomerEntity $customer
+    ): void {
+        $changeableAddresses = $dataBag->get('changeableAddresses');
+
+        if ($changeableAddresses === null) {
+            return;
+        }
+
+        $viewData->setChangeShipping((bool) $changeableAddresses->get('changeShipping'));
+        $viewData->setChangeBilling((bool) $changeableAddresses->get('changeBilling'));
+
+        $addressId = $dataBag->get('id');
+
+        if (!$addressId) {
+            return;
+        }
+
+        $viewData->setAddress($this->getById($addressId, $context, $customer));
+    }
+
+    /**
+     * @throws CustomerNotLoggedInException
+     * @throws InvalidUuidException
+     */
+    private function handleAddressSelection(
+        AddressEditorModalStruct $viewData,
+        RequestDataBag $dataBag,
+        SalesChannelContext $context,
+        CustomerEntity $customer
+    ): void {
+        $selectedAddress = $dataBag->get('selectAddress');
+
+        if ($selectedAddress === null) {
+            return;
+        }
+
+        $addressType = $selectedAddress->get('type');
+        $addressId = $selectedAddress->get('id');
+
+        if (!Uuid::isValid($addressId)) {
+            throw new InvalidUuidException($addressId);
+        }
+
+        $success = true;
+
+        try {
+            if ($addressType === self::ADDRESS_TYPE_SHIPPING) {
+                $address = $this->getById($addressId, $context, $customer);
+                $customer->setDefaultShippingAddress($address);
+                $this->accountService->setDefaultShippingAddress($addressId, $context, $customer);
+            } elseif ($addressType === self::ADDRESS_TYPE_BILLING) {
+                $address = $this->getById($addressId, $context, $customer);
+                $customer->setDefaultBillingAddress($address);
+                $this->accountService->setDefaultBillingAddress($addressId, $context, $customer);
+                $sub = $this->loginService->getSubFromCustomFields( $customer);
+                if ($sub) {
+                    $this->updateBillingAddressToCidaas($address, $sub, $context);
+                }
+
+            } else {
+                $success = false;
+            }
+        } catch (AddressNotFoundException $exception) {
+            $success = false;
+        }
+
+        if ($success) {
+            $this->addFlash(self::SUCCESS, $this->trans('account.addressDefaultChanged'));
+        } else {
+            $this->addFlash(self::DANGER, $this->trans('account.addressDefaultNotChanged'));
+        }
+
+        $viewData->setSuccess($success);
+    }
+
+    private function handleCustomerVatIds(RequestDataBag $dataBag, SalesChannelContext $context, CustomerEntity $customer): void
+    {
+        if (!$dataBag->has('vatIds')) {
+            return;
+        }
+
+        $newVatIds = $dataBag->get('vatIds')->all();
+        $oldVatIds = $customer->getVatIds() ?? [];
+        if (!array_diff($newVatIds, $oldVatIds) && !array_diff($oldVatIds, $newVatIds)) {
+            return;
+        }
+
+        $dataCustomer = CustomerTransformer::transform($customer);
+        $dataCustomer['vatIds'] = $newVatIds;
+        $dataCustomer['accountType'] = $customer->getCompany() === null ? CustomerEntity::ACCOUNT_TYPE_PRIVATE : CustomerEntity::ACCOUNT_TYPE_BUSINESS;
+
+        $newDataBag = new RequestDataBag($dataCustomer);
+
+        $this->updateCustomerProfileRoute->change($newDataBag, $context, $customer);
     }
  }
