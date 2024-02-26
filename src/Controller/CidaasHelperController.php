@@ -53,7 +53,7 @@ class CidaasHelperController extends StorefrontController {
             $token = $this->loginService->getAccessToken( $code, $request->get( 'sw-sales-channel-absolute-base-url' ) );
             if ( is_array( $token ) ) {
                 if ( isset( $token[ 'sub' ] ) ) {
-                    $request->getSession()->set( '_cidaas_token', $token[ 'access_token' ] );
+                    $request->getSession()->set( 'access_token', $token[ 'access_token' ] );
                     $request->getSession()->set( 'sub', $token[ 'sub' ] );
                     $user = $this->loginService->getAccountFromCidaas( $token[ 'access_token' ] );
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
@@ -81,7 +81,7 @@ class CidaasHelperController extends StorefrontController {
                     }
                     $this->loginService->checkCustomerGroups( $user, $context );
                     $this->loginService->checkCustomerNumber( $user, $context );
-                    $this->loginService->checkWebshopId( $user, $context );
+                    $this->loginService->checkWebshopId( $user,$token[ 'access_token' ], $context );
                     $this->loginService->updateAddressData( $user, $context );
                     $this->loginService->updateCustomerFromCidaas( $user, $context );
                     $response = $this->loginService->loginBySub( $token[ 'sub' ], $context );
@@ -103,7 +103,7 @@ class CidaasHelperController extends StorefrontController {
                 }
             } else if ( is_object( $token ) ) {
                 if ( isset( $token->sub ) ) {
-                    $request->getSession()->set( '_cidaas_token', $token->access_token );
+                    $request->getSession()->set( 'access_token', $token->access_token );
                     $request->getSession()->set( 'sub', $token->sub );
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
@@ -165,7 +165,7 @@ class CidaasHelperController extends StorefrontController {
             return $this->redirectToRoute( 'frontend.account.login.page' );
         }
         try {
-            $token = $request->getSession()->get( '_cidaas_token' );
+            $token = $request->getSession()->get( 'access_token' );
             if ( $token ) {
                 $this->loginService->endSession( $token );
             }
@@ -175,7 +175,7 @@ class CidaasHelperController extends StorefrontController {
                 $request->getSession()->invalidate();
             }
             $request->getSession()->remove( 'state' );
-            $request->getSession()->remove( '_cidaas_token' );
+            $request->getSession()->remove( 'access_token' );
             $request->getSession()->remove( 'sub' );
             $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
@@ -236,7 +236,7 @@ class CidaasHelperController extends StorefrontController {
     #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET', 'POST' ] ) ]
     public function changepassword( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
-        $token = $request->getSession()->get( '_cidaas_token' );
+        $token = $request->getSession()->get( 'access_token' );
         $newPassword = $request->get( 'newPassword' );
         $confirmPassword = $request->get( 'confirmPassword' );
         $oldPassword = $request->get( 'oldPassword' );
@@ -249,7 +249,8 @@ class CidaasHelperController extends StorefrontController {
     public function emailForm( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $email = $request->get( 'email' );
-        $this->loginService->changeEmail( $email, $sub, $context );
+        $token = $request->getSession()->get( 'access_token' );
+        $this->loginService->changeEmail( $email, $sub, $token, $context );
         $this->addFlash( 'success', 'E-Mail Adresse geändert' );
         return $this->json(
             array()
@@ -262,7 +263,8 @@ class CidaasHelperController extends StorefrontController {
         $firstName = $request->get( 'firstName' );
         $lastName = $request->get( 'lastName' );
         $salutationId = $request->get( 'salutationId' );
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $context );
+        $token = $request->getSession()->get( 'access_token' );
+        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $token, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
             $responseData = json_decode( json_encode( $res ), true );

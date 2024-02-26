@@ -91,7 +91,7 @@ class CidaasAddressController extends StorefrontController {
         return $this->redirectToRoute( 'frontend.account.address.page' );
     }
 
-    private function updateBillingAddressToCidaas( CustomerAddressEntity $address, string $sub, SalesChannelContext $context ) {
+    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context ) {
         $res = $this->loginService->updateBillingAddress( $address, $sub, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
