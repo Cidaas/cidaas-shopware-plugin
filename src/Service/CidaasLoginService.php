@@ -354,15 +354,14 @@ class CidaasLoginService {
         return $this->cidaasUrl;
     }
 
-    public function changeEmail($email, $sub, $context)
+    public function changeEmail($email, $sub, $token, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $adminToken = $this->getAdminToken();
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$adminToken->access_token
+                    'Authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
                     'email' => $email,
@@ -460,14 +459,14 @@ class CidaasLoginService {
         ], $context->getContext());
     }
 
-    public function checkWebshopId($user, $context) {
+    public function checkWebshopId($user, $token, $context) {
         $sub = $user['sub'];
         if (isset($user['customFields']['webshop_id'])) {
             file_put_contents('dumm.txt', '');
             return null;
         }
         $customer = $this->getCustomerBySub($sub, $context);
-        $this->setWebShopId($customer->getId(), $sub);
+        $this->setWebShopId($customer->getId(), $sub, $token);
     }
 
     public function checkCustomerGroups($user, $context) {
@@ -554,13 +553,12 @@ class CidaasLoginService {
         return $randomString;
     }
 
-    private function setWebShopId($id, $sub) {
-        $token = $this->getAdminToken();
+    private function setWebShopId($id, $sub, $token) {
         $client = new Client();
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token->access_token
+                    'Authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
                     'sub' => $sub,
@@ -620,10 +618,9 @@ class CidaasLoginService {
         }
     }
 
-    public function updateProfile($firstName, $lastName, $salutationId, $sub, $context) {
+    public function updateProfile($firstName, $lastName, $salutationId, $sub, $token, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $adminToken = $this->getAdminToken();
         $queryBuilder = $this->connection->createQueryBuilder();
         $tmp_id=Uuid::fromHexToBytes($salutationId);
         $queryBuilder->select('salutation_key')
@@ -631,9 +628,9 @@ class CidaasLoginService {
             ->where('id="'.$tmp_id.'"');
             $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$adminToken->access_token
+                    'authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
                     'given_name' => $firstName,
@@ -734,7 +731,7 @@ class CidaasLoginService {
         $addressId =  $address->get('id');
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
                     'authorization' => 'Bearer '.$adminToken->access_token
                 ],

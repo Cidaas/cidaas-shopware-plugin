@@ -82,7 +82,7 @@ class CidaasHelperController extends StorefrontController {
                     }
                     $this->loginService->checkCustomerGroups( $user, $context );
                     $this->loginService->checkCustomerNumber( $user, $context );
-                    $this->loginService->checkWebshopId( $user, $context );
+                    $this->loginService->checkWebshopId( $user,$token[ 'access_token' ], $context );
                     $this->loginService->updateAddressData( $user, $context );
                     $this->loginService->updateCustomerFromCidaas( $user, $context );
                     $response = $this->loginService->loginBySub( $token[ 'sub' ], $context );
@@ -251,7 +251,8 @@ class CidaasHelperController extends StorefrontController {
     public function emailForm( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $email = $request->get( 'email' );
-        $this->loginService->changeEmail( $email, $sub, $context );
+        $token = $request->getSession()->get( 'access_token' );
+        $this->loginService->changeEmail( $email, $sub, $token, $context );
         $this->addFlash( 'success', 'E-Mail Adresse geändert' );
         return $this->json(
             array()
@@ -264,7 +265,8 @@ class CidaasHelperController extends StorefrontController {
         $firstName = $request->get( 'firstName' );
         $lastName = $request->get( 'lastName' );
         $salutationId = $request->get( 'salutationId' );
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $context );
+        $token = $request->getSession()->get( 'access_token' );
+        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $token, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
             $responseData = json_decode( json_encode( $res ), true );
