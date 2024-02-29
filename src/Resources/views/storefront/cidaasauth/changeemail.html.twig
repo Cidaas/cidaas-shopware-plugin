@@ -7,7 +7,7 @@
 <div class="card account-email" id="accountMailContainer">
     {% block page_change_email_form %}
     <form class="card-body" id="emailForm">
-        <div class="card-title">{{ "account.addressChangeLabel"|trans|sw_sanitize }}
+        <div class="card-title">{{ "account.profileMailTitle"|trans|sw_sanitize }}
         </div>
         {% block page_change_email_form_group %}
         <div class="row g-2">
@@ -21,8 +21,8 @@
                 {% block page_change_email_new_email_input %}
                 <input type="email"
                     class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
-                    autocomplete="section-personal email" id="personalMail" placeholder="{{ "
-                    account.personalMailPlaceholder"|trans|striptags }}{{ "general.required" |trans|striptags }}"
+                    autocomplete="section-personal email" id="personalMail" 
+                    placeholder="{{ "account.personalMailPlaceholder"|trans|striptags }} {{ "general.required"|trans|striptags }}"
                     name="email[email]" data-form-validation-equal="personalMail" required="required">
                 {% endblock %}
             </div>
@@ -38,9 +38,9 @@
                 {% block page_change_email_confirm_email_input %}
                 <input type="email"
                     class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
-                    autocomplete="section-personal email" id="personalMailConfirmation" placeholder="{{ "
-                    account.personalMailConfirmationPlaceholder"|trans|striptags }}{{ "general.required"
-                    |trans|striptags }}" name="email[emailConfirmation]" required="required"
+                    autocomplete="section-personal email" id="personalMailConfirmation" 
+                    placeholder="{{ "account.personalMailConfirmationPlaceholder"|trans|striptags }} {{ "general.required"|trans|striptags }}" 
+                    name="email[emailConfirmation]" required="required"
                     data-form-validation-equal="personalMail" data-form-validation-equal-message="{{ "
                     account.personalMailConfirmationInvalidMessage"|trans|striptags }}">
                 {% endblock %}
