@@ -1,78 +1,89 @@
 {% block changeemail %}
-    <div
-        data-cidaas-email-change
-        data-cidaas-email-change-options="{{
+<div data-cidaas-email-change data-cidaas-email-change-options="{{
             {
                 'sub': context.customer.customFields.sub,
             }|json_encode
-        }}"
-    ></div>
-    <div class="card account-email" id="accountMailContainer">
-        <form class="card-body" id="emailForm">
-            <div class="card-title">
-                E-Mail Adresse ändern
+        }}"></div>
+<div class="card account-email" id="accountMailContainer">
+    {% block page_change_email_form %}
+    <form class="card-body" id="emailForm">
+        <div class="card-title">{{ "account.profileMailTitle"|trans|sw_sanitize }}
+        </div>
+        {% block page_change_email_form_group %}
+        <div class="row g-2">
+            {% block page_change_new_email_form_group %}
+            <div class="col form-group">
+                {% block page_change_email_new_mail_label %}
+                <label class="form-label" for="personalMail">
+                    {{ "account.personalMailLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
+                </label>
+                {% endblock %}
+                {% block page_change_email_new_email_input %}
+                <input type="email"
+                    class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
+                    autocomplete="section-personal email" id="personalMail" 
+                    placeholder="{{ "account.personalMailPlaceholder"|trans|striptags }} {{ "general.required"|trans|striptags }}"
+                    name="email[email]" data-form-validation-equal="personalMail" required="required">
+                {% endblock %}
             </div>
-            <div class="row g-2">
-                <div class="col form-group">
-                    <label class="form-label"
-                        for="personalMail">
-                        {{ "account.personalMailLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
-                    </label>
-                    <input type="email"
-                        class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
-                        autocomplete="section-personal email"
-                        id="personalMail"
-                        placeholder="{{ "account.personalMailPlaceholder"|trans|striptags }}{{ "general.required"|trans|striptags }}"
-                        name="email[email]"
-                        data-form-validation-equal="personalMail"
-                        required="required">
+            {% endblock %}
+            {% block page_change_confirm_email_form_group %}
+            <div class="col form-group">
+                {% block page_change_email_confirm_mail_label %}
+                <label class="form-label" for="personalMailConfirmation">
+                    {{ "account.personalMailConfirmationLabel"|trans|sw_sanitize }}{{
+                    "general.required"|trans|sw_sanitize }}
+                </label>
+                {% endblock %}
+                {% block page_change_email_confirm_email_input %}
+                <input type="email"
+                    class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
+                    autocomplete="section-personal email" id="personalMailConfirmation" 
+                    placeholder="{{ "account.personalMailConfirmationPlaceholder"|trans|striptags }} {{ "general.required"|trans|striptags }}" 
+                    name="email[emailConfirmation]" required="required"
+                    data-form-validation-equal="personalMail" data-form-validation-equal-message="{{ "
+                    account.personalMailConfirmationInvalidMessage"|trans|striptags }}">
+                {% endblock %}
+                {% block page_change_email_email_mismatch %}
+                <div class="invalid-feedback" style="display:none" id="invalidFeedback">{{
+                    "account.emailMismatchMessage"|trans|sw_sanitize }}
                 </div>
-                <div class="col form-group">
-                    <label class="form-label"
-                            for="personalMailConfirmation">
-                        {{ "account.personalMailConfirmationLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
-                    </label>
-                    <input type="email"
-                        class="form-control{% if formViolations.getViolations('/email') is not empty %} is-invalid{% endif %}"
-                        autocomplete="section-personal email"
-                        id="personalMailConfirmation"
-                        placeholder="{{ "account.personalMailConfirmationPlaceholder"|trans|striptags }}{{ "general.required"|trans|striptags }}"
-                        name="email[emailConfirmation]"
-                        required="required"
-                        data-form-validation-equal="personalMail"
-                        data-form-validation-equal-message="{{ "account.personalMailConfirmationInvalidMessage"|trans|striptags }}">
-                        <div class="invalid-feedback" style="display:none" id="invalidFeedback">
-                            E-Mail Adressen stimmen nicht überein!
-                        </div>
-                </div>
+                {% endblock %}
             </div>
-            
-            <div class="card-actions">
-                <button type="submit"
-                        class="profile-form-submit btn btn-light btn-sm"
-                        title="{{ "account.profileSaveChanges"|trans|striptags }}">
-                    {{ "account.profileSaveChanges"|trans|sw_sanitize }}
-                </button>
+            {% endblock %}
+        </div>
+        {% endblock %}
+
+        {% block page_change_email_action_buttons %}
+        <div class="card-actions">
+            <button type="submit" class="profile-form-submit btn btn-light btn-sm" title="{{ "
+                account.profileSaveChanges"|trans|striptags }}">
+                {{ "account.profileSaveChanges"|trans|sw_sanitize }}
+            </button>
+        </div>
+        {% endblock %}
+    </form>
+    {% endblock %}
+    {% block page_change_email_verifyemail %}
+    <div class="card-body" id="verifyThing" style="display: none;">
+        <div class="card-title">{{ "account.confirmChangeLabel"|trans|sw_sanitize }}
+        </div>
+        <div class="row">
+            <div class="col" id="emailVerify">
+                <p>{{ "account.confirmChangesMessage"|trans|sw_sanitize }}
+                </p>
+                {{ "account.newEmailLabel"|trans|sw_sanitize }}: <span id="emailVerifySpan"
+                    style="font-weight: 700; color: #e30613;"></span>
             </div>
-        </form>
-        <div class="card-body" id="verifyThing" style="display: none;">
-            <div class="card-title">
-                Änderung bestätigen
-            </div>
-            <div class="row">
-                <div class="col" id="emailVerify">
-                    <p>
-                        Bitte bestätige abschließend deine Änderungen:
-                    </p>
-                    neue E-Mail: <span id="emailVerifySpan" style="font-weight: 700; color: #e30613;"></span>
-                </div>
-            </div>
-            <br />
-            <div class="row">
-                <div class="col">
-                    <button type="button" class="btn btn-primary" id="verifyButton">Bestätigen</button>
-                </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col">
+                <button type="button" class="btn btn-primary" id="verifyButton">{{
+                    "account.confirmBtnLabel"|trans|sw_sanitize }}</button>
             </div>
         </div>
     </div>
+    {% endblock %}
+</div>
 {% endblock %}
