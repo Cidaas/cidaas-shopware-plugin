@@ -1,0 +1,9 @@
+{
+    "account": {
+        "confirmChangeLabel" : "Änderung bestätigen",
+        "confirmChangesMessage" : "Bitte bestätigen Sie Ihre Änderungen:",
+        "newEmailLabel":"Neue e-mail:",
+        "confirmBtnLabel": "Bestätigen"
+
+    }
+}
