@@ -1,0 +1,9 @@
+{
+    "account": {
+        "confirmChangeLabel" : "Confirm change",
+        "confirmChangesMessage" : "Please confirm your changes:",
+        "newEmailLabel":"New email:",
+        "confirmBtnLabel": "Confirm"
+
+    }
+}

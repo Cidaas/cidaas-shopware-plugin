@@ -358,10 +358,11 @@ class CidaasLoginService {
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
+        $adminToken = $this->getAdminToken();
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $resp = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token
+                    'Authorization' => 'Bearer '.$adminToken->access_token
                 ],
                 'form_params' => [
                     'email' => $email,
@@ -555,10 +556,11 @@ class CidaasLoginService {
 
     private function setWebShopId($id, $sub, $token) {
         $client = new Client();
+        $token = $this->getAdminToken();
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $resp = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token
+                    'Authorization' => 'Bearer '.$token->access_token
                 ],
                 'form_params' => [
                     'sub' => $sub,
@@ -623,14 +625,15 @@ class CidaasLoginService {
         $customer = $this->getCustomerBySub($sub, $context);
         $queryBuilder = $this->connection->createQueryBuilder();
         $tmp_id=Uuid::fromHexToBytes($salutationId);
+        $adminToken = $this->getAdminToken();
         $queryBuilder->select('salutation_key')
             ->from('salutation')
             ->where('id="'.$tmp_id.'"');
             $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer '.$adminToken->access_token
                 ],
                 'form_params' => [
                     'given_name' => $firstName,
@@ -731,7 +734,7 @@ class CidaasLoginService {
         $addressId =  $address->get('id');
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
                     'authorization' => 'Bearer '.$adminToken->access_token
                 ],
