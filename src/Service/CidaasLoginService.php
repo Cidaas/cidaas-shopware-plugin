@@ -731,7 +731,7 @@ class CidaasLoginService {
         $addressId =  $address->get('id');
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
                 'headers' => [
                     'authorization' => 'Bearer '.$adminToken->access_token
                 ],
@@ -963,11 +963,15 @@ class CidaasLoginService {
         if($isTokenExpired){
             $refreshToken = $request->getSession()->get( 'refresh_token' );
             $refreshTokenData = $this->renewAccessToken($refreshToken);
+            error_log("one");
+            error_log(serialize($refreshTokenData));
             $token = $refreshTokenData[ 'access_token' ];
             $request->getSession()->set( 'access_token', $token );
             $request->getSession()->set( 'refresh_token', $refreshTokenData[ 'refresh_token' ] );
             return $token ;
         } else {
+            error_log("two");
+            error_log($token);
              return $token ;
         }
     }

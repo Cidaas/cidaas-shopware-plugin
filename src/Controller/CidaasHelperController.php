@@ -132,7 +132,7 @@ class CidaasHelperController extends StorefrontController {
                     }
                     $this->loginService->checkCustomerGroups( $user, $context );
                     $this->loginService->checkCustomerNumber( $user, $context );
-                    $this->loginService->checkWebshopId( $user, $context );
+                    $this->loginService->checkWebshopId( $user, $token->access_token, $context );
                     $this->loginService->updateAddressData( $user, $context );
                     $this->loginService->updateCustomerFromCidaas( $user, $context );
                     $response = $this->loginService->loginBySub( $token->sub, $context );
