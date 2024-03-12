@@ -239,10 +239,12 @@ class CidaasHelperController extends StorefrontController {
     public function changepassword( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
         $newPassword = $request->get( 'newPassword' );
         $confirmPassword = $request->get( 'confirmPassword' );
         $oldPassword = $request->get( 'oldPassword' );
-        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $token );
+        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $accessToken );
         $this->addFlash( 'success', 'Password has been changed.' );
         return $this->json( $res );
     }
@@ -252,7 +254,9 @@ class CidaasHelperController extends StorefrontController {
         $sub = $request->getSession()->get( 'sub' );
         $email = $request->get( 'email' );
         $token = $request->getSession()->get( 'access_token' );
-        $this->loginService->changeEmail( $email, $sub, $token, $context );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $this->loginService->changeEmail( $email, $sub, $accessToken, $context );
         $this->addFlash( 'success', 'E-Mail Adresse geändert' );
         return $this->json(
             array()
@@ -266,7 +270,9 @@ class CidaasHelperController extends StorefrontController {
         $lastName = $request->get( 'lastName' );
         $salutationId = $request->get( 'salutationId' );
         $token = $request->getSession()->get( 'access_token' );
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $token, $context );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $accessToken, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
             $responseData = json_decode( json_encode( $res ), true );

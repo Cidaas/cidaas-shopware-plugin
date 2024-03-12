@@ -908,7 +908,7 @@ class CidaasLoginService {
         return $customField['sub'];
     }
 
-    // check expired token
+    // Function to check if the access token is expired
     function isTokenExpired($token) {
         $payload = json_decode(base64_decode(explode('.', $token)[1]), true);
     
@@ -919,7 +919,6 @@ class CidaasLoginService {
     
             // Calculate the current timestamp
             $currentTimestamp = time();
-    
             // Check if the token has expired
             if ($currentTimestamp > $expirationTimestamp) {
                 // Token has expired
@@ -934,11 +933,10 @@ class CidaasLoginService {
         }
     }
 
-    // Renew token 
-    public function renewAccessToken(Request $request)
+    // Renew token  with refresh token
+    public function renewAccessToken(string $refreshToken)
     {
-        $client = new Client();
-        $refreshToken = $request->getSession()->get( 'refresh_token' );
+        $client = new Client();    
         try {
             $response = $client->post($this->oAuthEndpoints->token_endpoint, [
                 'form_params' => [
@@ -957,5 +955,20 @@ class CidaasLoginService {
             return $msg;
         }
         return json_decode($response->getBody()->getContents(), true);
+    }
+    
+// check current access token expired or not and assign new token
+    public function getRenewAccessToken(Request $request, string $token){
+        $isTokenExpired = $this->isTokenExpired( $token );
+        if($isTokenExpired){
+            $refreshToken = $request->getSession()->get( 'refresh_token' );
+            $refreshTokenData = $this->renewAccessToken($refreshToken);
+            $token = $refreshTokenData[ 'access_token' ];
+            $request->getSession()->set( 'access_token', $token );
+            $request->getSession()->set( 'refresh_token', $refreshTokenData[ 'refresh_token' ] );
+            return $token ;
+        } else {
+             return $token ;
+        }
     }
 }
