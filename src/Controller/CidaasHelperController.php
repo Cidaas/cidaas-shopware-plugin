@@ -81,8 +81,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $this->updateCustomerProfileRoute = $updateCustomerProfileRoute;
     }
 
-
     // Redirect all account login stuff
+
     /**
      * @Route("/account/login", name="frontend.account.login.page")
      */
@@ -112,8 +112,11 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             // $request->getSession()->set('ding', $token);
             if (is_array($token)) {
                 if (isset($token['sub'])) {
-                    $request->getSession()->set('_cidaas_token', $token['access_token']);
-                    $request->getSession()->set('sub', $token['sub']);
+
+                    $request->getSession()->set( 'access_token', $token[ 'access_token' ] );
+                    $request->getSession()->set( 'sub', $token[ 'sub' ] );
+                    $request->getSession()->set( 'refresh_token', $token[ 'refresh_token' ] );
+
                     $user = $this->loginService->getAccountFromCidaas($token['access_token']);
                     $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
                     if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
@@ -140,7 +143,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
-                    $this->loginService->checkWebshopId($user, $context);
+                    $this->loginService->checkWebshopId( $user,$token[ 'access_token' ], $context );
                     $this->loginService->checkCustomerData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token['sub'], $context);
@@ -162,8 +165,11 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                 }
             } else if (is_object($token)) {
                 if (isset($token->sub)) {
-                    $request->getSession()->set('_cidaas_token', $token->access_token);
-                    $request->getSession()->set('sub', $token->sub);
+
+                    $request->getSession()->set( 'access_token', $token->access_token );
+                    $request->getSession()->set( 'sub', $token->sub );
+                    $request->getSession()->set( 'refresh_token', $token->refresh_token );
+
                     $user = $this->loginService->getAccountFromCidaas($token->access_token);
                     if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
                         try {
@@ -189,7 +195,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     }
                     $this->loginService->checkCustomerGroups($user, $context);
                     $this->loginService->checkCustomerNumber($user, $context);
-                    $this->loginService->checkWebshopId($user, $context);
+                     $this->loginService->checkWebshopId( $user, $token->access_token, $context );
                     $this->loginService->checkCustomerData($user, $context);
                     $this->loginService->updateCustomerFromCidaas($user, $context);
                     $response = $this->loginService->loginBySub($token->sub, $context);
@@ -227,7 +233,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             return $this->redirectToRoute('frontend.account.login.page');
         }
         try {
-            $token = $request->getSession()->get('_cidaas_token');
+            $token = $request->getSession()->get('access_token');
             if($token){
                 $this->loginService->endSession($token);
             }
@@ -237,7 +243,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                $request->getSession()->invalidate();
             }
             $request->getSession()->remove('state');
-            $request->getSession()->remove('_cidaas_token');
+            $request->getSession()->remove('access_token');
             $request->getSession()->remove('sub');
             $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
             $parameters = [];
@@ -329,11 +335,16 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     public function changePassword(Request $request, SalesChannelContext $context): Response
     {
         $sub = $request->getSession()->get('sub');
-        $token = $request->getSession()->get('_cidaas_token');
+
+        $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+
         $newPassword = $request->get('newPassword');
         $confirmPassword = $request->get('confirmPassword');
         $oldPassword = $request->get('oldPassword');
-        $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token);
+
+        $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
         $this->addFlash('success', 'Passwort erfolgreich geändert');
         return $this->json($res);
     }
@@ -345,11 +356,15 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     {
         $sub = $request->getSession()->get('sub');
         $email = $request->get('email');
-        $this->loginService->changeEmail($email, $sub, $context);
+
+        $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+
+        $this->loginService->changeEmail($email, $sub, $accessToken, $context);
         $this->addFlash('success', 'E-Mail Adresse geändert');
         return $this->json(
-            array(
-            )
+            array()
         );
     }
 
@@ -362,7 +377,12 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
-        $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
+
+        $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+
+        $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
         if($res) {
               // Assuming $object is your stdClass object
                 $responseData = json_decode(json_encode($res), true);
