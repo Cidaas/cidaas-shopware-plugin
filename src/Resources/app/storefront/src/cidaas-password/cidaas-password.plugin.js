@@ -33,7 +33,7 @@ export default class CidaasPassword extends Plugin {
             this.clientId = result.clientId
             this.url = result.url
             this.state = result.state
-            this.scope = "openid email profile"
+            this.scope = "openid offline_access email profile groups"
         })
     }
 
