@@ -8,7 +8,7 @@ export default class CidaasUtil {
     init(url) {
         this.client = new HttpClient();
         this.url = url;
-        this.scope = "openid email profile";
+        this.scope = "openid offline_access email profile groups";
         this.cidaasUris = {
             generateRequest: '/authz-srv/authrequest/authz/generate',
             login: '/login-srv/login',

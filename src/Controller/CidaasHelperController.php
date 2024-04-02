@@ -55,6 +55,7 @@ class CidaasHelperController extends StorefrontController {
                 if ( isset( $token[ 'sub' ] ) ) {
                     $request->getSession()->set( 'access_token', $token[ 'access_token' ] );
                     $request->getSession()->set( 'sub', $token[ 'sub' ] );
+                    $request->getSession()->set( 'refresh_token', $token[ 'refresh_token' ] );
                     $user = $this->loginService->getAccountFromCidaas( $token[ 'access_token' ] );
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
@@ -105,6 +106,7 @@ class CidaasHelperController extends StorefrontController {
                 if ( isset( $token->sub ) ) {
                     $request->getSession()->set( 'access_token', $token->access_token );
                     $request->getSession()->set( 'sub', $token->sub );
+                    $request->getSession()->set( 'refresh_token', $token->refresh_token );
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
@@ -130,7 +132,7 @@ class CidaasHelperController extends StorefrontController {
                     }
                     $this->loginService->checkCustomerGroups( $user, $context );
                     $this->loginService->checkCustomerNumber( $user, $context );
-                    $this->loginService->checkWebshopId( $user, $context );
+                    $this->loginService->checkWebshopId( $user, $token->access_token, $context );
                     $this->loginService->updateAddressData( $user, $context );
                     $this->loginService->updateCustomerFromCidaas( $user, $context );
                     $response = $this->loginService->loginBySub( $token->sub, $context );
@@ -237,10 +239,12 @@ class CidaasHelperController extends StorefrontController {
     public function changepassword( Request $request, SalesChannelContext $context ): Response {
         $sub = $request->getSession()->get( 'sub' );
         $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
         $newPassword = $request->get( 'newPassword' );
         $confirmPassword = $request->get( 'confirmPassword' );
         $oldPassword = $request->get( 'oldPassword' );
-        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $token );
+        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $accessToken );
         $this->addFlash( 'success', 'Password has been changed.' );
         return $this->json( $res );
     }
@@ -250,7 +254,9 @@ class CidaasHelperController extends StorefrontController {
         $sub = $request->getSession()->get( 'sub' );
         $email = $request->get( 'email' );
         $token = $request->getSession()->get( 'access_token' );
-        $this->loginService->changeEmail( $email, $sub, $token, $context );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $this->loginService->changeEmail( $email, $sub, $accessToken, $context );
         $this->addFlash( 'success', 'E-Mail Adresse geändert' );
         return $this->json(
             array()
@@ -264,7 +270,9 @@ class CidaasHelperController extends StorefrontController {
         $lastName = $request->get( 'lastName' );
         $salutationId = $request->get( 'salutationId' );
         $token = $request->getSession()->get( 'access_token' );
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $token, $context );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $accessToken, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
             $responseData = json_decode( json_encode( $res ), true );
