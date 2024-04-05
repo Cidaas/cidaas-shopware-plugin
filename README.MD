@@ -116,7 +116,7 @@ Note: We required two cidass application configuration for shopware plugin
 ![app_details](docs/docs-images/6.png)
 
 **4**. Fill in the app settings with the following details:
- - The scopes to be added include openid, email,roles,cidaas:register, and profile.
+ - The scopes to be added include openid,offline_access,groups, email,roles,cidaas:register, and profile.
  - Set the value for Hosted Page Group as "default".
  - Set your domain names for Redirect and Logout URLs.
  - Click on Next
