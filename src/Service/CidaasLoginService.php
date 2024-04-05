@@ -489,12 +489,11 @@ class CidaasLoginService {
         $user['customFields']['billing_address_zipcode'] :
         $billing->get('zipcode');
 
+       // Get company name
+        $company = isset($user['customFields']['company']) ? 
+        $user['customFields']['company'] : "";
 
-        if (array_key_exists('company', $user['customFields'])) {
-            $company = $user['customFields']['company'];
-        } else {
-            $company  = "";
-        }
+
 
         $this->customerAddressRepo->update([
             [
@@ -510,12 +509,18 @@ class CidaasLoginService {
     }
     public function updateCustomerFromCidaas($user, $context) {
         $customer = $this->getCustomerBySub($user['sub'], $context);
-        $salutationId =  $salutation = $this->getSalutationId($user['customFields']['salutation']);
+
+        $salutation = isset($user['customFields']['salutation']) ? $user['customFields']['salutation'] : "";
+        $salutationId =  $salutation = $this->getSalutationId($salutation);
+
+        $firstName = isset($user['given_name']) ? $user['given_name'] : $customer->getFirstName();
+        $lastName = isset($user['family_name']) ? $user['family_name'] : $customer->getLastName();
+        
         $this->customerRepo->update([
             [
                 "id" => $customer->getId(),
-                'firstName' =>$user['given_name'],
-                'lastName' =>$user['family_name'],
+                'firstName' =>$firstName,
+                'lastName' =>$lastName,
                 'salutationId' => $salutationId,
             ]
         ], $context->getContext());
