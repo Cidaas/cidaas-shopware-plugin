@@ -3,7 +3,8 @@
         "confirmChangeLabel" : "Confirm change",
         "confirmChangesMessage" : "Please confirm your changes:",
         "newEmailLabel":"New email:",
-        "confirmBtnLabel": "Confirm"
+        "confirmBtnLabel": "Confirm",
+        "addressSubmit" :"Submit"
 
     }
 }

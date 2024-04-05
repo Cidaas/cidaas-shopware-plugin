@@ -1,15 +1,5 @@
 <?php declare(strict_types = 1);
 
-/**
- *  needed data:
- *  Env => settings
- *  storename=StoreId => settings
- *  shared Secret => settings
- *  api_user => WS{storeId}._.1
- *  api_user_pw => settings
- */
-
-
 namespace Cidaas\OauthConnect\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
@@ -32,19 +22,15 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\PlatformRequest;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Country\Exception\CountryNotFoundException;
-
 use Cidaas\OauthConnect\Util\CidaasStruct;
-
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\FetchMode;
-
 use Shopware\Storefront\Framework\AffiliateTracking\AffiliateTrackingListener;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Shopware\Storefront\Framework\Routing\RequestTransformer;
@@ -54,7 +40,6 @@ use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Framework\Validation\DataValidationDefinition;
 use Symfony\Component\HttpFoundation\Request;
 class CidaasLoginService {
-
     private $eventDispatcher;
     private $customerRepo;
     private $customerGroupRepo;
@@ -63,27 +48,20 @@ class CidaasLoginService {
     private $countryRepository;
     private $contextRestorer;
     private $sysConfig;
-
     private $wellKnown = '/.well-known/openid-configuration';
     private $wellKnownUrl;
     private $oAuthEndpoints;
     private $client;
-
     private $connection;
-
     private $registerRoute;
-
     private $clientId;
     private $clientSecret;
     private $nonInteractiveClientId;
     private $nonInteractiveClientSecret;
-
     private $cidaasUrl;
-
     private $state = '';
     private $cfCustomerNumber = '';
     private $defaultGroup = '';
-
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
         EntityRepositoryInterface $customerRepo,
@@ -335,6 +313,47 @@ class CidaasLoginService {
         return $data;
     }
 
+    public function registerAdditionalInfoForUser($formData, $sub, $context, $url)
+    {
+        $billingAddressData = $formData->get('data');
+        $randomPassword = $this->generateRandomString(14);
+        $data = new RequestDataBag([
+            "guest" => false,
+            "salutationId" => $formData->get('salutationId'),
+            "firstName" => $formData->get('firstName'),
+            "lastName" => $formData->get('lastName'),
+            "email" => $formData->get('email'),
+            'defaultBillingAddressId' => Uuid::randomHex(),
+            'defaultShippingAddressId' => Uuid::randomHex(),
+            "password" => $randomPassword,
+            "accountType" => 'private',
+            "acceptedDataProtection" => true,
+            "billingAddress" => array(
+                "countryId" => $billingAddressData->get('countryId'),
+                "street" => $billingAddressData->get('street'),
+                "zipcode" => $billingAddressData->get('zipcode'),
+                "city" => $billingAddressData->get('city')
+            ),
+            "storefrontUrl" => $url
+        ]);
+        $regres = $this->registerRoute->register($data, $context, false);
+        $customer = $this->getCustomerByEmail($formData->get('email'), $context);
+        $mitglied = false;
+        $mitarbeiter = false;
+        $mitarbeiterPromo = false;
+        $updateData = [
+            'id' => $customer->getId(),
+                'lastLogin' => new \DateTimeImmutable(),
+                'customFields' => [
+                    'sub' => $sub ]
+        ];
+        $this->customerRepo->upsert([
+            $updateData
+        ], $context->getContext());
+        
+        return $data;
+    }
+
     public function getAccountFromCidaas($token)
     {
         $client = new Client();
@@ -445,21 +464,40 @@ class CidaasLoginService {
         }
         $billingId = $customer->getDefaultBillingAddressId();
         $billing = $this->customerAddressRepo->search(new Criteria([$billingId]), $context->getContext())->first();
-        $country = $this->getCountryId($user['customFields']['billing_address_country']);
 
-        if (array_key_exists('company', $user['customFields'])) {
-            $company = $user['customFields']['company'];
-        } else {
-            $company  = "";
-        }
+        // Get country
+        $countryId = isset($user['customFields']['billing_address_country']) ? 
+        $this->getCountryId($user['customFields']['billing_address_country']) :
+        $billing->get('countryId');
+
+        // Get street
+        $street = isset($user['customFields']['billing_address_street']) ? 
+        $user['customFields']['billing_address_street'] :
+        $billing->get('street');
+
+        // Get city
+        $city = isset($user['customFields']['billing_address_city']) ? 
+        $user['customFields']['billing_address_city'] :
+        $billing->get('city');
+
+        // Get zipcode
+        $zipcode = isset($user['customFields']['billing_address_zipcode']) ? 
+        $user['customFields']['billing_address_zipcode'] :
+        $billing->get('zipcode');
+
+       // Get company name
+        $company = isset($user['customFields']['company']) ? 
+        $user['customFields']['company'] : "";
+
+
 
         $this->customerAddressRepo->update([
             [
                 'id' => $billing->getId(),
-                'street' => $user['customFields']['billing_address_street'],
-                'city' => $user['customFields']['billing_address_city'],
-                'zipcode' => $user['customFields']['billing_address_zipcode'],
-                "countryId" => $country,
+                'street' => $street,
+                'city' => $city,
+                'zipcode' => $zipcode,
+                "countryId" => $countryId,
                 "company" => $company,
             ]
         ], $context->getContext());
@@ -467,12 +505,18 @@ class CidaasLoginService {
     }
     public function updateCustomerFromCidaas($user, $context) {
         $customer = $this->getCustomerBySub($user['sub'], $context);
-        $salutationId =  $salutation = $this->getSalutationId($user['customFields']['salutation']);
+
+        $salutation = isset($user['customFields']['salutation']) ? $user['customFields']['salutation'] : "";
+        $salutationId =  $salutation = $this->getSalutationId($salutation);
+
+        $firstName = isset($user['given_name']) ? $user['given_name'] : $customer->getFirstName();
+        $lastName = isset($user['family_name']) ? $user['family_name'] : $customer->getLastName();
+        
         $this->customerRepo->update([
             [
                 "id" => $customer->getId(),
-                'firstName' =>$user['given_name'],
-                'lastName' =>$user['family_name'],
+                'firstName' =>$firstName,
+                'lastName' =>$lastName,
                 'salutationId' => $salutationId,
             ]
         ], $context->getContext());
@@ -677,7 +721,7 @@ class CidaasLoginService {
         }
     }
 
-    private function getCountryId($countryVal) {
+    public function getCountryId($countryVal) {
         $queryBuilder = $this->connection->createQueryBuilder();
         $queryBuilder->select('country_id')
             ->from('country_translation')
