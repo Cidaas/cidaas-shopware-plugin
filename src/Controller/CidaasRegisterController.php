@@ -44,6 +44,119 @@ use Shopware\Core\Framework\Routing\RoutingException;
         return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url')));
     }
 
+    #[Route(path: '/register/user/additionalInfo', name: 'cidaas.register.additional.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    public function registerAdditionalPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
+    {
+        /** @var string $redirect */
+        $redirect = $request->get('redirectTo', 'frontend.account.home.page');
+        $errorRoute = $request->attributes->get('_route');
+ 
+        if ($context->getCustomer()) {
+            return $this->redirectToRoute($redirect);
+        }
+
+        $page = $this->registerPageLoader->load($request, $context);
+ 
+        $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
+
+        $token = $request->getSession()->get( 'access_token' );
+
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $user = $this->loginService->getAccountFromCidaas( $accessToken );
+
+        // Assuming $data is an instance of RequestDataBag
+        $data = new RequestDataBag();
+
+       // Define an array to map user keys to Shopware fields
+        $userFieldsMap = [
+            'given_name' => 'firstName',
+            'family_name' => 'lastName',
+            'email' => 'email',
+            'customFields' => [
+                'billing_address_country' => 'countryId',
+                'billing_address_street' => 'street',
+                'billing_address_city' => 'city',
+                'billing_address_zipcode' => 'zipcode'
+            ]
+        ];
+
+        // Loop through the user data and set the corresponding Shopware fields
+        foreach ($userFieldsMap as $userKey => $shopwareField) {
+            // Check if the user data contains the key
+            if (isset($user[$userKey])) {
+                // If the field is nested under 'customFields'
+                if (is_array($shopwareField)) {
+                    foreach ($shopwareField as $customKey => $customShopwareField) {
+                        if (isset($user[$userKey][$customKey])) {
+                            $data->set($customShopwareField, $user[$userKey][$customKey]);
+                        }
+                    }
+                } else {
+                    // Set the field in the data object
+                    $data->set($shopwareField, $user[$userKey]);
+                }
+            }
+        }
+        return  $this->renderStorefront("@CidaasOauthConnect/storefront/cidaasauth/addressRegister.html.twig",
+            ['redirectTo' => $redirect, 'errorRoute' => $errorRoute,'page' => $page,'data' => $data]
+        );
+    }
+
+    #[Route(path: '/save/user/additionalInfo', name: 'cidaas.register.additional.save', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['POST'])]
+    public function registerAdditionalSave(Request $request, RequestDataBag $formData, SalesChannelContext $context): Response
+    {
+
+        $token = $request->getSession()->get( 'access_token' );
+        // check token expiry and get renew access token
+        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $user = $this->loginService->getAccountFromCidaas( $accessToken );
+         
+        $url = $request->get( 'sw-sales-channel-absolute-base-url' );
+        $sub = $request->getSession()->get( 'sub' );
+
+        try {
+            $this->loginService->registerAdditionalInfoForUser( $formData, $sub, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+            $this->loginService->checkCustomerGroups( $user, $context );
+
+            return $this->redirectToRoute( 'frontend.account.profile.page' );
+
+        } catch ( ConstraintViolationException $formViolations ) {
+            $err = $formViolations->getMessage();
+            $this->addFlash( 'danger', 'Error: '. $err );
+            return $this->forwardToRoute( 'frontend.home.page', [
+                'loginError'=>true,
+                'errorSnippet'=>$err ?? null
+            ] );
+        }
+
+       return  $this->redirectToRoute( 'frontend.account.profile.page' );
+    }
+
+    #[Route( path: '/cancel/user', name: 'cidaas.register.additional.cancel', methods: [ 'GET' ] ) ]
+    public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
+        try {
+            $token = $request->getSession()->get( 'access_token' );
+            if ( $token ) {
+                $this->loginService->endSession( $token );
+            }
+            $salesChannelId = $context->getSalesChannel()->getId();
+            if ( $request->hasSession() && $this->loginService->getSysConfig( 'core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId ) ) {
+                $request->getSession()->invalidate();
+            }
+            $request->getSession()->remove( 'state' );
+            $request->getSession()->remove( 'access_token' );
+            $request->getSession()->remove( 'refresh_token' );
+            $request->getSession()->remove( 'sub' );
+            $parameters = [];
+        } catch ( ConstraintViolationException $formViolations ) {
+            $parameters = [ 'formViolations' => $formViolations ];
+        }
+
+        return $this->redirectToRoute( 'frontend.account.login.page', $parameters );
+    }
+
+
     #[Route(path: '/checkout/register', name: 'frontend.checkout.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
     public function checkoutRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
     {

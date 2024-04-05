@@ -60,8 +60,13 @@ class CidaasHelperController extends StorefrontController {
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                            $this->loginService->checkCustomerGroups( $user, $context );
+                            if ($this->hasRequiredUserData($user)) {
+                                // User has all the required data
+                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                                $this->loginService->checkCustomerGroups( $user, $context );
+                                } else {
+                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
+                                }
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -110,8 +115,13 @@ class CidaasHelperController extends StorefrontController {
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                            $this->loginService->checkCustomerGroups( $user, $context );
+                            if ($this->hasRequiredUserData($user)) {
+                                // User has all the required data
+                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                                $this->loginService->checkCustomerGroups( $user, $context );
+                                } else {
+                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
+                                }
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -161,6 +171,19 @@ class CidaasHelperController extends StorefrontController {
         return $this->forwardToRoute( 'frontend.home.page' );
     }
 
+   public function hasRequiredUserData($user) {
+        // Check if all required fields are present
+        if (isset($user['given_name']) &&
+            isset($user['family_name']) &&
+            isset($user['email']) &&
+            isset($user['customFields']['billing_address_street']) &&
+            isset($user['customFields']['billing_address_zipcode']) &&
+            isset($user['customFields']['billing_address_city'])) {
+            return true; // All required data is present
+        }
+        return false; // At least one required field is missing
+    }
+
     #[Route( path: '/account/logout', name: 'frontend.account.logout.page', methods: [ 'GET' ] ) ]
     public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
         if ( $context->getCustomer() === null ) {
@@ -178,6 +201,7 @@ class CidaasHelperController extends StorefrontController {
             }
             $request->getSession()->remove( 'state' );
             $request->getSession()->remove( 'access_token' );
+            $request->getSession()->remove( 'refresh_token' );
             $request->getSession()->remove( 'sub' );
             $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
