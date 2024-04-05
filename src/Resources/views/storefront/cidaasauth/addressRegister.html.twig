@@ -1,7 +1,7 @@
 {% sw_extends "@Storefront/storefront/base.html.twig" %}
 
 {% block base_content %}
-   {% block guest_section %}
+   {% block register_additional_section %}
       
     <div class="container">
         <div class="row mt-5 cidaas-guest-container">
@@ -144,11 +144,12 @@
                  
                     {% block component_account_register_cnacel %}
                         <div style="text-align: center;" class="col-md-6 offset-md-6">
-                          <button type="button" style="display: inline-block;width: 48%;" class="btn btn-secondary btn-lg">
-                                
-                           <a href="{{ path('cidaas.register.additional.cancel') }}" style="color: white; text-decoration: none;" onmouseover="this.style.color='white';" onmouseout="this.style.color='white';">Cancel</a>
+                           <a href="{{ path('cidaas.register.additional.cancel') }}" class="btn btn-secondary btn-lg" style="display: inline-block; width: 48%; text-decoration: none;">
+                                <button type="button" class="btn btn-secondary btn-lg" style="width: 100%;">
+                                    Cancel
+                                </button>
+                            </a>
 
-                            </button>
                             <button type="submit" style="display: inline-block; margin-right: 2%;width: 48%" class="btn btn-primary btn-lg">
                                 {{ "account.addressSubmit"|trans|sw_sanitize }}
                             </button>
