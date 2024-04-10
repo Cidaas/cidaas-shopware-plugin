@@ -541,8 +541,6 @@ class CidaasLoginService {
         // get default group data 
         $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
         // check user group length less equal to two 
-        error_log(serialize($user));
-        // error_log($user);
         if (isset($user['groups']) && is_array($user['groups'])&& count($user['groups']) > 0) {
             foreach ($user['groups'] as $group) {
                 if ($group['groupId'] !== 'CIDAAS_USERS' && $group['groupType'] === 'Shopware' ){  // get cidaas group info array data which is not equal to  CIDAAS_USERS group And GroupType is equal to Shopware
@@ -640,7 +638,7 @@ class CidaasLoginService {
         }
     }
 
-    public function getAccessToken(String $code, String $url)
+    public function getCidaasAccessToken(String $code, String $url)
     {
         $client = new Client();
         $redirectUri = $url.'/cidaas/redirect';
@@ -788,7 +786,7 @@ class CidaasLoginService {
     public function updateBillingAddress($address, $sub, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $adminToken = $this->getAdminToken();
+        $token = $this->getAccessToken();
         $street =  $address->get('street');
         $zipCode =  $address->get('zipcode');
         $company =  $address->get('company');
@@ -798,9 +796,9 @@ class CidaasLoginService {
         $addressId =  $address->get('id');
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$adminToken->access_token
+                    'authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
                     'customFields' => [
@@ -1019,19 +1017,19 @@ class CidaasLoginService {
         return json_decode($response->getBody()->getContents(), true);
     }
     
-// check current access token expired or not and assign new token
-    public function getRenewAccessToken(Request $request, string $token){
+// check current access token expired or not and assign new token 
+    public  function getAccessToken (){
+        $token = $_SESSION['accessToken'];
         $isTokenExpired = $this->isTokenExpired( $token );
         if($isTokenExpired){
-            $refreshToken = $request->getSession()->get( 'refresh_token' );
-            $refreshTokenData = $this->renewAccessToken($refreshToken);
-            $token = $refreshTokenData[ 'access_token' ];
-            $request->getSession()->set( 'access_token', $token );
-            $request->getSession()->set( 'refresh_token', $refreshTokenData[ 'refresh_token' ] );
-            return $token ;
-        } else {
-             return $token ;
-        }
+            if(isset($_SESSION['refreshToken'])) {
+                $refreshToken = $_SESSION['refreshToken'];
+                $refreshTokenData = $this->renewAccessToken($refreshToken);
+                $token = $refreshTokenData[ 'access_token' ];
+                $_SESSION['accessToken'] = $refreshTokenData[ 'access_token' ];
+                $_SESSION['refreshToken'] = $refreshTokenData[ 'refresh_token' ];
+            }
+        } 
+        return $token;
     }
-
 }
