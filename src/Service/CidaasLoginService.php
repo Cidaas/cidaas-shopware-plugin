@@ -783,10 +783,9 @@ class CidaasLoginService {
         return $country->name;
     }
 
-    public function updateBillingAddress($address, $sub, $context) {
+    public function updateBillingAddress($address, $sub, $token, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $token = $this->getAccessToken();
         $street =  $address->get('street');
         $zipCode =  $address->get('zipcode');
         $company =  $address->get('company');
@@ -1025,11 +1024,29 @@ class CidaasLoginService {
             if(isset($_SESSION['refreshToken'])) {
                 $refreshToken = $_SESSION['refreshToken'];
                 $refreshTokenData = $this->renewAccessToken($refreshToken);
+                if(isset($refreshTokenData->error)){
+                    $result = $this->generateTokenResponse(false, null, $refreshTokenData->error_description );
+                    return $result;
+                }
                 $token = $refreshTokenData[ 'access_token' ];
+                $result = $this->generateTokenResponse(true, $token);
                 $_SESSION['accessToken'] = $refreshTokenData[ 'access_token' ];
                 $_SESSION['refreshToken'] = $refreshTokenData[ 'refresh_token' ];
             }
         } 
-        return $token;
+        return $result = $this->generateTokenResponse(true, $token);;
     }
+
+  // generate the token response 
+        public function generateTokenResponse( bool $success,string $token = null , string $error = null ) {
+            $response = new \stdClass();
+            $response->success = $success;
+            
+            if ($success) {
+                $response->token = $token;
+            } else {
+                $response->error = $error;
+            }
+            return $response;
+        }
 }

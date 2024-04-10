@@ -177,7 +177,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                 if (isset($token->sub)) {
 
                     $_SESSION['accessToken'] = $token->access_token;
-                    $_SESSION['refreshToken'] = $token->refresh_token;
                     if(isset($token->refresh_token)) {
                         $_SESSION['refreshToken'] = $token->refresh_token;
                     }
@@ -372,7 +371,14 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     public function changePassword(Request $request, SalesChannelContext $context): Response
     {
         $sub = $request->getSession()->get('sub');
-        $accessToken =$this->loginService->getAccessToken();
+
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+        if(!$myBoolean){
+            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
 
         $newPassword = $request->get('newPassword');
         $confirmPassword = $request->get('confirmPassword');
@@ -390,7 +396,15 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     {
         $sub = $request->getSession()->get('sub');
         $email = $request->get('email');
-        $accessToken =$this->loginService->getAccessToken();
+
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+        if(!$myBoolean){
+            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
+
         $this->loginService->changeEmail($email, $sub, $accessToken, $context);
         $this->addFlash('success', 'E-Mail Adresse geändert');
         return $this->json(
@@ -407,7 +421,14 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
-        $accessToken =$this->loginService->getAccessToken();
+
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+        if(!$myBoolean){
+            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
 
         $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
         if($res) {
@@ -539,7 +560,17 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     }
 
     private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context){
-        $res = $this->loginService->updateBillingAddress($address, $sub, $context);
+
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+         error_log(json_encode( $accessTokenObj));
+        if(!$myBoolean){
+            return  $this->forwardToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
+
+        $res = $this->loginService->updateBillingAddress($address, $sub,  $accessToken,  $context);
         if($res) {
             // Assuming $object is your stdClass object
               $responseData = json_decode(json_encode($res), true);
@@ -914,8 +945,15 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
  
         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
 
-        $token =$this->loginService->getAccessToken();
-        $user = $this->loginService->getAccountFromCidaas( $token );
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+        if(!$myBoolean){
+            return  $this->redirectToRoute( 'cidaas.register.additional.cancel' );
+        }
+        $accessToken = $accessTokenObj->token;
+
+        $user = $this->loginService->getAccountFromCidaas( $accessToken );
 
         // Assuming $data is an instance of RequestDataBag
         $data = new RequestDataBag();
@@ -960,8 +998,15 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
      */
     public function registerAdditionalSave(Request $request, RequestDataBag $formData, SalesChannelContext $context): Response
     {
-        $token =$this->loginService->getAccessToken();
-        $user = $this->loginService->getAccountFromCidaas( $token );
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        $myBoolean = $accessTokenObj->success;
+        if(!$myBoolean){
+            return  $this->redirectToRoute( 'cidaas.register.additional.cancel' );
+        }
+        $accessToken = $accessTokenObj->token;
+
+        $user = $this->loginService->getAccountFromCidaas( $accessToken );
          
         $url = $request->get( 'sw-sales-channel-absolute-base-url' );
         $sub = $request->getSession()->get( 'sub' );
