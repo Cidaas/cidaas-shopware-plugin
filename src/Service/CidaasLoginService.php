@@ -1002,7 +1002,7 @@ class CidaasLoginService {
                     'grant_type' => 'refresh_token',
                     'client_id' => $this->clientId,
                     'client_secret' => $this->clientSecret,
-                    'refresh_token' => $refreshToken,
+                    'refresh_token' => "ssgdjshdjshdjsh",
                 ],
                 'headers' => [
                     'content_type' => 'application/json'
@@ -1032,9 +1032,11 @@ class CidaasLoginService {
                 $result = $this->generateTokenResponse(true, $token);
                 $_SESSION['accessToken'] = $refreshTokenData[ 'access_token' ];
                 $_SESSION['refreshToken'] = $refreshTokenData[ 'refresh_token' ];
-            }
+                return $result;
+            } 
+            return $this->generateTokenResponse(false, null,  "Refresh Token value not avilable");
         } 
-        return $result = $this->generateTokenResponse(true, $token);;
+        return $this->generateTokenResponse(true, $token);;
     }
 
   // generate the token response 

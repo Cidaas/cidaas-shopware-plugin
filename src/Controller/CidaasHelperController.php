@@ -68,9 +68,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         AbstractUpsertAddressRoute $updateAddressRoute,
         AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
         ) {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
         $this->loginService = $loginService;
         $this->cartService = $cartService;
         $this->logoutRoute = $logoutRoute;
@@ -281,6 +281,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             if(isset($_SESSION['refreshToken'])) {
                 unset($_SESSION['refreshToken']);
             }
+            session_destroy();
+            
             $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
             $parameters = [];
         } catch (ConstraintViolationException $formViolations) {
@@ -564,7 +566,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $accessTokenObj =$this->loginService->getAccessToken();
 
         $myBoolean = $accessTokenObj->success;
-        
+
         if(!$myBoolean){
             return  $this->forwardToRoute( 'frontend.account.logout.page' );
         }
@@ -1051,6 +1053,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             if(isset($_SESSION['refreshToken'])) {
                 unset($_SESSION['refreshToken']);
             }
+            session_destroy();
             $parameters = [];
         } catch ( ConstraintViolationException $formViolations ) {
             $parameters = [ 'formViolations' => $formViolations ];
