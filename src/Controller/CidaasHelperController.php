@@ -564,7 +564,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $accessTokenObj =$this->loginService->getAccessToken();
 
         $myBoolean = $accessTokenObj->success;
-         error_log(json_encode( $accessTokenObj));
+        
         if(!$myBoolean){
             return  $this->forwardToRoute( 'frontend.account.logout.page' );
         }
