@@ -1002,7 +1002,7 @@ class CidaasLoginService {
                     'grant_type' => 'refresh_token',
                     'client_id' => $this->clientId,
                     'client_secret' => $this->clientSecret,
-                    'refresh_token' => "ssgdjshdjshdjsh",
+                    'refresh_token' =>  $refreshToken,
                 ],
                 'headers' => [
                     'content_type' => 'application/json'

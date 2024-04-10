@@ -376,8 +376,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->redirectToRoute( 'frontend.account.logout.page' );
         }
         $accessToken = $accessTokenObj->token;
@@ -401,8 +400,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->redirectToRoute( 'frontend.account.logout.page' );
         }
         $accessToken = $accessTokenObj->token;
@@ -426,8 +424,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->redirectToRoute( 'frontend.account.logout.page' );
         }
         $accessToken = $accessTokenObj->token;
@@ -565,9 +562,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->forwardToRoute( 'frontend.account.logout.page' );
         }
         $accessToken = $accessTokenObj->token;
@@ -949,8 +944,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->redirectToRoute( 'cidaas.register.additional.cancel' );
         }
         $accessToken = $accessTokenObj->token;
@@ -1002,8 +996,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     {
         $accessTokenObj =$this->loginService->getAccessToken();
 
-        $myBoolean = $accessTokenObj->success;
-        if(!$myBoolean){
+        if(!$accessTokenObj->success){
             return  $this->redirectToRoute( 'cidaas.register.additional.cancel' );
         }
         $accessToken = $accessTokenObj->token;
