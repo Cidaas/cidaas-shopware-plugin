@@ -46,6 +46,9 @@ class CidaasAddressController extends StorefrontController {
         private readonly AbstractUpsertAddressRoute $updateAddressRoute,
         private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
     ) {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     // Update billing address to Cidaas
@@ -92,7 +95,15 @@ class CidaasAddressController extends StorefrontController {
     }
 
     private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context ) {
-        $res = $this->loginService->updateBillingAddress( $address, $sub, $context );
+
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        if(!$accessTokenObj->success){
+            return  $this->forwardToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
+
+        $res = $this->loginService->updateBillingAddress( $address, $sub, $accessToken, $context );
         if ( $res ) {
             // Assuming $object is your stdClass object
             $responseData = json_decode( json_encode( $res ), true );

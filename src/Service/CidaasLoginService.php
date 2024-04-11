@@ -640,7 +640,7 @@ class CidaasLoginService {
         }
     }
 
-    public function getAccessToken(String $code, String $url)
+    public function getCidaasAccessToken(String $code, String $url)
     {
         $client = new Client();
         $redirectUri = $url.'/cidaas/redirect';
@@ -785,10 +785,9 @@ class CidaasLoginService {
         return $country->name;
     }
 
-    public function updateBillingAddress($address, $sub, $context) {
+    public function updateBillingAddress($address, $sub, $token, $context) {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $adminToken = $this->getAdminToken();
         $street =  $address->get('street');
         $zipCode =  $address->get('zipcode');
         $company =  $address->get('company');
@@ -798,9 +797,9 @@ class CidaasLoginService {
         $addressId =  $address->get('id');
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$adminToken->access_token
+                    'authorization' => 'Bearer '.$token
                 ],
                 'form_params' => [
                     'customFields' => [
@@ -1024,18 +1023,39 @@ class CidaasLoginService {
         return json_decode($response->getBody()->getContents(), true);
     }
     
-// check current access token expired or not and assign new token
-    public function getRenewAccessToken(Request $request, string $token){
+    // check current access token expired or not and assign new token 
+    public  function getAccessToken (){
+        $token = $_SESSION['accessToken'];
         $isTokenExpired = $this->isTokenExpired( $token );
         if($isTokenExpired){
-            $refreshToken = $request->getSession()->get( 'refresh_token' );
-            $refreshTokenData = $this->renewAccessToken($refreshToken);
-            $token = $refreshTokenData[ 'access_token' ];
-            $request->getSession()->set( 'access_token', $token );
-            $request->getSession()->set( 'refresh_token', $refreshTokenData[ 'refresh_token' ] );
-            return $token ;
-        } else {
-             return $token ;
-        }
+            if(isset($_SESSION['refreshToken'])) {
+                $refreshToken = $_SESSION['refreshToken'];
+                $refreshTokenData = $this->renewAccessToken($refreshToken);
+                if(isset($refreshTokenData->error)){
+                    $result = $this->generateTokenResponse(false, null, $refreshTokenData->error_description );
+                    return $result;
+                }
+                $token = $refreshTokenData[ 'access_token' ];
+                $result = $this->generateTokenResponse(true, $token);
+                $_SESSION['accessToken'] = $refreshTokenData[ 'access_token' ];
+                $_SESSION['refreshToken'] = $refreshTokenData[ 'refresh_token' ];
+                return $result;
+            } 
+            return $this->generateTokenResponse(false, null,  "Refresh Token value not avilable");
+        } 
+        return $this->generateTokenResponse(true, $token);;
     }
+
+    // generate the token response 
+        public function generateTokenResponse( bool $success,string $token = null , string $error = null ) {
+            $response = new \stdClass();
+            $response->success = $success;
+            
+            if ($success) {
+                $response->token = $token;
+            } else {
+                $response->error = $error;
+            }
+            return $response;
+        }
 }
