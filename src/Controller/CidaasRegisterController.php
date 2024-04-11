@@ -28,7 +28,11 @@ use Shopware\Core\Framework\Routing\RoutingException;
         private readonly CartService $cartService,
         private readonly CheckoutRegisterPageLoader $registerPageLoader,
         private readonly AbstractRegisterRoute $registerRoute
-        ) { }
+        ) { 
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+        }
 
 
     #[Route(path: '/cidaas/register', name: 'cidaas.register', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
