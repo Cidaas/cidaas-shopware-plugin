@@ -83,45 +83,50 @@ class CidaasAddressController extends StorefrontController {
                 $this->updateBillingAddressToCidaas( $address, $sub, $context );
                 $this->accountService->setDefaultBillingAddress( $addressId, $context, $customer );
             } else {
-                $this->addFlash( 'danger', 'Address not found' );
+             $this->addFlash(self::DANGER, $this->trans('account.addressDefaultNotChanged'));
             }
         } catch ( AddressNotFoundException ) {
-            $this->addFlash( 'danger', 'Address not found' );
+            $this->addFlash(self::DANGER, $this->trans('account.addressDefaultNotChanged'));
         }
         return $this->redirectToRoute( 'frontend.account.address.page' );
     }
 
-    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context ) {
-        $res = $this->loginService->updateBillingAddress( $address, $sub, $context );
-        if ( $res ) {
-            // Assuming $object is your stdClass object
-            $responseData = json_decode( json_encode( $res ), true );
-            // Key exists in the array
-            if ( array_key_exists( 'success', $responseData ) ) {
-                if ( $responseData[ 'success' ] === true ) {
-                    $this->addFlash( 'success', 'Successfully updated Billing address' );
-                } elseif ( $responseData[ 'success' ] === false ) {
-                    if ( array_key_exists( 'error', $responseData ) ) {
-                        // Handle error data
-                        // Extract error details
-                        $error = $responseData[ 'error' ][ 'error' ];
-                        $this->addFlash( 'danger', 'Failed to update billing address: '.$error );
-                    } else {
-                        // No error information available
-                        error_log( json_encode( $responseData ) );
-                        $this->addFlash( 'danger', 'Failed to update billing address for unknown reason. Please check error log for more details.' );
-                    }
-                } else {
-                    $this->addFlash( 'danger', 'Failed to update billing address for unknown reason.' );
-                }
-            } else {
-                // Key does not exist in the array
-                $this->addFlash( 'danger', 'Failed to update billing address for unknown reason.' );
+    private function updateBillingAddressToCidaas(CustomerAddressEntity $address, string $sub, SalesChannelContext $context) {
+        try {
+            $res = $this->loginService->updateBillingAddress($address, $sub, $context);
+            
+            if (!$res) {
+                $this->addFlash('danger', 'Failed to update billing address: No response received from the service.');
+                return;
             }
-        } else {
-            $this->addFlash( 'danger', 'Failed to update billing address for unknown reason.' );
+    
+            $responseData = json_decode(json_encode($res), true);
+    
+            if (!is_array($responseData)) {
+                $this->addFlash('danger', 'Failed to update billing address: Invalid response format.');
+                error_log('Invalid response format: ' . json_encode($res));
+                return;
+            }
+    
+            if (!array_key_exists('success', $responseData)) {
+                $this->addFlash('danger', 'Failed to update billing address: Missing success key in response.');
+                error_log('Missing success key in response: ' . json_encode($responseData));
+                return;
+            }
+    
+            if ($responseData['success'] === true) {
+                $this->addFlash('success', 'Successfully updated billing address.');
+            } else {
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $this->addFlash('danger', 'Failed to update billing address: ' . $error);
+                error_log('Error response: ' . json_encode($responseData));
+            }
+        } catch (Exception $e) {
+            $this->addFlash('danger', 'An exception occurred while updating the billing address.');
+            error_log('Exception: ' . $e->getMessage());
         }
     }
+    
 
     // Get customer ID based on address ID
 

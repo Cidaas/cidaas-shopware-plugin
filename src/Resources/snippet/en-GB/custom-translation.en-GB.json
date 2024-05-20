@@ -4,7 +4,8 @@
         "confirmChangesMessage" : "Please confirm your changes:",
         "newEmailLabel":"New email:",
         "confirmBtnLabel": "Confirm",
-        "addressSubmit" :"Submit"
+        "addressSubmit" :"Submit",
+        "errorOccured" : "An error occurred:"
 
     }
 }

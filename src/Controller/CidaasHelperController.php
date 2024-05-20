@@ -60,13 +60,8 @@ class CidaasHelperController extends StorefrontController {
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            if ($this->hasRequiredUserData($user)) {
-                                // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                                $this->loginService->checkCustomerGroups( $user, $context );
-                                } else {
-                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
-                                }
+                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                            $this->loginService->checkCustomerGroups( $user, $context );
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -115,13 +110,8 @@ class CidaasHelperController extends StorefrontController {
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            if ($this->hasRequiredUserData($user)) {
-                                // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                                $this->loginService->checkCustomerGroups( $user, $context );
-                                } else {
-                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
-                                }
+                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                            $this->loginService->checkCustomerGroups( $user, $context );
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -260,31 +250,53 @@ class CidaasHelperController extends StorefrontController {
     }
 
     #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET', 'POST' ] ) ]
-    public function changepassword( Request $request, SalesChannelContext $context ): Response {
-        $sub = $request->getSession()->get( 'sub' );
-        $token = $request->getSession()->get( 'access_token' );
-        // check token expiry and get renew access token
-        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
-        $newPassword = $request->get( 'newPassword' );
-        $confirmPassword = $request->get( 'confirmPassword' );
-        $oldPassword = $request->get( 'oldPassword' );
-        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $accessToken );
-        $this->addFlash( 'success', 'Password has been changed.' );
-        return $this->json( $res );
+    public function changepassword(Request $request, SalesChannelContext $context): Response {
+        try {
+            $sub = $request->getSession()->get('sub');
+            $token = $request->getSession()->get('access_token');
+            // Check token expiry and get renew access token
+            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
+    
+            $newPassword = $request->get('newPassword');
+            $confirmPassword = $request->get('confirmPassword');
+            $oldPassword = $request->get('oldPassword');
+    
+            // Attempt to change the password
+            $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
+    
+            if ($res) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
+            } else {
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'). $res['message']);
+            }
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.errorOccured'). $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
     }
+    
 
     #[Route( path: '/cidaas/emailform', name: 'cidaas.emailform', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function emailForm( Request $request, SalesChannelContext $context ): Response {
-        $sub = $request->getSession()->get( 'sub' );
-        $email = $request->get( 'email' );
-        $token = $request->getSession()->get( 'access_token' );
-        // check token expiry and get renew access token
-        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
-        $this->loginService->changeEmail( $email, $sub, $accessToken, $context );
-        $this->addFlash( 'success', 'E-Mail Adresse geändert' );
-        return $this->json(
-            array()
-        );
+        try {
+            $sub = $request->getSession()->get('sub');
+            $email = $request->get('email');
+            $token = $request->getSession()->get('access_token');
+            
+            // Check token expiry and get a renewed access token
+            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
+            $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
+            if ($res) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
+            } else {
+                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'));
+            }
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'). $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route( path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]

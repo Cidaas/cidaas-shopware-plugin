@@ -4,7 +4,8 @@
         "confirmChangesMessage" : "Bitte bestätigen Sie Ihre Änderungen:",
         "newEmailLabel":"Neue e-mail:",
         "confirmBtnLabel": "Bestätigen",
-        "addressSubmit" :"Submit"
+        "addressSubmit" :"Submit",
+        "errorOccured" : "Es ist ein Fehler aufgetreten:"
 
     }
 }
