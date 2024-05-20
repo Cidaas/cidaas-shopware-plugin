@@ -96,33 +96,32 @@ class CidaasAddressController extends StorefrontController {
             $res = $this->loginService->updateBillingAddress($address, $sub, $context);
             
             if (!$res) {
-                $this->addFlash('danger', 'Failed to update billing address: No response received from the service.');
+                $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError'));
                 return;
             }
     
             $responseData = json_decode(json_encode($res), true);
-    
             if (!is_array($responseData)) {
-                $this->addFlash('danger', 'Failed to update billing address: Invalid response format.');
+                $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError'));
                 error_log('Invalid response format: ' . json_encode($res));
                 return;
             }
     
             if (!array_key_exists('success', $responseData)) {
-                $this->addFlash('danger', 'Failed to update billing address: Missing success key in response.');
+                $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError'));
                 error_log('Missing success key in response: ' . json_encode($responseData));
                 return;
             }
     
             if ($responseData['success'] === true) {
-                $this->addFlash('success', 'Successfully updated billing address.');
+                $this->addFlash(self::SUCCESS, $this->trans('account.updateBillingAddress'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash('danger', 'Failed to update billing address: ' . $error);
+                $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError'). $error);
                 error_log('Error response: ' . json_encode($responseData));
             }
         } catch (Exception $e) {
-            $this->addFlash('danger', 'An exception occurred while updating the billing address.');
+            $this->addFlash(self::DANGER, $this->trans('account.errorOccured'). $e->getMessage());
             error_log('Exception: ' . $e->getMessage());
         }
     }

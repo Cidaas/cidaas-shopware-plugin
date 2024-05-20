@@ -5,6 +5,8 @@
         "newEmailLabel":"Neue e-mail:",
         "confirmBtnLabel": "Bestätigen",
         "addressSubmit" :"Submit",
+        "updateBillingAddress" : "Standard-Rechnungsadresse erfolgreich aktualisiert.",
+        "billingAddressUpdateError": "Die Rechnungsadresse konnte nicht aktualisiert werden.",
         "errorOccured" : "Es ist ein Fehler aufgetreten:"
 
     }
