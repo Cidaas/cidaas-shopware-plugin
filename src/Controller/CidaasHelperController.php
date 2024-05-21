@@ -300,46 +300,42 @@ class CidaasHelperController extends StorefrontController {
     }
 
     #[Route( path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
-    public function updateProfile( Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer ): Response {
-        $sub = $request->getSession()->get( 'sub' );
-        $firstName = $request->get( 'firstName' );
-        $lastName = $request->get( 'lastName' );
-        $salutationId = $request->get( 'salutationId' );
-        $token = $request->getSession()->get( 'access_token' );
-        // check token expiry and get renew access token
-        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $accessToken, $context );
-        if ( $res ) {
-            // Assuming $object is your stdClass object
-            $responseData = json_decode( json_encode( $res ), true );
-            // Key exists in the array
-            if ( array_key_exists( 'success', $responseData ) ) {
-                if ( $responseData[ 'success' ] === true ) {
-                    $this->updateCustomerProfileRoute->change( $data, $context, $customer );
-                    $this->addFlash( 'success', 'Successfully updated profile' );
-                } elseif ( $responseData[ 'success' ] === false ) {
-                    if ( array_key_exists( 'error', $responseData ) ) {
-                        // Handle error data
-                        // Extract error details
-                        $error = $responseData[ 'error' ][ 'error' ];
-                        $this->addFlash( 'danger', 'Failed to update profile: '.$error );
-                    } else {
-                        // No error information available
-                        error_log( json_encode( $responseData ) );
-                        $this->addFlash( 'danger', 'Failed to update profile for unknown reason. Please check error log for more details.' );
-                    }
-                } else {
-                    $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
-                }
-            } else {
-                // Key does not exist in the array
-                $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
+    public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response {
+        $session = $request->getSession();
+        $sub = $session->get('sub');
+        $firstName = $request->get('firstName');
+        $lastName = $request->get('lastName');
+        $salutationId = $request->get('salutationId');
+        $token = $session->get('access_token');
+    
+        try {
+            // Check token expiry and renew access token if necessary
+            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
+    
+            // Update profile
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
+            $responseData = json_decode(json_encode($res), true);
+    
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.updateProfileError'));
             }
-        } else {
-            $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
+    
+            if ($responseData['success'] === true) {
+                $this->updateCustomerProfileRoute->change($data, $context, $customer);
+                $this->addFlash(self::SUCCESS, $this->trans('account.updateProfile'));
+            } else {
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                throw new \Exception($this->trans('account.updateProfileError') . $error);
+            }
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('account.updateProfileError'). $e->getMessage());
         }
-        return $this->redirectToRoute( 'frontend.account.profile.page' );
+    
+        return $this->redirectToRoute('frontend.account.profile.page');
     }
+    
+    
 
     #[Route( path: '/cidaas/url', name: 'cidaas.url', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
     public function getUrl( Request $request ): Response {
