@@ -28,6 +28,9 @@ class CidaasHelperController extends StorefrontController {
         private readonly AbstractLogoutRoute $logoutRoute,
         private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
     ) {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     // Redirect all account login 
@@ -50,12 +53,15 @@ class CidaasHelperController extends StorefrontController {
         $state = $request->query->get( 'state' );
         $sess = $request->getSession()->get( 'state' );
         if ( $state === $sess ) {
-            $token = $this->loginService->getAccessToken( $code, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+            $token = $this->loginService->getCidaasAccessToken( $code, $request->get( 'sw-sales-channel-absolute-base-url' ) );
             if ( is_array( $token ) ) {
                 if ( isset( $token[ 'sub' ] ) ) {
-                    $request->getSession()->set( 'access_token', $token[ 'access_token' ] );
+
+                    $_SESSION['accessToken'] = $token[ 'access_token' ];
+                    if(isset($token[ 'refresh_token' ])) {
+                        $_SESSION['refreshToken'] = $token[ 'refresh_token' ];
+                    }
                     $request->getSession()->set( 'sub', $token[ 'sub' ] );
-                    $request->getSession()->set( 'refresh_token', $token[ 'refresh_token' ] );
                     $user = $this->loginService->getAccountFromCidaas( $token[ 'access_token' ] );
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
@@ -104,9 +110,12 @@ class CidaasHelperController extends StorefrontController {
                 }
             } else if ( is_object( $token ) ) {
                 if ( isset( $token->sub ) ) {
-                    $request->getSession()->set( 'access_token', $token->access_token );
+
+                    $_SESSION['accessToken'] = $token->access_token;
+                    if(isset($token->refresh_token)) {
+                        $_SESSION['refreshToken'] = $token->refresh_token;
+                    }
                     $request->getSession()->set( 'sub', $token->sub );
-                    $request->getSession()->set( 'refresh_token', $token->refresh_token );
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
@@ -190,9 +199,16 @@ class CidaasHelperController extends StorefrontController {
                 $request->getSession()->invalidate();
             }
             $request->getSession()->remove( 'state' );
-            $request->getSession()->remove( 'access_token' );
-            $request->getSession()->remove( 'refresh_token' );
             $request->getSession()->remove( 'sub' );
+
+            if(isset($_SESSION['accessToken'])) {
+                unset($_SESSION['accessToken']);
+            }
+            if(isset($_SESSION['refreshToken'])) {
+                unset($_SESSION['refreshToken']);
+            }
+            session_destroy();
+
             $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
         } catch ( ConstraintViolationException $formViolations ) {
@@ -253,9 +269,13 @@ class CidaasHelperController extends StorefrontController {
     public function changepassword(Request $request, SalesChannelContext $context): Response {
         try {
             $sub = $request->getSession()->get('sub');
-            $token = $request->getSession()->get('access_token');
-            // Check token expiry and get renew access token
-            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
+            $accessTokenObj =$this->loginService->getAccessToken();
+
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+
     
             $newPassword = $request->get('newPassword');
             $confirmPassword = $request->get('confirmPassword');
@@ -282,10 +302,15 @@ class CidaasHelperController extends StorefrontController {
         try {
             $sub = $request->getSession()->get('sub');
             $email = $request->get('email');
-            $token = $request->getSession()->get('access_token');
             
-            // Check token expiry and get a renewed access token
-            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
+            $accessTokenObj =$this->loginService->getAccessToken();
+
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+
+            
             $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
             if ($res) {
                 $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
@@ -306,12 +331,17 @@ class CidaasHelperController extends StorefrontController {
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
-        $token = $session->get('access_token');
+       
+
     
         try {
-            // Check token expiry and renew access token if necessary
-            $accessToken = $this->loginService->getRenewAccessToken($request, $token);
-    
+            $accessTokenObj =$this->loginService->getAccessToken();
+
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+            
             // Update profile
             $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
             $responseData = json_decode(json_encode($res), true);
