@@ -184,39 +184,44 @@ class CidaasHelperController extends StorefrontController {
     }
 
     #[Route( path: '/account/logout', name: 'frontend.account.logout.page', methods: [ 'GET' ] ) ]
-    public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
-        if ( $context->getCustomer() === null ) {
-            return $this->redirectToRoute( 'frontend.account.login.page' );
+    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response {
+        if ($context->getCustomer() === null) {
+            return $this->redirectToRoute('frontend.account.login.page');
         }
         try {
-            $token = $request->getSession()->get( 'access_token' );
-            if ( $token ) {
-                $this->loginService->endSession( $token );
+            if (isset($_SESSION['accessToken'])) {
+                $this->loginService->endSession($_SESSION['accessToken']);
             }
-            $this->logoutRoute->logout( $context, $dataBag );
+    
+            $this->logoutRoute->logout($context, $dataBag);
+            $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
+    
             $salesChannelId = $context->getSalesChannel()->getId();
-            if ( $request->hasSession() && $this->loginService->getSysConfig( 'core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId ) ) {
-                $request->getSession()->invalidate();
+            if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
+                $session->invalidate();
+            } else {
+                $session = $request->getSession();
+                $session->remove('state');
+                $session->remove('sub');
             }
-            $request->getSession()->remove( 'state' );
-            $request->getSession()->remove( 'sub' );
-
-            if(isset($_SESSION['accessToken'])) {
+    
+            // Unset tokens if they exist
+            if (isset($_SESSION['accessToken'])) {
                 unset($_SESSION['accessToken']);
             }
-            if(isset($_SESSION['refreshToken'])) {
+            if (isset($_SESSION['refreshToken'])) {
                 unset($_SESSION['refreshToken']);
             }
+            
             session_destroy();
-
-            $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
-        } catch ( ConstraintViolationException $formViolations ) {
-            $parameters = [ 'formViolations' => $formViolations ];
+        } catch (ConstraintViolationException $formViolations) {
+            $parameters = ['formViolations' => $formViolations];
         }
-
-        return $this->redirectToRoute( 'frontend.account.login.page', $parameters );
+    
+        return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
+    
 
     #[Route( path: '/cidaas/exists', name: 'cidaas.exists', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function exists( Request $request, SalesChannelContext $context ): Response {
