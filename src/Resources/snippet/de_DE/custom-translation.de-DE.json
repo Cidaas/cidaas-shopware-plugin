@@ -1,5 +1,7 @@
 {
     "account": {
+        "loginSuccess": "Login Erfolgreich",
+        "loginError": "Fehler beim Login/Registrieren!",
         "confirmChangeLabel" : "Änderung bestätigen",
         "confirmChangesMessage" : "Bitte bestätigen Sie Ihre Änderungen:",
         "newEmailLabel":"Neue e-mail:",

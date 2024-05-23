@@ -105,7 +105,7 @@ class CidaasHelperController extends StorefrontController {
                         }
                         return $this->forwardToRoute( $target );
                     }
-                    $this->addFlash( 'success', 'Login Erfolgreich' );
+                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
                     return $this->forwardToRoute( 'frontend.home.page' );
                 }
             } else if ( is_object( $token ) ) {
@@ -158,15 +158,15 @@ class CidaasHelperController extends StorefrontController {
                         }
                         return $this->forwardToRoute( $target );
                     }
-                    $this->addFlash( 'success', 'Login Erfolgreich' );
+                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
                     return $this->forwardToRoute( 'frontend.home.page' );
                 }
             }
 
-            $this->addFlash( 'error', 'Das sollte nicht passieren, Entschuldigung' );
+            $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute( 'frontend.home.page' );
         }
-        $this->addFlash( 'error', 'Fehler bei der Anmeldung/Registrierung! Entschuldigung!' );
+        $this->addFlash(self::DANGER, $this->trans('account.loginError'));
         return $this->forwardToRoute( 'frontend.home.page' );
     }
 
@@ -212,8 +212,6 @@ class CidaasHelperController extends StorefrontController {
             if (isset($_SESSION['refreshToken'])) {
                 unset($_SESSION['refreshToken']);
             }
-            
-            session_destroy();
             $parameters = [];
         } catch (ConstraintViolationException $formViolations) {
             $parameters = ['formViolations' => $formViolations];

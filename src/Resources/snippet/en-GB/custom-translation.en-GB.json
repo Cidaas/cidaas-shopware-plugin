@@ -1,5 +1,7 @@
 {
     "account": {
+        "loginSuccess": "Login successfull.",
+        "loginError": "Error during login/registration! ",
         "confirmChangeLabel" : "Confirm change",
         "confirmChangesMessage" : "Please confirm your changes:",
         "newEmailLabel":"New email:",

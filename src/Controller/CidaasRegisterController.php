@@ -66,7 +66,13 @@ use Shopware\Core\Framework\Routing\RoutingException;
         $token = $request->getSession()->get( 'access_token' );
 
         // check token expiry and get renew access token
-        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+        $accessTokenObj =$this->loginService->getAccessToken();
+
+        if(!$accessTokenObj->success){
+            return  $this->forwardToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
+
         $user = $this->loginService->getAccountFromCidaas( $accessToken );
 
         // Assuming $data is an instance of RequestDataBag
@@ -111,9 +117,13 @@ use Shopware\Core\Framework\Routing\RoutingException;
     public function registerAdditionalSave(Request $request, RequestDataBag $formData, SalesChannelContext $context): Response
     {
 
-        $token = $request->getSession()->get( 'access_token' );
-        // check token expiry and get renew access token
-        $accessToken = $this->loginService->getRenewAccessToken( $request, $token );
+       $accessTokenObj =$this->loginService->getAccessToken();
+
+        if(!$accessTokenObj->success){
+            return  $this->forwardToRoute( 'frontend.account.logout.page' );
+        }
+        $accessToken = $accessTokenObj->token;
+
         $user = $this->loginService->getAccountFromCidaas( $accessToken );
          
         $url = $request->get( 'sw-sales-channel-absolute-base-url' );
@@ -140,9 +150,9 @@ use Shopware\Core\Framework\Routing\RoutingException;
     #[Route( path: '/cancel/user', name: 'cidaas.register.additional.cancel', methods: [ 'GET' ] ) ]
     public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
         try {
-            $token = $request->getSession()->get( 'access_token' );
-            if ( $token ) {
-                $this->loginService->endSession( $token );
+
+            if (isset($_SESSION['accessToken'])) {
+                $this->loginService->endSession($_SESSION['accessToken']);
             }
             $salesChannelId = $context->getSalesChannel()->getId();
             if ( $request->hasSession() && $this->loginService->getSysConfig( 'core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId ) ) {
