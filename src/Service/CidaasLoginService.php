@@ -401,7 +401,7 @@ class CidaasLoginService {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
                     'Authorization' => 'Bearer '.$token
                 ],
@@ -416,6 +416,9 @@ class CidaasLoginService {
                 'id' => $customer->getId(),
                 'email' => $email
             ]], $context->getContext());
+
+            return json_decode($response->getBody()->getContents());
+            
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }

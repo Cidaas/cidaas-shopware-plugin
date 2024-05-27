@@ -1,10 +1,17 @@
 {
     "account": {
+        "loginSuccess": "Login Erfolgreich",
+        "loginError": "Fehler beim Login/Registrieren!",
         "confirmChangeLabel" : "Änderung bestätigen",
         "confirmChangesMessage" : "Bitte bestätigen Sie Ihre Änderungen:",
         "newEmailLabel":"Neue e-mail:",
         "confirmBtnLabel": "Bestätigen",
-        "addressSubmit" :"Submit"
+        "addressSubmit" :"Submit",
+        "updateProfile" :"Profil erfolgreich aktualisiert.",
+        "updateProfileError" :"Profil konnte nicht aktualisiert werden.",
+        "updateBillingAddress" : "Standard-Rechnungsadresse erfolgreich aktualisiert.",
+        "billingAddressUpdateError": "Die Rechnungsadresse konnte nicht aktualisiert werden.",
+        "errorOccured" : "Es ist ein Fehler aufgetreten:"
 
     }
 }

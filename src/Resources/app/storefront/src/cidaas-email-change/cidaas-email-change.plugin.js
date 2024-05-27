@@ -42,13 +42,14 @@ export default class CidaasEmailChange extends Plugin {
     }
 
     handleVerify() {
-        ElementLoadingIndicatorUtil.create(this.mailContainer)
+        ElementLoadingIndicatorUtil.create(this.mailContainer);
         this.client.post('/cidaas/emailform', JSON.stringify({
             email: this.email
         }), (res) => {
-            ElementLoadingIndicatorUtil.remove(this.mailContainer)
-            document.getElementById('verifyThing').style.display = 'none'
-            window.location.href = "/account"
-        })
+            ElementLoadingIndicatorUtil.remove(this.mailContainer);
+            document.getElementById('verifyThing').style.display = 'none';
+            window.location.href = "/account/profile"; 
+        });
     }
+    
 }

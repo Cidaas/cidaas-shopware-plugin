@@ -66,13 +66,8 @@ class CidaasHelperController extends StorefrontController {
                     $temp = $this->loginService->customerExistsByEmail( $user[ 'email' ], $context );
                     if ( !$this->loginService->customerExistsBySub( $token[ 'sub' ], $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            if ($this->hasRequiredUserData($user)) {
-                                // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                                $this->loginService->checkCustomerGroups( $user, $context );
-                                } else {
-                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
-                                }
+                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                            $this->loginService->checkCustomerGroups( $user, $context );
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -110,7 +105,7 @@ class CidaasHelperController extends StorefrontController {
                         }
                         return $this->forwardToRoute( $target );
                     }
-                    $this->addFlash( 'success', 'Login Erfolgreich' );
+                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
                     return $this->forwardToRoute( 'frontend.home.page' );
                 }
             } else if ( is_object( $token ) ) {
@@ -124,13 +119,8 @@ class CidaasHelperController extends StorefrontController {
                     $user = $this->loginService->getAccountFromCidaas( $token->access_token );
                     if ( !$this->loginService->customerExistsBySub( $token->sub, $context ) && !$this->loginService->customerExistsByEmail( $user[ 'email' ], $context )[ 'exists' ] ) {
                         try {
-                            if ($this->hasRequiredUserData($user)) {
-                                // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
-                                $this->loginService->checkCustomerGroups( $user, $context );
-                                } else {
-                                    return $this->redirectToRoute( 'cidaas.register.additional.page' );
-                                }
+                            $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                            $this->loginService->checkCustomerGroups( $user, $context );
                             if ( $request->getSession()->get( 'redirect_to' ) ) {
                                 $target = $request->getSession()->get( 'redirect_to' );
                                 $request->getSession()->remove( 'redirect_to' );
@@ -168,15 +158,15 @@ class CidaasHelperController extends StorefrontController {
                         }
                         return $this->forwardToRoute( $target );
                     }
-                    $this->addFlash( 'success', 'Login Erfolgreich' );
+                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
                     return $this->forwardToRoute( 'frontend.home.page' );
                 }
             }
 
-            $this->addFlash( 'error', 'Das sollte nicht passieren, Entschuldigung' );
+            $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute( 'frontend.home.page' );
         }
-        $this->addFlash( 'error', 'Fehler bei der Anmeldung/Registrierung! Entschuldigung!' );
+        $this->addFlash(self::DANGER, $this->trans('account.loginError'));
         return $this->forwardToRoute( 'frontend.home.page' );
     }
 
@@ -194,39 +184,42 @@ class CidaasHelperController extends StorefrontController {
     }
 
     #[Route( path: '/account/logout', name: 'frontend.account.logout.page', methods: [ 'GET' ] ) ]
-    public function logout( Request $request, SalesChannelContext $context, RequestDataBag $dataBag ): Response {
-        if ( $context->getCustomer() === null ) {
-            return $this->redirectToRoute( 'frontend.account.login.page' );
+    public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response {
+        if ($context->getCustomer() === null) {
+            return $this->redirectToRoute('frontend.account.login.page');
         }
         try {
-            $token = $request->getSession()->get( 'access_token' );
-            if ( $token ) {
-                $this->loginService->endSession( $token );
+            if (isset($_SESSION['accessToken'])) {
+                $this->loginService->endSession($_SESSION['accessToken']);
             }
-            $this->logoutRoute->logout( $context, $dataBag );
+    
+            $this->logoutRoute->logout($context, $dataBag);
+            $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
+    
             $salesChannelId = $context->getSalesChannel()->getId();
-            if ( $request->hasSession() && $this->loginService->getSysConfig( 'core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId ) ) {
-                $request->getSession()->invalidate();
+            if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
+                $session->invalidate();
+            } else {
+                $session = $request->getSession();
+                $session->remove('state');
+                $session->remove('sub');
             }
-            $request->getSession()->remove( 'state' );
-            $request->getSession()->remove( 'sub' );
-
-            if(isset($_SESSION['accessToken'])) {
+    
+            // Unset tokens if they exist
+            if (isset($_SESSION['accessToken'])) {
                 unset($_SESSION['accessToken']);
             }
-            if(isset($_SESSION['refreshToken'])) {
+            if (isset($_SESSION['refreshToken'])) {
                 unset($_SESSION['refreshToken']);
             }
-            session_destroy();
-
-            $this->addFlash( self::SUCCESS, $this->trans( 'account.logoutSucceeded' ) );
             $parameters = [];
-        } catch ( ConstraintViolationException $formViolations ) {
-            $parameters = [ 'formViolations' => $formViolations ];
+        } catch (ConstraintViolationException $formViolations) {
+            $parameters = ['formViolations' => $formViolations];
         }
-
-        return $this->redirectToRoute( 'frontend.account.login.page', $parameters );
+    
+        return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
+    
 
     #[Route( path: '/cidaas/exists', name: 'cidaas.exists', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function exists( Request $request, SalesChannelContext $context ): Response {
@@ -276,89 +269,106 @@ class CidaasHelperController extends StorefrontController {
     }
 
     #[Route( path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET', 'POST' ] ) ]
-    public function changepassword( Request $request, SalesChannelContext $context ): Response {
-        $sub = $request->getSession()->get( 'sub' );
+    public function changepassword(Request $request, SalesChannelContext $context): Response {
+        try {
+            $sub = $request->getSession()->get('sub');
+            $accessTokenObj =$this->loginService->getAccessToken();
 
-        $accessTokenObj =$this->loginService->getAccessToken();
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
 
-        if(!$accessTokenObj->success){
-            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+    
+            $newPassword = $request->get('newPassword');
+            $confirmPassword = $request->get('confirmPassword');
+            $oldPassword = $request->get('oldPassword');
+    
+            // Attempt to change the password
+            $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
+    
+            if ($res) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
+            } else {
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'). $res['message']);
+            }
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.errorOccured'). $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-        $accessToken = $accessTokenObj->token;
-
-        $newPassword = $request->get( 'newPassword' );
-        $confirmPassword = $request->get( 'confirmPassword' );
-        $oldPassword = $request->get( 'oldPassword' );
-        $res = $this->loginService->changepassword( $newPassword, $confirmPassword, $oldPassword, $sub, $accessToken );
-        $this->addFlash( 'success', 'Password has been changed.' );
-        return $this->json( $res );
     }
+    
 
     #[Route( path: '/cidaas/emailform', name: 'cidaas.emailform', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'POST' ] ) ]
     public function emailForm( Request $request, SalesChannelContext $context ): Response {
-        $sub = $request->getSession()->get( 'sub' );
-        $email = $request->get( 'email' );
-       
-        $accessTokenObj =$this->loginService->getAccessToken();
+        try {
+            $sub = $request->getSession()->get('sub');
+            $email = $request->get('email');
+            
+            $accessTokenObj =$this->loginService->getAccessToken();
 
-        if(!$accessTokenObj->success){
-            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+
+            
+            $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
+            if ($res) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
+            } else {
+                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'));
+            }
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'). $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        $accessToken = $accessTokenObj->token;
-
-        $this->loginService->changeEmail( $email, $sub, $accessToken, $context );
-        $this->addFlash( 'success', 'E-Mail Adresse geändert' );
-        return $this->json(
-            array()
-        );
     }
 
     #[Route( path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: [ '_loginRequired' => true ], methods: [ 'POST' ] ) ]
-    public function updateProfile( Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer ): Response {
-        $sub = $request->getSession()->get( 'sub' );
-        $firstName = $request->get( 'firstName' );
-        $lastName = $request->get( 'lastName' );
-        $salutationId = $request->get( 'salutationId' );
-        
-        $accessTokenObj =$this->loginService->getAccessToken();
+    public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response {
+        $session = $request->getSession();
+        $sub = $session->get('sub');
+        $firstName = $request->get('firstName');
+        $lastName = $request->get('lastName');
+        $salutationId = $request->get('salutationId');
+       
 
-        if(!$accessTokenObj->success){
-            return  $this->redirectToRoute( 'frontend.account.logout.page' );
-        }
-        $accessToken = $accessTokenObj->token;
-        
-        $res = $this->loginService->updateProfile( $firstName, $lastName, $salutationId, $sub, $accessToken, $context );
-        if ( $res ) {
-            // Assuming $object is your stdClass object
-            $responseData = json_decode( json_encode( $res ), true );
-            // Key exists in the array
-            if ( array_key_exists( 'success', $responseData ) ) {
-                if ( $responseData[ 'success' ] === true ) {
-                    $this->updateCustomerProfileRoute->change( $data, $context, $customer );
-                    $this->addFlash( 'success', 'Successfully updated profile' );
-                } elseif ( $responseData[ 'success' ] === false ) {
-                    if ( array_key_exists( 'error', $responseData ) ) {
-                        // Handle error data
-                        // Extract error details
-                        $error = $responseData[ 'error' ][ 'error' ];
-                        $this->addFlash( 'danger', 'Failed to update profile: '.$error );
-                    } else {
-                        // No error information available
-                        error_log( json_encode( $responseData ) );
-                        $this->addFlash( 'danger', 'Failed to update profile for unknown reason. Please check error log for more details.' );
-                    }
-                } else {
-                    $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
-                }
-            } else {
-                // Key does not exist in the array
-                $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
+    
+        try {
+            $accessTokenObj =$this->loginService->getAccessToken();
+
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
             }
-        } else {
-            $this->addFlash( 'danger', 'Failed to update profile for unknown reason.' );
+            $accessToken = $accessTokenObj->token;
+            
+            // Update profile
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
+            $responseData = json_decode(json_encode($res), true);
+    
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.updateProfileError'));
+            }
+    
+            if ($responseData['success'] === true) {
+                $this->updateCustomerProfileRoute->change($data, $context, $customer);
+                $this->addFlash(self::SUCCESS, $this->trans('account.updateProfile'));
+            } else {
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                throw new \Exception($this->trans('account.updateProfileError') . $error);
+            }
+        } catch (\Exception $e) {
+            error_log($e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('account.updateProfileError'). $e->getMessage());
         }
-        return $this->redirectToRoute( 'frontend.account.profile.page' );
+    
+        return $this->redirectToRoute('frontend.account.profile.page');
     }
+    
+    
 
     #[Route( path: '/cidaas/url', name: 'cidaas.url', options: [ 'seo' => false ], defaults: [ 'XmlHttpRequest' => true ], methods: [ 'GET' ] ) ]
     public function getUrl( Request $request ): Response {

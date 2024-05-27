@@ -1,10 +1,17 @@
 {
     "account": {
+        "loginSuccess": "Login successfull.",
+        "loginError": "Error during login/registration! ",
         "confirmChangeLabel" : "Confirm change",
         "confirmChangesMessage" : "Please confirm your changes:",
         "newEmailLabel":"New email:",
         "confirmBtnLabel": "Confirm",
-        "addressSubmit" :"Submit"
+        "addressSubmit" :"Submit",
+        "updateProfile" :"Successfully updated profile.",
+        "updateProfileError" :"Failed to update profile.",
+        "updateBillingAddress" : "Default billing address updated successfully.",
+        "billingAddressUpdateError": "Failed to update billing address.",
+        "errorOccured" : "An error occurred:"
 
     }
 }
