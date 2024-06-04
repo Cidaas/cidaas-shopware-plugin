@@ -294,14 +294,20 @@ class CidaasHelperController extends StorefrontController
             // Attempt to change the password
             $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
 
-            if ($res) {
+            $responseData = json_decode(json_encode($res), true);
+
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.passwordChangeSuccess'));
+            }
+            if ($responseData['success'] === true) {
                 $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
             } else {
-                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $res['message']);
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'). $error);
             }
             return $this->json($res);
         } catch (\Exception $e) {
-            $this->addFlash(self::DANGER, $this->trans('account.errorOccured') . $e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $e->getMessage());
             return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -321,11 +327,19 @@ class CidaasHelperController extends StorefrontController
             $accessToken = $accessTokenObj->token;
 
             $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
-            if ($res) {
+
+            $responseData = json_decode(json_encode($res), true);
+
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.emailChangeNoSuccess'));
+            }
+            if ($responseData['success'] === true) {
                 $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
             } else {
-                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'));
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'). $error);
             }
+
             return $this->json($res);
         } catch (\Exception $e) {
             $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess') . $e->getMessage());
@@ -363,7 +377,7 @@ class CidaasHelperController extends StorefrontController
                 $this->addFlash(self::SUCCESS, $this->trans('account.updateProfile'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                throw new \Exception($this->trans('account.updateProfileError') . $error);
+                $this->addFlash(self::DANGER, $this->trans('account.updateProfileError') . $error);
             }
         } catch (\Exception $e) {
             error_log($e->getMessage());

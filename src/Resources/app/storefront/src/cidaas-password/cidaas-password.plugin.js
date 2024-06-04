@@ -36,6 +36,9 @@ export default class CidaasPassword extends Plugin {
                     const result = JSON.parse(res);
                     if (result.success) {
                         window.location.href = "/account/logout";
+                    } else{
+                        
+                        window.location.href = "/account/profile";
                     }
                 } catch (err) {
                     // Handle error
