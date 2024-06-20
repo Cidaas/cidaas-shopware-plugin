@@ -209,13 +209,7 @@ class CidaasHelperController extends StorefrontController
                 $session->remove('sub');
             }
 
-            // Unset tokens if they exist
-            if (isset($_SESSION['accessToken'])) {
-                unset($_SESSION['accessToken']);
-            }
-            if (isset($_SESSION['refreshToken'])) {
-                unset($_SESSION['refreshToken']);
-            }
+            session_unset();
             $parameters = [];
         } catch (ConstraintViolationException $formViolations) {
             $parameters = ['formViolations' => $formViolations];
@@ -280,19 +274,13 @@ class CidaasHelperController extends StorefrontController
     {
         try {
             $sub = $request->getSession()->get('sub');
-            $accessTokenObj = $this->loginService->getAccessToken();
-
-            if (!$accessTokenObj->success) {
-                return $this->redirectToRoute('frontend.account.logout.page');
-            }
-            $accessToken = $accessTokenObj->token;
-
+          
             $newPassword = $request->get('newPassword');
             $confirmPassword = $request->get('confirmPassword');
             $oldPassword = $request->get('oldPassword');
 
             // Attempt to change the password
-            $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
+            $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub);
 
             $responseData = json_decode(json_encode($res), true);
 
@@ -319,14 +307,7 @@ class CidaasHelperController extends StorefrontController
             $sub = $request->getSession()->get('sub');
             $email = $request->get('email');
 
-            $accessTokenObj = $this->loginService->getAccessToken();
-
-            if (!$accessTokenObj->success) {
-                return $this->redirectToRoute('frontend.account.logout.page');
-            }
-            $accessToken = $accessTokenObj->token;
-
-            $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
+            $res = $this->loginService->changeEmail($email, $sub, $context);
 
             $responseData = json_decode(json_encode($res), true);
 
@@ -357,15 +338,8 @@ class CidaasHelperController extends StorefrontController
         $salutationId = $request->get('salutationId');
 
         try {
-            $accessTokenObj = $this->loginService->getAccessToken();
-
-            if (!$accessTokenObj->success) {
-                return $this->redirectToRoute('frontend.account.logout.page');
-            }
-            $accessToken = $accessTokenObj->token;
-
             // Update profile
-            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $accessToken, $context);
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {

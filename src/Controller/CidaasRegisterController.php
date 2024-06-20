@@ -159,9 +159,8 @@ class CidaasRegisterController extends StorefrontController
                 $request->getSession()->invalidate();
             }
             $request->getSession()->remove('state');
-            $request->getSession()->remove('access_token');
-            $request->getSession()->remove('refresh_token');
             $request->getSession()->remove('sub');
+            session_unset();
             $parameters = [];
         } catch (ConstraintViolationException $formViolations) {
             $parameters = ['formViolations' => $formViolations];

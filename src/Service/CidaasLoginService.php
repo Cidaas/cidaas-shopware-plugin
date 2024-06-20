@@ -392,14 +392,16 @@ class CidaasLoginService
         return $this->cidaasUrl;
     }
 
-    public function changeEmail($email, $sub, $token, $context)
+    public function changeEmail($email, $sub, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
             $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
+                    'Authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'email' => $email,
@@ -670,13 +672,15 @@ class CidaasLoginService
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token)
+    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub)
     {
         $client = new Client();
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
             $response = $client->post($this->cidaasUrl . '/users-srv/changepassword', [
                 'headers' => [
-                    'authorization' => 'Bearer ' . $token,
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'sub' => $sub,
@@ -691,7 +695,7 @@ class CidaasLoginService
         }
     }
 
-    public function updateProfile($firstName, $lastName, $salutationId, $sub, $token, $context)
+    public function updateProfile($firstName, $lastName, $salutationId, $sub, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
@@ -701,10 +705,12 @@ class CidaasLoginService
             ->from('salutation')
             ->where('id="' . $tmp_id . '"');
         $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
             $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'authorization' => 'Bearer ' . $token,
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'given_name' => $firstName,
@@ -808,10 +814,13 @@ class CidaasLoginService
         $country = $this->getCountry($countryId);
         $addressId = $address->get('id');
 
+        $accessTokenObj = $this->loginService->getAccessToken();
+        $accessToken = $accessTokenObj->token;
+
         try {
             $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'authorization' => 'Bearer ' . $token,
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'customFields' => [

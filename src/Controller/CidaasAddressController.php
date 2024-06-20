@@ -100,14 +100,7 @@ class CidaasAddressController extends StorefrontController
     {
         try {
 
-            $accessTokenObj = $this->loginService->getAccessToken();
-
-            if (!$accessTokenObj->success) {
-                return $this->forwardToRoute('frontend.account.logout.page');
-            }
-            $accessToken = $accessTokenObj->token;
-
-            $res = $this->loginService->updateBillingAddress($address, $sub, $accessToken, $context);
+            $res = $this->loginService->updateBillingAddress($address, $sub, $context);
 
             if (!$res) {
                 $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError'));
