@@ -802,7 +802,7 @@ class CidaasLoginService
         return $country->name;
     }
 
-    public function updateBillingAddress($address, $sub, $token, $context)
+    public function updateBillingAddress($address, $sub, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
@@ -814,7 +814,7 @@ class CidaasLoginService
         $country = $this->getCountry($countryId);
         $addressId = $address->get('id');
 
-        $accessTokenObj = $this->loginService->getAccessToken();
+        $accessTokenObj = $this->getAccessToken();
         $accessToken = $accessTokenObj->token;
 
         try {
