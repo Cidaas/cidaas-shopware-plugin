@@ -189,32 +189,47 @@ class CidaasHelperController extends StorefrontController
     #[Route(path: '/account/logout', name: 'frontend.account.logout.page', methods: ['GET'])]
     public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
     {
+        // Redirect to login page if the customer is not logged in
         if ($context->getCustomer() === null) {
             return $this->redirectToRoute('frontend.account.login.page');
         }
+
         try {
+            // End the session if an access token is present
             if (isset($_SESSION['accessToken'])) {
                 $this->loginService->endSession($_SESSION['accessToken']);
             }
 
+            // Perform the logout operation
             $this->logoutRoute->logout($context, $dataBag);
+
+            // Add a success message for the logout
             $this->addFlash(self::SUCCESS, $this->trans('account.logoutSucceeded'));
 
+            // Get the current sales channel ID
             $salesChannelId = $context->getSalesChannel()->getId();
+
+            // Check if the request has a session and invalidate it if needed
+            $session = $request->getSession();
             if ($request->hasSession() && $this->loginService->getSysConfig('core.loginRegistration.invalidateSessionOnLogOut', $salesChannelId)) {
                 $session->invalidate();
             } else {
-                $session = $request->getSession();
+                // Remove specific session attributes if the session is not invalidated
                 $session->remove('state');
                 $session->remove('sub');
             }
 
+            // Clear all session variables
             session_unset();
+
+            // Prepare parameters for the redirect
             $parameters = [];
         } catch (ConstraintViolationException $formViolations) {
+            // Handle form validation errors
             $parameters = ['formViolations' => $formViolations];
         }
 
+        // Redirect to the login page with any parameters
         return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
@@ -274,7 +289,7 @@ class CidaasHelperController extends StorefrontController
     {
         try {
             $sub = $request->getSession()->get('sub');
-          
+
             $newPassword = $request->get('newPassword');
             $confirmPassword = $request->get('confirmPassword');
             $oldPassword = $request->get('oldPassword');
@@ -291,7 +306,7 @@ class CidaasHelperController extends StorefrontController
                 $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'). $error);
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $error);
             }
             return $this->json($res);
         } catch (\Exception $e) {
@@ -318,7 +333,7 @@ class CidaasHelperController extends StorefrontController
                 $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess'). $error);
+                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess') . $error);
             }
 
             return $this->json($res);
