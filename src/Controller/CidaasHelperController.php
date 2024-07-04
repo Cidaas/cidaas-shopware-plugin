@@ -174,17 +174,38 @@ class CidaasHelperController extends StorefrontController
 
     public function hasRequiredUserData($user)
     {
+        // Define the required fields and nested fields
+        $requiredFields = [
+            'given_name',
+            'family_name',
+            'email',
+            'customFields.billing_address_street',
+            'customFields.billing_address_zipcode',
+            'customFields.billing_address_city',
+        ];
+    
         // Check if all required fields are present
-        if (isset($user['given_name']) &&
-            isset($user['family_name']) &&
-            isset($user['email']) &&
-            isset($user['customFields']['billing_address_street']) &&
-            isset($user['customFields']['billing_address_zipcode']) &&
-            isset($user['customFields']['billing_address_city'])) {
-            return true; // All required data is present
+        foreach ($requiredFields as $field) {
+            if (!$this->isFieldSet($user, $field)) {
+                return false; // At least one required field is missing
+            }
         }
-        return false; // At least one required field is missing
+        return true; // All required data is present    
     }
+    
+    // Helper function to check if a nested field is set
+    private function isFieldSet($array, $field)
+    {
+        $keys = explode('.', $field);
+        foreach ($keys as $key) {
+            if (!isset($array[$key])) {
+                return false;
+            }
+            $array = $array[$key];
+        }
+        return true;
+    }
+    
 
     #[Route(path: '/account/logout', name: 'frontend.account.logout.page', methods: ['GET'])]
     public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
