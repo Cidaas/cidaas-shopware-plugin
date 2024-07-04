@@ -48,127 +48,95 @@ class CidaasHelperController extends StorefrontController
         return $this->forwardToRoute('frontend.home.page');
     }
 
+    // handle redirect from Cidaas
     #[Route(path: '/cidaas/redirect', name: 'cidaas.redirect', options: ['seo' => false], methods: ['GET'])]
     public function cidaasRedirect(Request $request, SalesChannelContext $context)
     {
         $code = $request->query->get('code');
         $state = $request->query->get('state');
-        $sess = $request->getSession()->get('state');
-        if ($state === $sess) {
-            $token = $this->loginService->getCidaasAccessToken($code, $request->get('sw-sales-channel-absolute-base-url'));
-            if (is_array($token)) {
-                if (isset($token['sub'])) {
+        $sessionState = $request->getSession()->get('state');
 
-                    $_SESSION['accessToken'] = $token['access_token'];
-                    if (isset($token['refresh_token'])) {
-                        $_SESSION['refreshToken'] = $token['refresh_token'];
-                    }
-                    $request->getSession()->set('sub', $token['sub']);
-                    $user = $this->loginService->getAccountFromCidaas($token['access_token']);
-                    $temp = $this->loginService->customerExistsByEmail($user['email'], $context);
-                    if (!$this->loginService->customerExistsBySub($token['sub'], $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        try {
-                            $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
-                            $this->loginService->checkCustomerGroups($user, $context);
-                            if ($request->getSession()->get('redirect_to')) {
-                                $target = $request->getSession()->get('redirect_to');
-                                $request->getSession()->remove('redirect_to');
-                                return $this->forwardToRoute($target);
-                            }
-                            return $this->forwardToRoute('frontend.home.page');
-                        } catch (ConstraintViolationException $formViolations) {
-                            $err = $formViolations->getMessage();
-                            $this->addFlash('danger', 'Error: ' . $err);
-                            return $this->forwardToRoute('frontend.home.page', [
-                                'loginError' => true,
-                                'errorSnippet' => $err ?? null,
-                            ]);
-                        }
-                    }
-                    if (!$this->loginService->customerExistsBySub($token['sub'], $context) && $this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        $this->loginService->mapSubToCustomer($user['email'], $token['sub'], $context);
-                    }
-                    $this->loginService->checkCustomerGroups($user, $context);
-                    $this->loginService->checkCustomerNumber($user, $context);
-                    $this->loginService->checkWebshopId($user, $token['access_token'], $context);
-                    $this->loginService->updateAddressData($user, $context);
-                    $this->loginService->updateCustomerFromCidaas($user, $context);
-                    $response = $this->loginService->loginBySub($token['sub'], $context);
-                    $request->getSession()->set('sub', $token['sub']);
-                    $token2 = $response->getToken();
-                    $this->addCartErrors($this->cartService->getCart($token2, $context));
-                    if ($request->getSession()->get('redirect_to')) {
-                        $target = $request->getSession()->get('redirect_to');
-                        $request->getSession()->remove('redirect_to');
-                        if ($request->getSession()->get('redirectParameters')) {
-                            $redirectParameters = $request->getSession()->get('redirectParameters');
-                            $request->getSession()->remove('redirectParameters');
-                            return $this->forwardToRoute($target, [], json_decode(json_encode($redirectParameters), true));
-                        }
-                        return $this->forwardToRoute($target);
-                    }
-                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
-                    return $this->forwardToRoute('frontend.home.page');
-                }
-            } else if (is_object($token)) {
-                if (isset($token->sub)) {
-
-                    $_SESSION['accessToken'] = $token->access_token;
-                    if (isset($token->refresh_token)) {
-                        $_SESSION['refreshToken'] = $token->refresh_token;
-                    }
-                    $request->getSession()->set('sub', $token->sub);
-                    $user = $this->loginService->getAccountFromCidaas($token->access_token);
-                    if (!$this->loginService->customerExistsBySub($token->sub, $context) && !$this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        try {
-                            $this->loginService->registerExistingUser($user, $context, $request->get('sw-sales-channel-absolute-base-url'));
-                            $this->loginService->checkCustomerGroups($user, $context);
-                            if ($request->getSession()->get('redirect_to')) {
-                                $target = $request->getSession()->get('redirect_to');
-                                $request->getSession()->remove('redirect_to');
-                                return $this->forwardToRoute($target);
-                            }
-                            return $this->forwardToRoute('frontend.home.page');
-                        } catch (ConstraintViolationException $formViolations) {
-                            $err = $formViolations->getMessage();
-                            $this->addFlash('danger', 'Error: ' . $err);
-                            return $this->forwardToRoute('frontend.home.page', [
-                                'loginError' => true,
-                                'errorSnippet' => $err ?? null,
-                            ]);
-                        }
-                    }
-                    if (!$this->loginService->customerExistsBySub($token->sub, $context) && $this->loginService->customerExistsByEmail($user['email'], $context)['exists']) {
-                        $this->loginService->mapSubToCustomer($user['email'], $token->sub, $context);
-                    }
-                    $this->loginService->checkCustomerGroups($user, $context);
-                    $this->loginService->checkCustomerNumber($user, $context);
-                    $this->loginService->checkWebshopId($user, $token->access_token, $context);
-                    $this->loginService->updateAddressData($user, $context);
-                    $this->loginService->updateCustomerFromCidaas($user, $context);
-                    $response = $this->loginService->loginBySub($token->sub, $context);
-                    $request->getSession()->set('sub', $token->sub);
-                    $token2 = $response->getToken();
-                    $this->addCartErrors($this->cartService->getCart($token2, $context));
-                    if ($request->getSession()->get('redirect_to')) {
-                        $target = $request->getSession()->get('redirect_to');
-                        $request->getSession()->remove('redirect_to');
-                        if ($request->getSession()->get('redirectParameters')) {
-                            $redirectParameters = $request->getSession()->get('redirectParameters');
-                            $request->getSession()->remove('redirectParameters');
-                            return $this->forwardToRoute($target, [], json_decode(json_encode($redirectParameters), true));
-                        }
-                        return $this->forwardToRoute($target);
-                    }
-                    $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
-                    return $this->forwardToRoute('frontend.home.page');
-                }
-            }
-
+        if ($state !== $sessionState) {
             $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute('frontend.home.page');
         }
-        $this->addFlash(self::DANGER, $this->trans('account.loginError'));
+
+        $baseUrl = $request->get('sw-sales-channel-absolute-base-url');
+        $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
+
+        if (!$token || (!is_array($token) && !is_object($token))) {
+            $this->addFlash(self::DANGER, $this->trans('account.loginError'));
+            return $this->forwardToRoute('frontend.home.page');
+        }
+
+        $accessToken = is_array($token) ? $token['access_token'] : $token->access_token;
+        $sub = is_array($token) ? $token['sub'] : $token->sub;
+        $refreshToken = is_array($token) ? $token['refresh_token'] : $token->refresh_token ?? null;
+
+        $_SESSION['accessToken'] = $accessToken;
+        if ($refreshToken) {
+            $_SESSION['refreshToken'] = $refreshToken;
+        }
+        $request->getSession()->set('sub', $sub);
+
+        $user = $this->loginService->getAccountFromCidaas($accessToken);
+        $email = $user['email'];
+        $customerExistsBySub = $this->loginService->customerExistsBySub($sub, $context);
+        $customerExistsByEmail = $this->loginService->customerExistsByEmail($email, $context)['exists'];
+
+        if (!$customerExistsBySub && !$customerExistsByEmail) {
+            try {
+                $this->loginService->registerExistingUser($user, $context, $baseUrl);
+                $this->loginService->checkCustomerGroups($user, $context);
+                return $this->handleRedirect($request);
+            } catch (ConstraintViolationException $formViolations) {
+                $error = $formViolations->getMessage();
+                $this->addFlash('danger', 'Error: ' . $error);
+                return $this->forwardToRoute('frontend.home.page', [
+                    'loginError' => true,
+                    'errorSnippet' => $error,
+                ]);
+            }
+        }
+
+        if (!$customerExistsBySub && $customerExistsByEmail) {
+            $this->loginService->mapSubToCustomer($email, $sub, $context);
+        }
+
+        $this->loginService->checkCustomerGroups($user, $context);
+        $this->loginService->checkCustomerNumber($user, $context);
+        $this->loginService->checkWebshopId($user, $accessToken, $context);
+        $this->loginService->updateAddressData($user, $context);
+        $this->loginService->updateCustomerFromCidaas($user, $context);
+
+        $response = $this->loginService->loginBySub($sub, $context);
+        $request->getSession()->set('sub', $sub);
+        $this->addCartErrors($this->cartService->getCart($response->getToken(), $context));
+
+        return $this->handleRedirect($request);
+    }
+
+/**
+ * Handles redirect logic after a successful login.
+ *
+ * @param Request $request
+ * @return Response
+ */
+    private function handleRedirect(Request $request)
+    {
+        if ($request->getSession()->get('redirect_to')) {
+            $target = $request->getSession()->get('redirect_to');
+            $request->getSession()->remove('redirect_to');
+
+            if ($redirectParameters = $request->getSession()->get('redirectParameters')) {
+                $request->getSession()->remove('redirectParameters');
+                return $this->forwardToRoute($target, [], json_decode(json_encode($redirectParameters), true));
+            }
+
+            return $this->forwardToRoute($target);
+        }
+
+        $this->addFlash(self::SUCCESS, $this->trans('account.loginSuccess'));
         return $this->forwardToRoute('frontend.home.page');
     }
 
@@ -183,16 +151,16 @@ class CidaasHelperController extends StorefrontController
             'customFields.billing_address_zipcode',
             'customFields.billing_address_city',
         ];
-    
+
         // Check if all required fields are present
         foreach ($requiredFields as $field) {
             if (!$this->isFieldSet($user, $field)) {
                 return false; // At least one required field is missing
             }
         }
-        return true; // All required data is present    
+        return true; // All required data is present
     }
-    
+
     // Helper function to check if a nested field is set
     private function isFieldSet($array, $field)
     {
@@ -205,7 +173,6 @@ class CidaasHelperController extends StorefrontController
         }
         return true;
     }
-    
 
     #[Route(path: '/account/logout', name: 'frontend.account.logout.page', methods: ['GET'])]
     public function logout(Request $request, SalesChannelContext $context, RequestDataBag $dataBag): Response
