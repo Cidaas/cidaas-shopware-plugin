@@ -28,9 +28,6 @@ class CidaasHelperController extends StorefrontController
         private readonly AbstractLogoutRoute $logoutRoute,
         private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
     ) {
-        // if (session_status() === PHP_SESSION_NONE) {
-        //     session_start();
-        // }
     }
 
     // Redirect all account login
