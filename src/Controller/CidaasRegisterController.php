@@ -29,9 +29,6 @@ class CidaasRegisterController extends StorefrontController
         private readonly CheckoutRegisterPageLoader $registerPageLoader,
         private readonly AbstractRegisterRoute $registerRoute
     ) {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 
     #[Route(path: '/cidaas/register', name: 'cidaas.register', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]

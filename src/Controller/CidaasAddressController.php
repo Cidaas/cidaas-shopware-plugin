@@ -46,9 +46,6 @@ class CidaasAddressController extends StorefrontController
         private readonly AbstractUpsertAddressRoute $updateAddressRoute,
         private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
     ) {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 
     // Update billing address to Cidaas
