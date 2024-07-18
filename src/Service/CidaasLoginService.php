@@ -1,46 +1,41 @@
-<?php declare(strict_types = 1);
+<?php declare (strict_types = 1);
 
 namespace Cidaas\OauthConnect\Service;
 
-use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\FetchMode;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Customer\Event\CustomerBeforeLoginEvent;
 use Shopware\Core\Checkout\Customer\Event\CustomerLoginEvent;
 use Shopware\Core\Checkout\Customer\Exception\BadCredentialsException;
-use Shopware\Core\Checkout\Customer\Exception\CustomerAuthThrottledException;
-use Shopware\Core\Checkout\Customer\Exception\CustomerNotFoundException;
-use Shopware\Core\Checkout\Customer\Exception\InactiveCustomerException;
-use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
-use Shopware\Core\System\SalesChannel\ContextTokenResponse;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use Shopware\Core\System\SalesChannel\Context\CartRestorer;
-use Shopware\Core\Framework\Uuid\Uuid;
-use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
-use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Checkout\Customer\SalesChannel\AbstractRegisterRoute;
-use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
-use Shopware\Core\PlatformRequest;
-use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Content\Newsletter\Exception\SalesChannelDomainNotFoundException;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Uuid\Uuid;
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
+use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\Framework\Validation\DataValidationDefinition;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Country\Exception\CountryNotFoundException;
-use Cidaas\OauthConnect\Util\CidaasStruct;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\FetchMode;
-use Symfony\Component\HttpFoundation\Request;
-use Shopware\Storefront\Framework\AffiliateTracking\AffiliateTrackingListener;
 use Shopware\Core\System\SalesChannel\Aggregate\SalesChannelDomain\SalesChannelDomainEntity;
-use Shopware\Core\Framework\Validation\DataValidationDefinition;
-use Shopware\Core\Content\Newsletter\Exception\SalesChannelDomainNotFoundException;
+use Shopware\Core\System\SalesChannel\ContextTokenResponse;
+use Shopware\Core\System\SalesChannel\Context\CartRestorer;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Shopware\Storefront\Framework\AffiliateTracking\AffiliateTrackingListener;
 use Shopware\Storefront\Framework\Routing\RequestTransformer;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class CidaasLoginService {
+class CidaasLoginService
+{
 
     private $eventDispatcher;
     private $customerRepo;
@@ -68,7 +63,7 @@ class CidaasLoginService {
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
         EntityRepository $customerRepo,
-        CartRestorer     $contextRestorer,
+        CartRestorer $contextRestorer,
         SystemConfigService $sysConfig,
         Connection $connection,
         AbstractRegisterRoute $registerRoute,
@@ -76,33 +71,32 @@ class CidaasLoginService {
         EntityRepository $customerAddressRepo,
         EntityRepository $customerGroupTranslationRepo,
         EntityRepository $countryRepository
-        )
-        {
-            $this->eventDispatcher = $eventDispatcher;
-            $this->customerRepo = $customerRepo;
-            $this->customerGroupRepository = $customerGroupRepository;
-            $this->customerAddressRepo = $customerAddressRepo;
-            $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
-            $this->countryRepository = $countryRepository;
-            $this->sysConfig = $sysConfig;
-            $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri').$this->wellKnown;
-            $client = new Client();
-            $res = $client->get($this->wellKnownUrl);
-            $this->oAuthEndpoints = json_decode($res->getBody()->getContents());
-            $this->clientId = $sysConfig->get('CidaasOauthConnect.config.clientId');
-            $this->clientSecret = $sysConfig->get('CidaasOauthConnect.config.clientSecret');
-            $this->nonInteractiveClientId = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientId');
-            $this->nonInteractiveClientSecret = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientSecret');
+    ) {
+        $this->eventDispatcher = $eventDispatcher;
+        $this->customerRepo = $customerRepo;
+        $this->customerGroupRepository = $customerGroupRepository;
+        $this->customerAddressRepo = $customerAddressRepo;
+        $this->customerGroupTranslationRepo = $customerGroupTranslationRepo;
+        $this->countryRepository = $countryRepository;
+        $this->sysConfig = $sysConfig;
+        $this->wellKnownUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri') . $this->wellKnown;
+        $client = new Client();
+        $res = $client->get($this->wellKnownUrl);
+        $this->oAuthEndpoints = json_decode($res->getBody()->getContents());
+        $this->clientId = $sysConfig->get('CidaasOauthConnect.config.clientId');
+        $this->clientSecret = $sysConfig->get('CidaasOauthConnect.config.clientSecret');
+        $this->nonInteractiveClientId = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientId');
+        $this->nonInteractiveClientSecret = $sysConfig->get('CidaasOauthConnect.config.nonInteractiveClientSecret');
 
-            $this->cidaasUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri');
-            $this->cfCustomerNumber = $sysConfig->get('CidaasOauthConnect.config.CfCustomernumber');
-            $this->defaultGroup = $sysConfig->get('CidaasOauthConnect.config.customergroupDefault');
-            
-            $this->connection = $connection;
-            $this->registerRoute = $registerRoute;
-            $this->contextRestorer = $contextRestorer;
+        $this->cidaasUrl = $sysConfig->get('CidaasOauthConnect.config.baseUri');
+        $this->cfCustomerNumber = $sysConfig->get('CidaasOauthConnect.config.CfCustomernumber');
+        $this->defaultGroup = $sysConfig->get('CidaasOauthConnect.config.customergroupDefault');
 
-        }
+        $this->connection = $connection;
+        $this->registerRoute = $registerRoute;
+        $this->contextRestorer = $contextRestorer;
+
+    }
 
     public function getWellKnown()
     {
@@ -141,7 +135,7 @@ class CidaasLoginService {
         return new ContextTokenResponse($newToken);
     }
 
-    public function loginBySub($sub, $context, $email=null): ContextTokenResponse
+    public function loginBySub($sub, $context, $email = null): ContextTokenResponse
     {
         if ($email !== null) {
             $event = new CustomerBeforeLoginEvent($context, $email);
@@ -149,8 +143,7 @@ class CidaasLoginService {
         }
         try {
             $customer = $this->getCustomerBySub($sub, $context);
-        }
-        catch (BadCredentialsException $e) {
+        } catch (BadCredentialsException $e) {
             throw new UnauthorizedHttpException('json', $e->getMessage());
         }
         $context = $this->contextRestorer->restore($customer->getId(), $context);
@@ -166,7 +159,8 @@ class CidaasLoginService {
         return new ContextTokenResponse($newToken);
     }
 
-    public function getCustomerBySub($sub, $context) {
+    public function getCustomerBySub($sub, $context)
+    {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.customFields.sub', $sub));
         $criteria->addFilter(new EqualsFilter('customer.guest', 0));
@@ -177,7 +171,8 @@ class CidaasLoginService {
         return $customers->first();
     }
 
-    public function getCustomerByEmail($email, $context) {
+    public function getCustomerByEmail($email, $context)
+    {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('customer.email', $email));
         $criteria->addFilter(new EqualsFilter('customer.active', 1));
@@ -206,26 +201,26 @@ class CidaasLoginService {
         $customers = $this->customerRepo->search($criteria, $context->getContext());
         if ($customers->count() < 1) {
             return array(
-                "exists" => false
+                "exists" => false,
             );
         }
         return array(
             "exists" => true,
             "id" => $customers->first()->getId(),
-            "lastLogin" => $customers->first()->getLastLogin()
+            "lastLogin" => $customers->first()->getLastLogin(),
         );
     }
 
     public function customerExistsInCidaas($email, $requestId, $context)
     {
-        $target =  $this->cidaasUrl + '/users-srv/user/checkexists/'.$requestId;
+        $target = $this->cidaasUrl+'/users-srv/user/checkexists/' . $requestId;
         $client = new Client();
         $resp = $client->post($target, [
             'form_params' => [
-                'email'=>$email,
-                'requestId' => $requestId
-            ]
-            ]);
+                'email' => $email,
+                'requestId' => $requestId,
+            ],
+        ]);
         return json_decode($resp->getBody()->getContents());
     }
 
@@ -235,37 +230,38 @@ class CidaasLoginService {
         return $customer->getLastLogin();
     }
 
-    public function getAuthorizationUri($state, $url, $email=null): String
+    public function getAuthorizationUri($state, $url, $email = null): String
     {
-        $redirectUri = $url.'/cidaas/redirect';
-        $result = $this->oAuthEndpoints->authorization_endpoint 
-            . '?scope='. urlencode("openid offline_access email profile groups") .'&response_type=code'
-            . '&approval_prompt=auto&redirect_uri='. urlencode($redirectUri) 
-            . '&client_id='.$this->clientId . '&state='.$state;
+        $redirectUri = $url . '/cidaas/redirect';
+        $result = $this->oAuthEndpoints->authorization_endpoint
+        . '?scope=' . urlencode("openid offline_access email profile groups") . '&response_type=code'
+        . '&approval_prompt=auto&redirect_uri=' . urlencode($redirectUri)
+        . '&client_id=' . $this->clientId . '&state=' . $state;
         if ($email !== null) {
-            $result .= '&userIdHint='.$email . '&type=email';
+            $result .= '&userIdHint=' . $email . '&type=email';
         }
         return $result;
 
     }
 
-    public function getRegisterUri($state, $url, $userIdHint=null, $type=null): String
+    public function getRegisterUri($state, $url, $userIdHint = null, $type = null): String
     {
-        $redirectUri = $url.'/cidaas/redirect';
+        $redirectUri = $url . '/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
-            . urlencode("openid offline_access email profile groups") . '&client_id='.$this->clientId
-            . '&response_type=code&approval_prompt=auto&redirect_uri='
-            . urlencode($redirectUri)
+        . urlencode("openid offline_access email profile groups") . '&client_id=' . $this->clientId
+        . '&response_type=code&approval_prompt=auto&redirect_uri='
+        . urlencode($redirectUri)
             . '&view_type=register'
-            . '&state='.$state;
+            . '&state=' . $state;
         if ($userIdHint !== null) {
-            $result .= '&userIdHint='.$userIdHint
-            .'&type='.$type;
+            $result .= '&userIdHint=' . $userIdHint
+                . '&type=' . $type;
         }
         return $result;
     }
 
-    public function getClientId() {
+    public function getClientId()
+    {
         return $this->clientId;
     }
 
@@ -289,9 +285,9 @@ class CidaasLoginService {
                 "countryId" => $country,
                 "street" => $user['customFields']['billing_address_street'],
                 "zipcode" => $user['customFields']['billing_address_zipcode'],
-                "city" => $user['customFields']['billing_address_city']
+                "city" => $user['customFields']['billing_address_city'],
             ),
-            "storefrontUrl" => $url
+            "storefrontUrl" => $url,
         ]);
         $regres = $this->registerRoute->register($data, $context, false);
         $customer = $this->getCustomerByEmail($user['email'], $context);
@@ -300,19 +296,19 @@ class CidaasLoginService {
         $mitarbeiterPromo = false;
         $updateData = [
             'id' => $customer->getId(),
-                'lastLogin' => new \DateTimeImmutable(),
-                'customFields' => [
-                    'sub' => $user['sub']]
+            'lastLogin' => new \DateTimeImmutable(),
+            'customFields' => [
+                'sub' => $user['sub']],
         ];
         if ($this->cfCustomerNumber) {
             if ($this->cfCustomerNumber !== '') {
-                $updateData['customerNumber'] = $user['customFields'][$this->cfCustomerNumber];    
+                $updateData['customerNumber'] = $user['customFields'][$this->cfCustomerNumber];
             }
         }
         $this->customerRepo->upsert([
-            $updateData
+            $updateData,
         ], $context->getContext());
-        
+
         return $data;
     }
 
@@ -336,9 +332,9 @@ class CidaasLoginService {
                 "countryId" => $billingAddressData->get('countryId'),
                 "street" => $billingAddressData->get('street'),
                 "zipcode" => $billingAddressData->get('zipcode'),
-                "city" => $billingAddressData->get('city')
+                "city" => $billingAddressData->get('city'),
             ),
-            "storefrontUrl" => $url
+            "storefrontUrl" => $url,
         ]);
         $regres = $this->registerRoute->register($data, $context, false);
         $customer = $this->getCustomerByEmail($formData->get('email'), $context);
@@ -347,14 +343,14 @@ class CidaasLoginService {
         $mitarbeiterPromo = false;
         $updateData = [
             'id' => $customer->getId(),
-                'lastLogin' => new \DateTimeImmutable(),
-                'customFields' => [
-                    'sub' => $sub ]
+            'lastLogin' => new \DateTimeImmutable(),
+            'customFields' => [
+                'sub' => $sub],
         ];
         $this->customerRepo->upsert([
-            $updateData
+            $updateData,
         ], $context->getContext());
-        
+
         return $data;
     }
 
@@ -364,9 +360,9 @@ class CidaasLoginService {
         $response = $client->get($this->oAuthEndpoints->userinfo_endpoint, [
             'headers' => [
                 'content_type' => 'application/json',
-                'Authorization' => 'Bearer '.$token
-                
-            ]
+                'Authorization' => 'Bearer ' . $token,
+
+            ],
         ]);
 
         return json_decode($response->getBody()->getContents(), true);
@@ -375,15 +371,15 @@ class CidaasLoginService {
     public function endSession($token)
     {
         $client = new Client();
-        $client->get($this->oAuthEndpoints->end_session_endpoint. '?access_token_hint='.$token,
-        ['headers' => [
-            'content_type' => 'application/json'
+        $client->get($this->oAuthEndpoints->end_session_endpoint . '?access_token_hint=' . $token,
+            ['headers' => [
+                'content_type' => 'application/json',
+            ],
             ]
-        ]
         );
     }
 
-    public function getSysConfig($name, $param=null)
+    public function getSysConfig($name, $param = null)
     {
         if ($param !== null) {
             return $this->sysConfig->get($name, $param);
@@ -396,51 +392,54 @@ class CidaasLoginService {
         return $this->cidaasUrl;
     }
 
-    public function changeEmail($email, $sub, $token, $context)
+    public function changeEmail($email, $sub, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token
+                    'Authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'email' => $email,
                     'sub' => $sub,
                     'provider' => 'self',
-                    'email_verified' => true
-                ]
-                ]);
+                    'email_verified' => true,
+                ],
+            ]);
             $this->customerRepo->update([[
                 'id' => $customer->getId(),
-                'email' => $email
+                'email' => $email,
             ]], $context->getContext());
 
             return json_decode($response->getBody()->getContents());
-            
+
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
     }
 
-    public function mapSubToCustomer($email, $sub,  $context)
+    public function mapSubToCustomer($email, $sub, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerByEmail($email, $context);
         try {
-            $temp_cf=$customer->getCustomFields();
+            $temp_cf = $customer->getCustomFields();
             $temp_cf['sub'] = $sub;
             $this->customerRepo->update([[
                 'id' => $customer->getId(),
-                'customFields' => $temp_cf
+                'customFields' => $temp_cf,
             ]], $context->getContext());
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
     }
 
-    public function checkCustomerNumber($user, $context) {
+    public function checkCustomerNumber($user, $context)
+    {
         $sub = $user['sub'];
         $customer = $this->getCustomerBySub($sub, $context);
         if (isset($user['customFields']['adressnummer'])) {
@@ -450,22 +449,23 @@ class CidaasLoginService {
                 $this->customerRepo->update([
                     [
                         'id' => $customer->getId(),
-                        'customerNumber' => $adrNr
-                    ]
+                        'customerNumber' => $adrNr,
+                    ],
                 ], $context->getContext());
             }
         }
         return null;
     }
 
-    public function updateAddressData($user, $context) {
+    public function updateAddressData($user, $context)
+    {
         $customer = $this->getCustomerBySub($user['sub'], $context);
         if ($customer->getEmail() !== $user['email']) {
             $this->customerRepo->update([
                 [
                     "id" => $customer->getId(),
-                    "email" => $user['email']
-                ]
+                    "email" => $user['email'],
+                ],
             ], $context->getContext());
             $customer = $this->getCustomerBySub($user['sub'], $context);
         }
@@ -473,30 +473,28 @@ class CidaasLoginService {
         $billing = $this->customerAddressRepo->search(new Criteria([$billingId]), $context->getContext())->first();
 
         // Get country
-        $countryId = isset($user['customFields']['billing_address_country']) ? 
+        $countryId = isset($user['customFields']['billing_address_country']) ?
         $this->getCountryId($user['customFields']['billing_address_country']) :
         $billing->get('countryId');
 
         // Get street
-        $street = isset($user['customFields']['billing_address_street']) ? 
+        $street = isset($user['customFields']['billing_address_street']) ?
         $user['customFields']['billing_address_street'] :
         $billing->get('street');
 
         // Get city
-        $city = isset($user['customFields']['billing_address_city']) ? 
+        $city = isset($user['customFields']['billing_address_city']) ?
         $user['customFields']['billing_address_city'] :
         $billing->get('city');
 
         // Get zipcode
-        $zipcode = isset($user['customFields']['billing_address_zipcode']) ? 
+        $zipcode = isset($user['customFields']['billing_address_zipcode']) ?
         $user['customFields']['billing_address_zipcode'] :
         $billing->get('zipcode');
 
-       // Get company name
-        $company = isset($user['customFields']['company']) ? 
+        // Get company name
+        $company = isset($user['customFields']['company']) ?
         $user['customFields']['company'] : "";
-
-
 
         $this->customerAddressRepo->update([
             [
@@ -506,30 +504,32 @@ class CidaasLoginService {
                 'zipcode' => $zipcode,
                 "countryId" => $countryId,
                 "company" => $company,
-            ]
+            ],
         ], $context->getContext());
-        
+
     }
-    public function updateCustomerFromCidaas($user, $context) {
+    public function updateCustomerFromCidaas($user, $context)
+    {
         $customer = $this->getCustomerBySub($user['sub'], $context);
 
         $salutation = isset($user['customFields']['salutation']) ? $user['customFields']['salutation'] : "";
-        $salutationId =  $salutation = $this->getSalutationId($salutation);
+        $salutationId = $salutation = $this->getSalutationId($salutation);
 
         $firstName = isset($user['given_name']) ? $user['given_name'] : $customer->getFirstName();
         $lastName = isset($user['family_name']) ? $user['family_name'] : $customer->getLastName();
-        
+
         $this->customerRepo->update([
             [
                 "id" => $customer->getId(),
-                'firstName' =>$firstName,
-                'lastName' =>$lastName,
+                'firstName' => $firstName,
+                'lastName' => $lastName,
                 'salutationId' => $salutationId,
-            ]
+            ],
         ], $context->getContext());
     }
 
-    public function checkWebshopId($user, $token, $context) {
+    public function checkWebshopId($user, $token, $context)
+    {
         $sub = $user['sub'];
         if (isset($user['customFields']['webshop_id'])) {
             file_put_contents('dumm.txt', '');
@@ -539,72 +539,75 @@ class CidaasLoginService {
         $this->setWebShopId($customer->getId(), $sub, $token);
     }
 
-    public function checkCustomerGroups($user, $context) {
+    public function checkCustomerGroups($user, $context)
+    {
         $cidaasCustomerGroupName = "";
         $cidaasCustomerGroupId = "";
         $cidaasCustomerGroups = [];
         $customer = $this->getCustomerBySub($user['sub'], $context);
-        // get default group data 
+        // get default group data
         $stdGroup = $this->getGroupByName('Standard-Kundengruppe', $context);
-        // check user group length less equal to two 
-        if (isset($user['groups']) && is_array($user['groups'])&& count($user['groups']) > 0) {
+        // check user group length less equal to two
+        if (isset($user['groups']) && is_array($user['groups']) && count($user['groups']) > 0) {
             foreach ($user['groups'] as $group) {
-                if ($group['groupId'] !== 'CIDAAS_USERS' && $group['groupType'] === 'Shopware' ){  // get cidaas group info array data which is not equal to  CIDAAS_USERS group And GroupType is equal to Shopware
+                if ($group['groupId'] !== 'CIDAAS_USERS' && $group['groupType'] === 'Shopware') { // get cidaas group info array data which is not equal to  CIDAAS_USERS group And GroupType is equal to Shopware
                     $cidaasCustomerGroups[] = $group;
                 }
             }
         }
-       
-        if(count($cidaasCustomerGroups) > 0){
+
+        if (count($cidaasCustomerGroups) > 0) {
             $cidaasCustomerGroupName = $cidaasCustomerGroups[0]['groupName'];
             $cidaasCustomerGroupId = $cidaasCustomerGroups[0]['groupId'];
-            // check the group is exits or not in shopware 
-           $customGroup = $this->getGroupByName($cidaasCustomerGroupName, $context);
-          if($customGroup){
-            if($customGroup->getCustomerGroupId() !== $stdGroup->getCustomerGroupId()) {
-                //  update customer with new cidaas group 
-                $this->customerRepo->update([
-                    [
-                        'id' => $customer->getId(),
-                        'groupId' => $customGroup->getCustomerGroupId()
-                    ]
-                ], $context->getContext());
-            } else {
-                //  update customer with default customer group
+            // check the group is exits or not in shopware
+            $customGroup = $this->getGroupByName($cidaasCustomerGroupName, $context);
+            if ($customGroup) {
+                if ($customGroup->getCustomerGroupId() !== $stdGroup->getCustomerGroupId()) {
+                    //  update customer with new cidaas group
                     $this->customerRepo->update([
                         [
                             'id' => $customer->getId(),
-                            'groupId' => $this->defaultGroup
-                        ]
+                            'groupId' => $customGroup->getCustomerGroupId(),
+                        ],
                     ], $context->getContext());
+                } else {
+                    //  update customer with default customer group
+                    $this->customerRepo->update([
+                        [
+                            'id' => $customer->getId(),
+                            'groupId' => $this->defaultGroup,
+                        ],
+                    ], $context->getContext());
+                }
             }
-          }
         } else {
-             //  update customer with default customer group
-             $this->customerRepo->update([
+            //  update customer with default customer group
+            $this->customerRepo->update([
                 [
                     'id' => $customer->getId(),
-                    'groupId' => $stdGroup->getCustomerGroupId()
-                ]
+                    'groupId' => $stdGroup->getCustomerGroupId(),
+                ],
             ], $context->getContext());
         }
         return;
     }
 
-    public function getGroupByName($name, SalesChannelContext $context) {
+    public function getGroupByName($name, SalesChannelContext $context)
+    {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('name', $name));
         // return $this->customerGroupRepository->search($criteria, $context->getContext())->first();
         return $this->customerGroupTranslationRepo->search($criteria, $context->getContext())->first();
     }
 
-    public function validateToken($token) {
+    public function validateToken($token)
+    {
         $client = new Client();
         try {
             $response = $client->post($this->oAuthEndpoints->introspection_endpoint, [
                 'form_params' => [
-                    'token' => $token
-                ]
+                    'token' => $token,
+                ],
             ]);
             $active = json_decode($response->getBody()->getContents())->active;
             return $active;
@@ -613,7 +616,8 @@ class CidaasLoginService {
         }
     }
 
-    private function generateRandomString($length = 10) {
+    private function generateRandomString($length = 10)
+    {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
         $randomString = '';
@@ -623,21 +627,22 @@ class CidaasLoginService {
         return $randomString;
     }
 
-    private function setWebShopId($id, $sub, $token) {
+    private function setWebShopId($id, $sub, $token)
+    {
         $client = new Client();
         try {
-            $resp = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $resp = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token
+                    'Authorization' => 'Bearer ' . $token,
                 ],
                 'form_params' => [
                     'sub' => $sub,
                     'provider' => 'SELF',
                     'customFields' => [
-                        'webshop_id' => $id
-                    ]
-                ]
-                ]);
+                        'webshop_id' => $id,
+                    ],
+                ],
+            ]);
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
@@ -646,7 +651,7 @@ class CidaasLoginService {
     public function getCidaasAccessToken(String $code, String $url)
     {
         $client = new Client();
-        $redirectUri = $url.'/cidaas/redirect';
+        $redirectUri = $url . '/cidaas/redirect';
         try {
             $response = $client->post($this->oAuthEndpoints->token_endpoint, [
                 'form_params' => [
@@ -654,69 +659,74 @@ class CidaasLoginService {
                     'client_id' => $this->clientId,
                     'client_secret' => $this->clientSecret,
                     'code' => $code,
-                    'redirect_uri' => $redirectUri
+                    'redirect_uri' => $redirectUri,
                 ],
                 'headers' => [
-                    'content_type' => 'application/json'
-                ]
+                    'content_type' => 'application/json',
+                ],
             ]);
-        } 
-        catch (ClientException $e) {
+        } catch (ClientException $e) {
             $msg = \json_decode($e->getResponse()->getBody()->getContents());
             return $msg;
         }
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token) {
+    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub)
+    {
         $client = new Client();
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
-            $response = $client->post($this->cidaasUrl.'/users-srv/changepassword', [
+            $response = $client->post($this->cidaasUrl . '/users-srv/changepassword', [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'sub' => $sub,
                     'new_password' => $newPassword,
                     'confirm_password' => $confirmPassword,
-                    'old_password' => $oldPassword
-                ]
-                ]);
+                    'old_password' => $oldPassword,
+                ],
+            ]);
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
     }
 
-    public function updateProfile($firstName, $lastName, $salutationId, $sub, $token, $context) {
+    public function updateProfile($firstName, $lastName, $salutationId, $sub, $context)
+    {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
         $queryBuilder = $this->connection->createQueryBuilder();
-        $tmp_id=Uuid::fromHexToBytes($salutationId);
+        $tmp_id = Uuid::fromHexToBytes($salutationId);
         $queryBuilder->select('salutation_key')
             ->from('salutation')
-            ->where('id="'.$tmp_id.'"');
-            $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
+            ->where('id="' . $tmp_id . '"');
+        $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'given_name' => $firstName,
                     'family_name' => $lastName,
                     'customFields' => [
-                        'salutation' => $salutationKey ? $salutationKey : 'not_specified'
+                        'salutation' => $salutationKey ? $salutationKey : 'not_specified',
                     ],
                     'sub' => $sub,
-                    'provider' => 'self'
-                ]
-                ]);
+                    'provider' => 'self',
+                ],
+            ]);
             $this->customerRepo->update([[
                 'id' => $customer->getId(),
                 'firstName' => $firstName,
                 'lastName' => $lastName,
-                'salutationId' => $salutationId
+                'salutationId' => $salutationId,
             ]], $context->getContext());
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
@@ -724,17 +734,18 @@ class CidaasLoginService {
         }
     }
 
-    public function getCountryId($countryVal) {
+    public function getCountryId($countryVal)
+    {
         $queryBuilder = $this->connection->createQueryBuilder();
         $queryBuilder->select('country_id')
             ->from('country_translation')
-            ->where('name="'.$countryVal.'"');
+            ->where('name="' . $countryVal . '"');
         $country = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN);
         if (!$country) {
             $queryBuilder = $this->connection->createQueryBuilder();
             $queryBuilder->select('id')
                 ->from('country')
-                ->where('iso="'.$countryVal.'"');
+                ->where('iso="' . $countryVal . '"');
             $country = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN);
         }
         if (!$country) {
@@ -747,7 +758,8 @@ class CidaasLoginService {
         return Uuid::fromBytesToHex($country[0]);
     }
 
-    private function getSalutationId($salutation) {
+    private function getSalutationId($salutation)
+    {
         $queryBuilder = $this->connection->createQueryBuilder();
         if ($salutation === null || $salutation === "") {
             $queryBuilder = $this->connection->createQueryBuilder();
@@ -759,24 +771,26 @@ class CidaasLoginService {
         }
         $queryBuilder->select('id')
             ->from('salutation')
-            ->where('salutation_key="'. $salutation .'"');
+            ->where('salutation_key="' . $salutation . '"');
         $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
         return Uuid::fromBytesToHex($salutation);
     }
 
-    private function getAdminToken() {
+    private function getAdminToken()
+    {
         $client = new Client();
-        $resp = $client->post($this->cidaasUrl.'/token-srv/token', [
+        $resp = $client->post($this->cidaasUrl . '/token-srv/token', [
             'form_params' => [
-                "grant_type" =>  'client_credentials',
+                "grant_type" => 'client_credentials',
                 'client_id' => $this->nonInteractiveClientId,
-                'client_secret' => $this->nonInteractiveClientSecret
-            ]
-            ]);
+                'client_secret' => $this->nonInteractiveClientSecret,
+            ],
+        ]);
         return json_decode($resp->getBody()->getContents());
     }
 
-    private function getCountry(string $countryId){
+    private function getCountry(string $countryId)
+    {
         /**
          * @var CountryEntity|null $country
          */
@@ -788,58 +802,63 @@ class CidaasLoginService {
         return $country->name;
     }
 
-    public function updateBillingAddress($address, $sub, $token, $context) {
+    public function updateBillingAddress($address, $sub, $context)
+    {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
-        $street =  $address->get('street');
-        $zipCode =  $address->get('zipcode');
-        $company =  $address->get('company');
-        $city =  $address->get('city');
+        $street = $address->get('street');
+        $zipCode = $address->get('zipcode');
+        $company = $address->get('company');
+        $city = $address->get('city');
         $countryId = $address->get('countryId');
         $country = $this->getCountry($countryId);
-        $addressId =  $address->get('id');
+        $addressId = $address->get('id');
+
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
 
         try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
+            $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer ' . $accessToken,
                 ],
                 'form_params' => [
                     'customFields' => [
-                        'billing_address_zipcode' => $zipCode ,
+                        'billing_address_zipcode' => $zipCode,
                         'billing_address_street' => $street,
                         'company' => $company,
                         'billing_address_city' => $city,
-                        'billing_address_country' => strtolower($country)
+                        'billing_address_country' => strtolower($country),
                     ],
                     'sub' => $sub,
-                    'provider' => 'self'
-                ]
-                ]);
-             
-                $this->customerAddressRepo->update([
-                    [
-                        'id' => $addressId,
-                        'salutationId' => $address->get('salutationId'),
-                        'firstName' => $address->get('firstName'),
-                        'lastName' => $address->get('lastName'),
-                        'street' => $address->get('street'),
-                        'city' => $address->get('city'),
-                        'zipcode' => $address->get('zipcode'),
-                        'countryId' => $address->get('countryId'),
-                        'countryStateId' => $address->get('countryStateId') ?: null,
-                        'company' => $address->get('company'),
-                        'department' => $address->get('department') ?: null,
-                    ]
-                ], $context->getContext());
+                    'provider' => 'self',
+                ],
+            ]);
+
+            $this->customerAddressRepo->update([
+                [
+                    'id' => $addressId,
+                    'salutationId' => $address->get('salutationId'),
+                    'firstName' => $address->get('firstName'),
+                    'lastName' => $address->get('lastName'),
+                    'street' => $address->get('street'),
+                    'city' => $address->get('city'),
+                    'zipcode' => $address->get('zipcode'),
+                    'countryId' => $address->get('countryId'),
+                    'countryStateId' => $address->get('countryStateId') ?: null,
+                    'company' => $address->get('company'),
+                    'department' => $address->get('department') ?: null,
+                ],
+            ], $context->getContext());
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
             return json_decode($e->getResponse()->getBody()->getContents());
         }
     }
 
-    public function updateAddressToShopware($address, $context) {
-        $addressId =  $address->get('id');
+    public function updateAddressToShopware($address, $context)
+    {
+        $addressId = $address->get('id');
         $this->customerAddressRepo->update([
             [
                 'id' => $addressId,
@@ -853,11 +872,10 @@ class CidaasLoginService {
                 'countryStateId' => $address->get('countryStateId') ?: null,
                 'company' => $address->get('company'),
                 'department' => $address->get('department') ?: null,
-            ]
+            ],
         ], $context->getContext());
 
     }
-
 
     public function prepareAffiliateTracking(RequestDataBag $data, SessionInterface $session): DataBag
     {
@@ -905,7 +923,7 @@ class CidaasLoginService {
         return $domain->getUrl();
     }
 
-     /**
+    /**
      * @return array<string, mixed>
      */
     public function decodeParam(Request $request, string $param): array
@@ -928,8 +946,8 @@ class CidaasLoginService {
         $creatueCustomerAccount = $data->getBoolean('createCustomerAccount');
 
         $configKey = $creatueCustomerAccount
-            ? 'core.loginRegistration.doubleOptInRegistration'
-            : 'core.loginRegistration.doubleOptInGuestOrder';
+        ? 'core.loginRegistration.doubleOptInRegistration'
+        : 'core.loginRegistration.doubleOptInGuestOrder';
 
         $doubleOptInRequired = $this->sysConfig
             ->get($configKey, $context->getSalesChannel()->getId());
@@ -972,20 +990,22 @@ class CidaasLoginService {
         return $definition;
     }
 
-    public function getSubFromCustomFields(CustomerEntity $customer): string {
+    public function getSubFromCustomFields(CustomerEntity $customer): string
+    {
         $customField = $customer->get('customFields');
         return $customField['sub'];
     }
 
     // Function to check if the access token is expired
-    function isTokenExpired($token) {
+    function isTokenExpired($token)
+    {
         $payload = json_decode(base64_decode(explode('.', $token)[1]), true);
-    
+
         // Check if the 'exp' claim exists in the payload
         if (isset($payload['exp'])) {
             // Calculate the expiration timestamp based on 'exp' claim
             $expirationTimestamp = $payload['exp'];
-    
+
             // Calculate the current timestamp
             $currentTimestamp = time();
             // Check if the token has expired
@@ -1005,7 +1025,7 @@ class CidaasLoginService {
     // Renew token  with refresh token
     public function renewAccessToken(string $refreshToken)
     {
-        $client = new Client();    
+        $client = new Client();
         try {
             $response = $client->post($this->oAuthEndpoints->token_endpoint, [
                 'form_params' => [
@@ -1015,50 +1035,51 @@ class CidaasLoginService {
                     'refresh_token' => $refreshToken,
                 ],
                 'headers' => [
-                    'content_type' => 'application/json'
-                ]
+                    'content_type' => 'application/json',
+                ],
             ]);
-        } 
-        catch (ClientException $e) {
+        } catch (ClientException $e) {
             $msg = \json_decode($e->getResponse()->getBody()->getContents());
             return $msg;
         }
         return json_decode($response->getBody()->getContents(), true);
     }
-    
-    // check current access token expired or not and assign new token 
-    public  function getAccessToken (){
+
+    // check current access token expired or not and assign new token
+    public function getAccessToken()
+    {
         $token = $_SESSION['accessToken'];
-        $isTokenExpired = $this->isTokenExpired( $token );
-        if($isTokenExpired){
-            if(isset($_SESSION['refreshToken'])) {
+        $isTokenExpired = $this->isTokenExpired($token);
+        if ($isTokenExpired) {
+            if (isset($_SESSION['refreshToken'])) {
                 $refreshToken = $_SESSION['refreshToken'];
                 $refreshTokenData = $this->renewAccessToken($refreshToken);
-                if(isset($refreshTokenData->error)){
-                    $result = $this->generateTokenResponse(false, null, $refreshTokenData->error_description );
+                if (isset($refreshTokenData->error)) {
+                    $result = $this->generateTokenResponse(false, null, $refreshTokenData->error_description);
                     return $result;
                 }
-                $token = $refreshTokenData[ 'access_token' ];
+                $token = $refreshTokenData['access_token'];
                 $result = $this->generateTokenResponse(true, $token);
-                $_SESSION['accessToken'] = $refreshTokenData[ 'access_token' ];
-                $_SESSION['refreshToken'] = $refreshTokenData[ 'refresh_token' ];
+                $_SESSION['accessToken'] = $refreshTokenData['access_token'];
+                $_SESSION['refreshToken'] = $refreshTokenData['refresh_token'];
                 return $result;
-            } 
-            return $this->generateTokenResponse(false, null,  "Refresh Token value not avilable");
-        } 
-        return $this->generateTokenResponse(true, $token);;
+            }
+            return $this->generateTokenResponse(false, null, "Refresh Token value not avilable");
+        }
+        return $this->generateTokenResponse(true, $token);
     }
 
-    // generate the token response 
-        public function generateTokenResponse( bool $success,string $token = null , string $error = null ) {
-            $response = new \stdClass();
-            $response->success = $success;
-            
-            if ($success) {
-                $response->token = $token;
-            } else {
-                $response->error = $error;
-            }
-            return $response;
+    // generate the token response
+    public function generateTokenResponse(bool $success, string $token = null, string $error = null)
+    {
+        $response = new \stdClass();
+        $response->success = $success;
+
+        if ($success) {
+            $response->token = $token;
+        } else {
+            $response->error = $error;
         }
+        return $response;
+    }
 }
