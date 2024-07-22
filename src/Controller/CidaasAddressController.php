@@ -124,7 +124,7 @@ class CidaasAddressController extends StorefrontController
                 $this->addFlash(self::DANGER, $this->trans('account.billingAddressUpdateError') . $error);
                 error_log('Error response: ' . json_encode($responseData));
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->addFlash(self::DANGER, $this->trans('account.errorOccured') . $e->getMessage());
             error_log('Exception: ' . $e->getMessage());
         }
