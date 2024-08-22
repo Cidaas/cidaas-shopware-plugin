@@ -332,6 +332,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
      */
     public function cidaasLogin(Request $request, SalesChannelContext $context): Response
     {
+        $baseURL = $this->loginService->createBaseURL($request);
+
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
         }
@@ -347,7 +349,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, $request->get('sw-sales-channel-absolute-base-url'));
+        $red = $this->loginService->getAuthorizationUri($state, $baseURL);
         return new RedirectResponse($red);
     }
 

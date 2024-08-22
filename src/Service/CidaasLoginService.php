@@ -1051,4 +1051,24 @@ class CidaasLoginService {
             }
             return $response;
         }
+
+
+    
+
+     // Create base url with locale 
+      public  function createBaseURL(Request $request)
+      {
+        $defaultLocale = $request->attributes->get('_locale');
+        $defaultLocaleCode =  explode('-', $defaultLocale)[0];
+
+        $locale = $request->query->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
+        $baseUrl = $request->get('sw-sales-channel-absolute-base-url');
+
+        $localeUrl = ($localeCode === $defaultLocaleCode) ? $baseUrl : $baseUrl . '/' . $localeCode; 
+        
+        
+        return $localeUrl;
+    }
 }
