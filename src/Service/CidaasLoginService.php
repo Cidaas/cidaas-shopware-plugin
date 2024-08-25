@@ -39,6 +39,8 @@ use Shopware\Core\Content\Newsletter\Exception\SalesChannelDomainNotFoundExcepti
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Framework\Validation\DataValidationDefinition;
 use Symfony\Component\HttpFoundation\Request;
+use Shopware\Core\System\Locale\LocaleEntity;
+
 class CidaasLoginService {
     private $eventDispatcher;
     private $customerRepo;
@@ -62,6 +64,7 @@ class CidaasLoginService {
     private $state = '';
     private $cfCustomerNumber = '';
     private $defaultGroup = '';
+
     public function __construct(
         EventDispatcherInterface $eventDispatcher,
         EntityRepositoryInterface $customerRepo,
@@ -232,13 +235,13 @@ class CidaasLoginService {
         return $customer->getLastLogin();
     }
 
-    public function getAuthorizationUri($state, $url, $email=null): String
+    public function getAuthorizationUri($state, $url, $localeCode, $email=null): String
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint 
             . '?scope='. urlencode("openid offline_access email profile groups") .'&response_type=code'
             . '&approval_prompt=auto&redirect_uri='. urlencode($redirectUri) 
-            . '&client_id='.$this->clientId . '&state='.$state;
+            . '&client_id='.$this->clientId . '&state='.$state . '&ui_locales='.$localeCode;
         if ($email !== null) {
             $result .= '&userIdHint='.$email . '&type=email';
         }
@@ -246,7 +249,7 @@ class CidaasLoginService {
 
     }
 
-    public function getRegisterUri($state, $url, $userIdHint=null, $type=null): String
+    public function getRegisterUri($state, $url, $localeCode,  $userIdHint=null, $type=null): String
     {
         $redirectUri = $url.'/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
@@ -254,7 +257,8 @@ class CidaasLoginService {
             . '&response_type=code&approval_prompt=auto&redirect_uri='
             . urlencode($redirectUri)
             . '&view_type=register'
-            . '&state='.$state;
+            . '&state='.$state
+            . '&ui_locales='.$localeCode;
         if ($userIdHint !== null) {
             $result .= '&userIdHint='.$userIdHint
             .'&type='.$type;
@@ -1052,8 +1056,36 @@ class CidaasLoginService {
             return $response;
         }
 
-
+        public function getLocaleBySalesChannelId(string $salesChannelId): ?string
+        {
+            $context = Context::createDefaultContext(); // Use the default context
     
+            // Fetch sales channel data
+            $salesChannel = $this->salesChannelRepository->search(
+                (new Criteria([$salesChannelId]))->addAssociation('language'),
+                $context
+            )->get($salesChannelId);
+    
+            if (!$salesChannel) {
+                return null;
+            }
+    
+            // Retrieve the associated language
+            $language = $salesChannel->getLanguage();
+
+            // Fetch locale details if needed
+            $localeId = $language->getLocaleId();
+            if ($localeId) {
+                $localeCriteria = new Criteria([$localeId]);
+                $locale = $this->localeRepository->search($localeCriteria, $context)->get($localeId);
+
+                if ($locale instanceof LocaleEntity) {
+                    $localeCode = $locale->getCode(); // Retrieve the locale code
+                }
+            }
+            return $localeCode;
+        }
+        
 
      // Create base url with locale 
       public  function createBaseURL(Request $request)
@@ -1064,11 +1096,14 @@ class CidaasLoginService {
         $locale = $request->query->get('_locale');
         $localeCode = explode('-', $locale)[0];
 
+        error_log($defaultLocale);
+        error_log($locale);
+
+
         $baseUrl = $request->get('sw-sales-channel-absolute-base-url');
 
-        $localeUrl = ($localeCode === $defaultLocaleCode) ? $baseUrl : $baseUrl . '/' . $localeCode; 
-        
-        
+        $localeUrl = ($localeCode === $defaultLocaleCode) ? $baseUrl : $baseUrl . '/' . $localeCode;
+
         return $localeUrl;
     }
 }

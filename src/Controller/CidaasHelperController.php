@@ -110,8 +110,12 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $code = $request->query->get('code');
         $state = $request->query->get('state');
         $sess = $request->getSession()->get('state');
+
+        // get storfront url
+        $baseUrl = $request->get('sw-storefront-url');
+
         if ($state === $sess) {
-            $token = $this->loginService->getCidaasAccessToken($code, $request->get('sw-sales-channel-absolute-base-url'));
+            $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
             if (is_array($token)) {
                 if (isset($token['sub'])) {
 
@@ -128,7 +132,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                         try {
                             if ($this->hasRequiredUserData($user)) {
                                 // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                                $this->loginService->registerExistingUser( $user, $context, $baseUrl );
                                 $this->loginService->checkCustomerGroups( $user, $context );
                                 } else {
                                     return $this->redirectToRoute( 'cidaas.register.additional.page' );
@@ -189,7 +193,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
                             if ($this->hasRequiredUserData($user)) {
                                 // User has all the required data
-                                $this->loginService->registerExistingUser( $user, $context, $request->get( 'sw-sales-channel-absolute-base-url' ) );
+                                $this->loginService->registerExistingUser( $user, $context, $baseUrl );
                                 $this->loginService->checkCustomerGroups( $user, $context );
                                 } else {
                                     return $this->redirectToRoute( 'cidaas.register.additional.page' );
@@ -333,6 +337,10 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     public function cidaasLogin(Request $request, SalesChannelContext $context): Response
     {
         $baseURL = $this->loginService->createBaseURL($request);
+        $locale = $request->query->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
+        error_log("svfdisufksukf". $baseURL);
 
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
@@ -349,7 +357,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, $baseURL);
+        $red = $this->loginService->getAuthorizationUri($state, $baseURL, $localeCode);
         return new RedirectResponse($red);
     }
 
@@ -358,14 +366,18 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
      */
     public function cidaasRegister(Request $request, SalesChannelContext $context): Response
     {
+        $baseURL = $this->loginService->createBaseURL($request);
+        $locale = $request->query->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
         $state = Uuid::randomHex();
         $request->getSession()->set('state', $state);
         if ($request->query->get('userIdHint')) {
             $userIdHint = $request->query->get('userIdHint');
             $type = $request->query->get('type');
-            return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url'), $userIdHint, $type));
+            return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseURL, $locale, $userIdHint, $type));
         }
-        return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url')));
+        return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseURL, $localeCode));
     }
 
 
