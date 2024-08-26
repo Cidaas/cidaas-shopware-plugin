@@ -13,7 +13,7 @@ export default class CidaasEmailChange extends Plugin {
     init() {
         this.client = new HttpClient()
         $('#emailForm').on('submit', this.handleSubmit.bind(this))
-        // ElementLoadingIndicatorUtil.create(this.mediaDiv)
+        this.locale = DomAccess.getDataAttribute(document.querySelector('#emailForm'), 'locale');
         this.mailContainer = DomAccess.querySelector(document, 'div#accountMailContainer')
     }
     sleep(ms) {
@@ -53,7 +53,10 @@ export default class CidaasEmailChange extends Plugin {
         }), (res) => {
             ElementLoadingIndicatorUtil.remove(this.mailContainer)
             $('#verifyThing').hide()
-            window.location.href="/account"
+
+            const fullLocale = this.locale; // Example locale string
+            const localeCode = fullLocale.split('-')[0];
+            window.location.href=`/${localeCode}/account/profile`
         })
     }
 }
