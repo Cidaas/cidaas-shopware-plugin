@@ -5,11 +5,11 @@
     <div class="container">
         <div class="row mt-5">
             <div class="guest-btn guest-block">
-                <h3 class="font-weight-bold">Konto einloggen/Registrieren</h3>
-            <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="{{ path('cidaas.login', {'_locale': app.request.locale}) }}?redirect_to=frontend.checkout.confirm.page">Mit Konto fortfahren</a>
+                <h3 class="font-weight-bold">{{ 'guest_section.login_register_account'|trans|sw_sanitize }}</h3>
+                <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="{{ path('cidaas.login', {'_locale': app.request.locale}) }}?redirect_to=frontend.checkout.confirm.page">{{ 'guest_section.continue_with_account'|trans|sw_sanitize }}</a>
 
-                <h3 class="font-weight-bold mt-5">Ohne Konto</h3>
-                <a class="btn btn-primary mt-2 guest-p1 button-guest" href="{{ path('cidaas.guest.register.page', {}, app.request.locale) }}">Als Gast fortfahren</a>
+                <h3 class="font-weight-bold mt-5">{{ 'guest_section.without_account'|trans |sw_sanitize }}</h3>
+                <a class="btn btn-primary mt-2 guest-p1 button-guest" href="{{ path('cidaas.guest.register.page', {}, app.request.locale) }}">{{ 'guest_section.continue_as_guest'|trans|sw_sanitize }}</a>
             </div>
         </div>
     </div>
