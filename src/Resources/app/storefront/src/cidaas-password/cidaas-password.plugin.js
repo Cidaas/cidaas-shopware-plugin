@@ -16,6 +16,8 @@ export default class CidaasPassword extends Plugin {
         this.newPasswordInput = $('#newPassword')
         this.confirmPasswordInput = $('#passwordConfirmation')
         this.oldPasswordInput = $('#password')
+        this.locale = DomAccess.getDataAttribute(document.querySelector('#emailForm'), 'locale')
+        this.localeCode = this.locale.split('-')[0]
         this.client = new HttpClient()
         this.client.get('/cidaas/url', (res) => {
             try {
@@ -49,7 +51,7 @@ export default class CidaasPassword extends Plugin {
                 try {
                     let result = JSON.parse(res)
                     if (result.success) {
-                        window.location.href = "/account/logout";
+                        window.location.href = `/${this.localeCode}/account/logout`
                     }
                 } catch (err) {
                     
@@ -63,7 +65,7 @@ export default class CidaasPassword extends Plugin {
             result: true,
             _csrf_token: this.options.csrf
         }) ,(res) => {
-            window.location.href="/account"
+            window.location.href = `/${this.localeCode}/account`
         })
     }
 
