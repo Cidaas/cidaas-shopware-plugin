@@ -512,6 +512,12 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
         $errorRoute = $request->attributes->get('_route');
 
+       // Get the current request path
+    $requestPath = $request->getRequestUri();
+
+    // error_log(json_encode($request->server->all()));
+    error_log("Request Path: " . $requestPath);
+
         if ($context->getCustomer()) {
             return $this->redirectToRoute($redirect);
         }
@@ -525,7 +531,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
 
         return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
-           ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
+           ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data, 'locale' => 'de']
        );
     }
 
