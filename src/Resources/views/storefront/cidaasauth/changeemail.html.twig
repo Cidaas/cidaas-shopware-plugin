@@ -8,7 +8,7 @@
 </div>
 <div class="card account-email" id="accountMailContainer">
     {% block page_change_email_form %}
-    <form class="card-body" id="emailForm">
+    <form class="card-body" id="emailForm" data-locale="{{ app.request.locale }}">
         <div class="card-title">{{ "account.profileMailTitle"|trans|sw_sanitize }}
         </div>
         {% block page_change_email_form_group %}

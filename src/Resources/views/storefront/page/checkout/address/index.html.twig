@@ -17,8 +17,9 @@
         {% block page_checkout_address_login_toggle %}
             <div class="register-login-collapse-toogle">
                 {% sw_icon 'avatar' %}
-             <a href="/cidaas/login?redirect_to=frontend.checkout.confirm.page"">
-                    <strong>{{ "checkout.addressLoginToggle"|trans|sw_sanitize }}</strong> </a>
+                <a href="{{ path('cidaas.login', {'_locale': app.request.locale}) }}?redirect_to=frontend.checkout.confirm.page">
+                    <strong>{{ "checkout.addressLoginToggle"|trans|sw_sanitize }}</strong>
+                </a>
             </div>
         {% endblock %}
 
