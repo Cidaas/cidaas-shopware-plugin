@@ -340,7 +340,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $locale = $request->query->get('_locale');
         $localeCode = explode('-', $locale)[0];
 
-        error_log("svfdisufksukf". $baseURL);
 
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
@@ -512,11 +511,6 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $redirect = $request->get('redirectTo', 'frontend.checkout.confirm.page');
         $errorRoute = $request->attributes->get('_route');
 
-       // Get the current request path
-    $requestPath = $request->getRequestUri();
-
-    // error_log(json_encode($request->server->all()));
-    error_log("Request Path: " . $requestPath);
 
         if ($context->getCustomer()) {
             return $this->redirectToRoute($redirect);
@@ -531,7 +525,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         $this->hook(new CheckoutRegisterPageLoadedHook($page, $context));
 
         return  $this->renderStorefront("@CidaasOauthConnect/storefront/page/guest.html.twig",
-           ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data, 'locale' => 'de']
+           ['redirectTo' => $redirect, 'errorRoute' => $errorRoute, 'page' => $page, 'data' => $data]
        );
     }
 

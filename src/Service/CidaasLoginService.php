@@ -1056,36 +1056,6 @@ class CidaasLoginService {
             return $response;
         }
 
-        public function getLocaleBySalesChannelId(string $salesChannelId): ?string
-        {
-            $context = Context::createDefaultContext(); // Use the default context
-    
-            // Fetch sales channel data
-            $salesChannel = $this->salesChannelRepository->search(
-                (new Criteria([$salesChannelId]))->addAssociation('language'),
-                $context
-            )->get($salesChannelId);
-    
-            if (!$salesChannel) {
-                return null;
-            }
-    
-            // Retrieve the associated language
-            $language = $salesChannel->getLanguage();
-
-            // Fetch locale details if needed
-            $localeId = $language->getLocaleId();
-            if ($localeId) {
-                $localeCriteria = new Criteria([$localeId]);
-                $locale = $this->localeRepository->search($localeCriteria, $context)->get($localeId);
-
-                if ($locale instanceof LocaleEntity) {
-                    $localeCode = $locale->getCode(); // Retrieve the locale code
-                }
-            }
-            return $localeCode;
-        }
-        
 
      // Create base url with locale 
       public  function createBaseURL(Request $request)
