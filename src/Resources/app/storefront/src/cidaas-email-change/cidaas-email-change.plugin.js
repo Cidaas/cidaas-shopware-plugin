@@ -1,11 +1,7 @@
 import Plugin from 'src/plugin-system/plugin.class'
 import DomAccess from 'src/helper/dom-access.helper';
 import HttpClient from 'src/service/http-client.service';
-import Debouncer from 'src/helper/debouncer.helper';
 import ElementLoadingIndicatorUtil from 'src/utility/loading-indicator/element-loading-indicator.util';
-import ButtonLoadingIndicatorUtil from 'src/utility/loading-indicator/button-loading-indicator.util';
-
-import CidaasUtil from '../util/cidaas-util';
 
 import * as $ from 'jquery'
 
@@ -13,7 +9,6 @@ export default class CidaasEmailChange extends Plugin {
     init() {
         this.client = new HttpClient()
         $('#emailForm').on('submit', this.handleSubmit.bind(this))
-        this.locale = DomAccess.getDataAttribute(document.querySelector('#emailForm'), 'locale');
         this.mailContainer = DomAccess.querySelector(document, 'div#accountMailContainer')
     }
     sleep(ms) {
@@ -21,14 +16,13 @@ export default class CidaasEmailChange extends Plugin {
             setTimeout(resolve, ms)
         })
     }
-    handleSubmit(evt){
+    handleSubmit(evt) {
         evt.preventDefault()
         let email1 = $('#personalMail').val()
         let email2 = $('#personalMailConfirmation').val()
         if (email1 === email2) {
             $('#personalMailConfirmation').removeClass('is-invalid')
             $('#invalidFeedback').hide()
-            
             this.changeEmail(email1, email2)
 
         } else {
@@ -53,10 +47,24 @@ export default class CidaasEmailChange extends Plugin {
         }), (res) => {
             ElementLoadingIndicatorUtil.remove(this.mailContainer)
             $('#verifyThing').hide()
-
-            const fullLocale = this.locale; // Example locale string
-            const localeCode = fullLocale.split('-')[0];
-            window.location.href=`/${localeCode}/account/profile`
+            this.redirectProfilePath();
         })
+    }
+
+
+    redirectProfilePath() {
+        // Determine the base URL
+        const baseUrl = `${window.location.protocol}//${window.location.host}`;
+        // Optional: Get the locale from the current URL if it's available
+        const path = window.location.pathname;
+        const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/i);
+        const locale = localeMatch ? localeMatch[1] : '';
+
+        // Construct the profile URL, including locale if applicable
+        const profileUrl = locale ? `${baseUrl}/${locale}/account/profile` : `${baseUrl}/account/profile`;
+
+        // Redirect to the logout URL
+        window.location.href = profileUrl;
+
     }
 }
