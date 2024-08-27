@@ -332,14 +332,13 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     }
 
     /**
-     * @Route("/cidaas/login", name="cidaas.login", methods={"GET"}, options={"seo"="false"})
+     * @Route("/cidaas/login", name="frontend.cidaas.account.login.page", methods={"GET"}, options={"seo"="false"})
      */
     public function cidaasLogin(Request $request, SalesChannelContext $context): Response
     {
-        $baseURL = $this->loginService->createBaseURL($request);
-        $locale = $request->query->get('_locale');
+        $baseUrl = $request->get('sw-storefront-url');
+        $locale = $request->attributes->get('_locale');
         $localeCode = explode('-', $locale)[0];
-
 
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
@@ -356,17 +355,17 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, $baseURL, $localeCode);
+        $red = $this->loginService->getAuthorizationUri($state, $baseUrl, $localeCode);
         return new RedirectResponse($red);
     }
 
     /**
-     * @Route("/cidaas/register", name="cidaas.register", methods={"GET"}, options={"seo"="false"})
+     * @Route("/cidaas/register", name="frontend.cidaas.account.register.page", methods={"GET"}, options={"seo"="false"})
      */
     public function cidaasRegister(Request $request, SalesChannelContext $context): Response
     {
-        $baseURL = $this->loginService->createBaseURL($request);
-        $locale = $request->query->get('_locale');
+        $baseUrl = $request->get('sw-storefront-url');
+        $locale = $request->attributes->get('_locale');
         $localeCode = explode('-', $locale)[0];
 
         $state = Uuid::randomHex();
@@ -374,9 +373,9 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         if ($request->query->get('userIdHint')) {
             $userIdHint = $request->query->get('userIdHint');
             $type = $request->query->get('type');
-            return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseURL, $locale, $userIdHint, $type));
+            return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseUrl, $localeCode, $userIdHint, $type));
         }
-        return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseURL, $localeCode));
+        return new RedirectResponse($this->loginService->getRegisterUri($state,  $baseUrl, $localeCode));
     }
 
 
@@ -652,7 +651,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     }
 
     /**
-     * @Route("/guest/register", name="cidaas.guest.register.page", options={"seo"="false"}, methods={"GET"})
+     * @Route("/guest/register", name="frontend.cidaas.guest.register.page", options={"seo"="false"}, methods={"GET"})
      */
     public function guestRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
     {
