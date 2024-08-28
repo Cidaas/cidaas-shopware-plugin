@@ -1,23 +1,18 @@
 import Plugin from 'src/plugin-system/plugin.class'
 import DomAccess from 'src/helper/dom-access.helper';
 import HttpClient from 'src/service/http-client.service';
-import Debouncer from 'src/helper/debouncer.helper';
-import ElementLoadingIndicatorUtil from 'src/utility/loading-indicator/element-loading-indicator.util';
-import ButtonLoadingIndicatorUtil from 'src/utility/loading-indicator/button-loading-indicator.util';
 
 import CidaasUtil from '../util/cidaas-util';
 
 import * as $ from 'jquery'
 
 export default class CidaasPassword extends Plugin {
-    
+
     init() {
         $('#profilePasswordForm').on('submit', this.handleFormSubmit.bind(this))
         this.newPasswordInput = $('#newPassword')
         this.confirmPasswordInput = $('#passwordConfirmation')
         this.oldPasswordInput = $('#password')
-        this.locale = DomAccess.getDataAttribute(document.querySelector('#emailForm'), 'locale')
-        this.localeCode = this.locale.split('-')[0]
         this.client = new HttpClient()
         this.client.get('/cidaas/url', (res) => {
             try {
@@ -51,23 +46,24 @@ export default class CidaasPassword extends Plugin {
                 try {
                     let result = JSON.parse(res)
                     if (result.success) {
-                        window.location.href = `/${this.localeCode}/account/logout`
+                        this.performLogout();
                     }
                 } catch (err) {
-                    
+
                 }
             })
         }
     }
+    performLogout() {
+        const baseUrl = `${window.location.protocol}//${window.location.host}`;
+        const path = window.location.pathname;
+        const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/i);
+        const locale = localeMatch ? localeMatch[1] : '';
 
-    sendSuccessInfo() {
-        this.client.post('/cidaas/changepassword', JSON.stringify({
-            result: true,
-            _csrf_token: this.options.csrf
-        }) ,(res) => {
-            window.location.href = `/${this.localeCode}/account`
-        })
+        const logoutUrl = locale ? `${baseUrl}/${locale}/account/logout` : `${baseUrl}/account/logout`;
+        window.location.href = logoutUrl;
     }
+
 
     checkInputFields() {
         let newPassword = this.newPasswordInput.val()
