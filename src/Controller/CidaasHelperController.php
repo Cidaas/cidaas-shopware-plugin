@@ -93,11 +93,11 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
     {
         if ($request->get('redirectTo')) {
             if ($request->get('redirectParameters')) {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
             } else {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->Get('redirectTo')]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->Get('redirectTo')]);
             }
-            return $this->redirectTo('cidaas.login');
+            return $this->redirectTo('frontend.cidaas.account.login.page');
         }
         return $this->forwardToRoute('frontend.home.page');
     }
