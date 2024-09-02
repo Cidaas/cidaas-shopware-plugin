@@ -13,5 +13,12 @@
         "billingAddressUpdateError": "Failed to update billing address.",
         "errorOccured" : "An error occurred:"
 
+    },
+    "guest_section": {
+    "login_register_account": "Log in/Register Account",
+    "continue_with_account": "Continue with Account",
+    "without_account": "Without Account",
+    "continue_as_guest": "Continue as Guest"
     }
+
 }

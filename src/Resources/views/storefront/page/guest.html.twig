@@ -1,20 +1,28 @@
 {% sw_extends "@Storefront/storefront/base.html.twig" %}
 
 {% block base_content %}
-   {% block guest_section %}
-      
-    <div class="container">
-        <div class="row mt-5 cidaas-guest-container">
+    {% block guest_section %}
+
+        <div class="container">
+            <div class="row mt-5 cidaas-guest-container">
                 <div class="guest-btn guest-block">
-                            <h3 class="font-weight-bold">Login/Register an account</h3>
-                            <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="/cidaas/login?redirect_to=frontend.checkout.confirm.page">Continue with account</a>
+                    <h3 class="font-weight-bold">
+                    {{ 'guest_section.login_register_account'|trans|sw_sanitize }}
+                    </h3>
+                    <a class="btn btn-primary mt-2 guest-p1 button-cidaas" href="{{ path('frontend.cidaas.account.login.page') ~ '?redirect_to=frontend.checkout.confirm.page' }}">
+                    {{ 'guest_section.continue_with_account'|trans|sw_sanitize }}
+                    </a>
 
-                            <h3 class="font-weight-bold mt-5">Without account </h3>
-                            <a class="btn btn-primary mt-2 guest-p2 button-guest" href="{{ path('cidaas.guest.register.page') }}">Continue as guest</a>
+                    <h3 class="font-weight-bold mt-5">
+                    {{ 'guest_section.without_account'|trans |sw_sanitize }}
+                    </h3>
+                    <a class="btn btn-primary mt-2 guest-p2 button-guest" href="{{ path('frontend.cidaas.guest.register.page') }}">
+                    {{ 'guest_section.continue_as_guest'|trans|sw_sanitize }}
+                    </a>
 
+                </div>
             </div>
         </div>
-    </div>
 
-   {% endblock %}
-{% endblock %} 
+    {% endblock %}
+{% endblock %}

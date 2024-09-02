@@ -36,11 +36,11 @@ class CidaasHelperController extends StorefrontController
     {
         if ($request->get('redirectTo')) {
             if ($request->get('redirectParameters')) {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
             } else {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->Get('redirectTo')]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->Get('redirectTo')]);
             }
-            return $this->redirectTo('cidaas.login');
+            return $this->redirectTo('frontend.cidaas.account.login.page');
         }
         return $this->forwardToRoute('frontend.home.page');
     }
@@ -58,7 +58,9 @@ class CidaasHelperController extends StorefrontController
             return $this->forwardToRoute('frontend.home.page');
         }
 
-        $baseUrl = $request->get('sw-sales-channel-absolute-base-url');
+         // get storfront url
+        $baseUrl = $request->get('sw-storefront-url');
+
         $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
 
         if (!$token || (!is_array($token) && !is_object($token))) {
@@ -218,7 +220,7 @@ class CidaasHelperController extends StorefrontController
         return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
-    #[Route(path: '/cidaas/exists', name: 'cidaas.exists', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/exists', name: 'frontend.cidaas.exists', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
     public function exists(Request $request, SalesChannelContext $context): Response
     {
         $email = $request->get('email');
@@ -226,7 +228,7 @@ class CidaasHelperController extends StorefrontController
         return $this->json($exists);
     }
 
-    #[Route(path: '/cidaas/authuri/{email}', name: 'cidaas.authuri', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/authuri/{email}', name: 'frontend.cidaas.authuri', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function authuri(Request $request, $email): Response
     {
         if ($request->getSession()->get('state')) {
@@ -238,7 +240,7 @@ class CidaasHelperController extends StorefrontController
         ));
     }
 
-    #[Route(path: '/cidaas/lastlogin/{customerId}', name: 'cidaas.lastlogin', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/lastlogin/{customerId}', name: 'frontend.cidaas.lastlogin', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function lastLogin(Request $request, SalesChannelContext $context, $customerId): Response
     {
         $lastLogin = $this->loginService->getLastLogin($customerId, $context);
@@ -247,9 +249,13 @@ class CidaasHelperController extends StorefrontController
         ));
     }
 
-    #[Route(path: '/cidaas/login', name: 'cidaas.login', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/login', name: 'frontend.cidaas.account.login.page', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function cidaasLogin(Request $request, SalesChannelContext $context): Response
     {
+        $baseUrl = $request->get('sw-storefront-url');
+        $locale = $request->attributes->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
         }
@@ -265,11 +271,11 @@ class CidaasHelperController extends StorefrontController
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, $request->get('sw-sales-channel-absolute-base-url'));
+        $red = $this->loginService->getAuthorizationUri($state, $baseUrl, $localeCode);
         return new RedirectResponse($red);
     }
 
-    #[Route(path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET', 'POST'])]
+    #[Route(path: '/cidaas/changepassword', name: 'frontend.cidaas.changepassword', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET', 'POST'])]
     public function changepassword(Request $request, SalesChannelContext $context): Response
     {
         try {
@@ -300,7 +306,7 @@ class CidaasHelperController extends StorefrontController
         }
     }
 
-    #[Route(path: '/cidaas/emailform', name: 'cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/emailform', name: 'frontend.cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
     public function emailForm(Request $request, SalesChannelContext $context): Response
     {
         try {

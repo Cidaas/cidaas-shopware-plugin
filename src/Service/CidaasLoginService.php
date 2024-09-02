@@ -230,13 +230,13 @@ class CidaasLoginService
         return $customer->getLastLogin();
     }
 
-    public function getAuthorizationUri($state, $url, $email = null): String
+    public function getAuthorizationUri($state, $url, $localeCode, $email = null): String
     {
         $redirectUri = $url . '/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint
         . '?scope=' . urlencode("openid offline_access email profile groups") . '&response_type=code'
         . '&approval_prompt=auto&redirect_uri=' . urlencode($redirectUri)
-        . '&client_id=' . $this->clientId . '&state=' . $state;
+        . '&client_id='.$this->clientId . '&state='.$state . '&ui_locales='.$localeCode;
         if ($email !== null) {
             $result .= '&userIdHint=' . $email . '&type=email';
         }
@@ -244,7 +244,7 @@ class CidaasLoginService
 
     }
 
-    public function getRegisterUri($state, $url, $userIdHint = null, $type = null): String
+    public function getRegisterUri($state, $url,$localeCode, $userIdHint = null, $type = null): String
     {
         $redirectUri = $url . '/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
@@ -252,7 +252,8 @@ class CidaasLoginService
         . '&response_type=code&approval_prompt=auto&redirect_uri='
         . urlencode($redirectUri)
             . '&view_type=register'
-            . '&state=' . $state;
+            . '&state='.$state
+            . '&ui_locales='.$localeCode;
         if ($userIdHint !== null) {
             $result .= '&userIdHint=' . $userIdHint
                 . '&type=' . $type;
