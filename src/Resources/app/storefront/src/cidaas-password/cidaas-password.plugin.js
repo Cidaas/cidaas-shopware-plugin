@@ -46,7 +46,9 @@ export default class CidaasPassword extends Plugin {
                 try {
                     let result = JSON.parse(res)
                     if (result.success) {
-                        this.performLogout();
+                        this.redirectToUrl('/account/logout');
+                    } else {
+                        this.redirectToUrl('/account/profile');
                     }
                 } catch (err) {
 
@@ -54,14 +56,14 @@ export default class CidaasPassword extends Plugin {
             })
         }
     }
-    performLogout() {
+    redirectToUrl(path) {
         const baseUrl = `${window.location.protocol}//${window.location.host}`;
-        const path = window.location.pathname;
-        const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/i);
+        const currentPath = window.location.pathname;
+        const localeMatch = currentPath.match(/^\/([a-z]{2})(\/|$)/i);
         const locale = localeMatch ? localeMatch[1] : '';
-
-        const logoutUrl = locale ? `${baseUrl}/${locale}/account/logout` : `${baseUrl}/account/logout`;
-        window.location.href = logoutUrl;
+    
+        const url = locale ? `${baseUrl}/${locale}${path}` : `${baseUrl}${path}`;
+        window.location.href = url;
     }
 
 

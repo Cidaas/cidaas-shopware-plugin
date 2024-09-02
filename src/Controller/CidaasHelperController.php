@@ -384,44 +384,76 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
      */
     public function changePassword(Request $request, SalesChannelContext $context): Response
     {
-        $sub = $request->getSession()->get('sub');
+        try {
+            $sub = $request->getSession()->get('sub');
 
-        $accessTokenObj =$this->loginService->getAccessToken();
+            $accessTokenObj =$this->loginService->getAccessToken();
 
-        if(!$accessTokenObj->success){
-            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+
+            $newPassword = $request->get('newPassword');
+            $confirmPassword = $request->get('confirmPassword');
+            $oldPassword = $request->get('oldPassword');
+
+            $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
+
+            $responseData = json_decode(json_encode($res), true);
+
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.passwordChangeSuccess'));
+            }
+            if ($responseData['success'] === true) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
+            } else {
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $error);
+            }
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
-        $accessToken = $accessTokenObj->token;
-
-        $newPassword = $request->get('newPassword');
-        $confirmPassword = $request->get('confirmPassword');
-        $oldPassword = $request->get('oldPassword');
-
-        $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
-        $this->addFlash('success', 'Passwort erfolgreich geändert');
-        return $this->json($res);
-    }
+   }
 
     /**
      * @Route("/cidaas/emailform", name="cidaas.emailform", methods={"POST"}, options={"seo"="false"}, defaults={"XmlHttpRequest"=true})
      */
     public function emailForm(Request $request, SalesChannelContext $context): Response
     {
-        $sub = $request->getSession()->get('sub');
-        $email = $request->get('email');
+        try {
+            $sub = $request->getSession()->get('sub');
+            $email = $request->get('email');
+    
+            $accessTokenObj =$this->loginService->getAccessToken();
+    
+            if(!$accessTokenObj->success){
+                return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            }
+            $accessToken = $accessTokenObj->token;
+    
+            $res = $this->loginService->changeEmail($email, $sub, $accessToken, $context);
 
-        $accessTokenObj =$this->loginService->getAccessToken();
+            $responseData = json_decode(json_encode($res), true);
 
-        if(!$accessTokenObj->success){
-            return  $this->redirectToRoute( 'frontend.account.logout.page' );
+            if (!$res || !array_key_exists('success', $responseData)) {
+                throw new \Exception($this->trans('account.emailChangeNoSuccess'));
+            }
+            if ($responseData['success'] === true) {
+                $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
+            } else {
+                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess') . $error);
+            }
+
+            return $this->json($res);
+        } catch (\Exception $e) {
+            $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess') . $e->getMessage());
+            return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        $accessToken = $accessTokenObj->token;
 
-        $this->loginService->changeEmail($email, $sub, $accessToken, $context);
-        $this->addFlash('success', 'E-Mail Adresse geändert');
-        return $this->json(
-            array()
-        );
     }
 
      /**
