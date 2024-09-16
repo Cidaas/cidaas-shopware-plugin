@@ -13,5 +13,13 @@
         "billingAddressUpdateError": "Die Rechnungsadresse konnte nicht aktualisiert werden.",
         "errorOccured" : "Es ist ein Fehler aufgetreten:"
 
+    },
+
+    "guest_section" : {
+        "login_register_account": "Konto einloggen/Registrieren",
+        "continue_with_account": "Mit Konto fortfahren",
+        "without_account": "Ohne Konto",
+        "continue_as_guest": "Als Gast fortfahren"
     }
+
 }

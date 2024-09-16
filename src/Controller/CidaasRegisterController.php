@@ -31,17 +31,21 @@ class CidaasRegisterController extends StorefrontController
     ) {
     }
 
-    #[Route(path: '/cidaas/register', name: 'cidaas.register', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/register', name: 'frontend.cidaas.account.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
     public function cidaasRegister(Request $request, SalesChannelContext $context): Response
     {
+        $baseUrl = $request->get('sw-storefront-url');
+        $locale = $request->attributes->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
         $state = Uuid::randomHex();
         $request->getSession()->set('state', $state);
         if ($request->query->get('userIdHint')) {
             $userIdHint = $request->query->get('userIdHint');
             $type = $request->query->get('type');
-            return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url'), $userIdHint, $type));
+            return new RedirectResponse($this->loginService->getRegisterUri($state, $baseUrl, $localeCode, $userIdHint, $type));
         }
-        return new RedirectResponse($this->loginService->getRegisterUri($state, $request->get('sw-sales-channel-absolute-base-url')));
+        return new RedirectResponse($this->loginService->getRegisterUri($state, $baseUrl, $localeCode));
     }
 
     #[Route(path: '/register/user/additionalInfo', name: 'cidaas.register.additional.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
@@ -190,7 +194,7 @@ class CidaasRegisterController extends StorefrontController
         );
     }
 
-    #[Route(path: '/guest/register', name: 'cidaas.guest.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
+    #[Route(path: '/guest/register', name: 'frontend.cidaas.guest.register.page', options: ['seo' => false], defaults: ['_noStore' => true], methods: ['GET'])]
     public function guestRegisterPage(Request $request, RequestDataBag $data, SalesChannelContext $context): Response
     {
         /** @var string $redirect */

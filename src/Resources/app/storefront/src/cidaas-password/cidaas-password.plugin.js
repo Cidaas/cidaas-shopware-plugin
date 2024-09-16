@@ -35,11 +35,11 @@ export default class CidaasPassword extends Plugin {
                 try {
                     const result = JSON.parse(res);
                     if (result.success) {
-                        window.location.href = "/account/logout";
-                    } else{
-                        
-                        window.location.href = "/account/profile";
+                        this.redirectToUrl('/account/logout');
+                    } else {
+                        this.redirectToUrl('/account/profile');
                     }
+
                 } catch (err) {
                     // Handle error
                     console.log(err)
@@ -55,6 +55,17 @@ export default class CidaasPassword extends Plugin {
             window.location.href = "/account";
         });
     }
+
+    redirectToUrl(path) {
+        const baseUrl = `${window.location.protocol}//${window.location.host}`;
+        const currentPath = window.location.pathname;
+        const localeMatch = currentPath.match(/^\/([a-z]{2})(\/|$)/i);
+        const locale = localeMatch ? localeMatch[1] : '';
+    
+        const url = locale ? `${baseUrl}/${locale}${path}` : `${baseUrl}${path}`;
+        window.location.href = url;
+    }
+
 
     checkInputFields() {
         const newPassword = this.newPasswordInput.value;
