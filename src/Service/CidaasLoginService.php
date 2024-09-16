@@ -70,7 +70,8 @@ class CidaasLoginService
         EntityRepository $customerGroupRepository,
         EntityRepository $customerAddressRepo,
         EntityRepository $customerGroupTranslationRepo,
-        EntityRepository $countryRepository
+        EntityRepository $countryRepository,
+        EntityRepository $customFieldRepository
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->customerRepo = $customerRepo;
@@ -95,6 +96,7 @@ class CidaasLoginService
         $this->connection = $connection;
         $this->registerRoute = $registerRoute;
         $this->contextRestorer = $contextRestorer;
+        $this->customFieldRepository = $customFieldRepository;
 
     }
 
@@ -1083,4 +1085,47 @@ class CidaasLoginService
         }
         return $response;
     }
+
+    public function getCustomerCustomFieldDefinitions(Context $context): array
+    {
+        // Create a Criteria object to filter custom fields related to the customer entity
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'customer'));
+
+        // Fetch the custom field definitions from the repository
+        $customFieldDefinitions = $this->customFieldRepository->search($criteria, $context)->getEntities();
+
+        return $customFieldDefinitions->getElements();
+    }
+
+    public function updateCustomerCustomFields(CustomerEntity $customer, RequestDataBag $data, SalesChannelContext $context, string $sub): void
+    {
+        // Initialize the customFields array
+        $customFields = [];
+    
+        // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
+        if ($data->get('customFields') instanceof RequestDataBag) {
+            // Get the 'customFields' data
+            $customFieldData = $data->get('customFields');
+    
+            // Iterate over each custom field
+            foreach ($customFieldData as $key => $value) {
+                $customFields[$key] = $value;
+            }
+        }
+        $customFields['sub'] = $sub;
+    
+        // Prepare the update data
+        $updateData = [
+            'id' => $customer->getId(),
+            'lastLogin' => new \DateTimeImmutable(),
+            'customFields' => $customFields, // Assign the collected custom fields
+        ];
+    
+        // Perform the update operation using the repository
+        $this->customerRepo->upsert([
+            $updateData,
+        ], $context->getContext());
+    }
+    
 }

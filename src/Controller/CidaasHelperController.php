@@ -12,6 +12,8 @@ use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
+use Shopware\Storefront\Page\Account\Profile\AccountProfilePageLoadedHook;
+use Shopware\Storefront\Page\Account\Profile\AccountProfilePageLoader;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,7 +28,8 @@ class CidaasHelperController extends StorefrontController
         private readonly CidaasLoginService $loginService,
         private readonly CartService $cartService,
         private readonly AbstractLogoutRoute $logoutRoute,
-        private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
+        private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute,
+        private readonly AccountProfilePageLoader $profilePageLoader
     ) {
     }
 
@@ -306,7 +309,7 @@ class CidaasHelperController extends StorefrontController
         }
     }
 
-    #[Route(path: '/cidaas/emailform', name: 'frontend.cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/change/email', name: 'cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
     public function emailForm(Request $request, SalesChannelContext $context): Response
     {
         try {
@@ -334,7 +337,7 @@ class CidaasHelperController extends StorefrontController
         }
     }
 
-    #[Route(path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: ['_loginRequired' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/profile/update', name: 'frontend.account.profile.save', defaults: ['_loginRequired' => true], methods: ['POST'])]
     public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response
     {
         $session = $request->getSession();
@@ -349,19 +352,21 @@ class CidaasHelperController extends StorefrontController
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
-                throw new \Exception($this->trans('account.updateProfileError'));
+                $this->addFlash(self::DANGER, $this->trans('error.message-default'));
             }
 
             if ($responseData['success'] === true) {
                 $this->updateCustomerProfileRoute->change($data, $context, $customer);
-                $this->addFlash(self::SUCCESS, $this->trans('account.updateProfile'));
+                $this->loginService->updateCustomerCustomFields($customer, $data, $context, $sub);
+
+                $this->addFlash(self::SUCCESS, $this->trans('account.profileUpdateSuccess'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash(self::DANGER, $this->trans('account.updateProfileError') . $error);
+                $this->addFlash(self::DANGER, $this->trans('error.message-default'));
             }
         } catch (\Exception $e) {
             error_log($e->getMessage());
-            $this->addFlash(self::DANGER, $this->trans('account.updateProfileError') . $e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('error.message-default') . $e->getMessage());
         }
 
         return $this->redirectToRoute('frontend.account.profile.page');
@@ -388,5 +393,41 @@ class CidaasHelperController extends StorefrontController
                 'state' => $state,
             )
         );
+    }
+
+    #[Route(path: '/account/profile', name: 'frontend.account.profile.page', defaults: ['_loginRequired' => true, '_noStore' => true], methods: ['GET'])]
+    public function profileOverview(Request $request, SalesChannelContext $context): Response
+    {
+        $page = $this->profilePageLoader->load($request, $context);
+
+        $this->hook(new AccountProfilePageLoadedHook($page, $context));
+        // Get custom field definitions for customers (all possible custom fields from admin)
+        $customFieldDefinitions = $this->loginService->getCustomerCustomFieldDefinitions($context->getContext());
+
+        // Get the current customer and their custom field values
+        $customer = $context->getCustomer();
+        $customFields = $customer ? $customer->getCustomFields() : [];
+
+        // Initialize an array to hold all custom fields (merge definitions and values)
+        $allCustomFields = [];
+
+        // Iterate over the custom field definitions
+        foreach ($customFieldDefinitions as $customFieldDefinition) {
+            $fieldName = $customFieldDefinition->getName();
+
+            // Initialize all custom fields with default values (null if no customer value)
+            $allCustomFields[$fieldName] = null;
+        }
+
+        // Merge the customer's current custom fields with all custom fields
+        // The customer's custom fields will overwrite any default null values in $allCustomFields
+        $mergedCustomFields = array_merge($allCustomFields, $customFields);
+
+        return $this->renderStorefront('@Storefront/storefront/page/account/profile/index.html.twig', [
+            'page' => $page,
+            'customFields' => $mergedCustomFields,
+            'passwordFormViolation' => $request->get('passwordFormViolation'),
+            'emailFormViolation' => $request->get('emailFormViolation'),
+        ]);
     }
 }

@@ -1,0 +1,19 @@
+{% sw_extends '@Storefront/storefront/component/address/address-personal.html.twig' %}
+
+{% block component_address_personal_fields %}
+    {{ parent() }}
+
+    <div class="row g-2">
+        {% for fieldKey, fieldValue in customFields %}
+            {% if fieldKey != 'sub' %}
+                <div class="form-group col-sm-6">
+                    <label class="form-label" for="customFields[{{ fieldKey }}]">
+                        {{ ("customFields." ~ fieldKey)|trans|sw_sanitize }}
+                    </label>
+                    <input type="text" class="form-control" name="customFields[{{ fieldKey }}]" value="{{ fieldValue }}" id="customFields[{{ fieldKey }}]">
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
