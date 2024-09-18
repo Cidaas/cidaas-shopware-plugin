@@ -14,6 +14,7 @@ code_quality_json:
   script:
     - buildah pull docker.io/codeclimate/codeclimate
     - container=$(buildah from codeclimate/codeclimate:latest)
+    - sleep 3600
     - buildah run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
