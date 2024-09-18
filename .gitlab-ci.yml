@@ -9,11 +9,11 @@ default:
 
 code_quality_json:
   stage: test
-  image: docker:git
+  image: quay.io/buildah/stable
   allow_failure: true
   script:
-    - docker pull codeclimate/codeclimate
-    - docker run
+    - buildah pull codeclimate/codeclimate
+    - buildah run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
        --volume "$PWD":/code
