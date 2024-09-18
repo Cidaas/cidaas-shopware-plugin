@@ -14,12 +14,12 @@ code_quality_json:
   script:
     - buildah pull docker.io/codeclimate/codeclimate
     - container=$(buildah from codeclimate/codeclimate:latest)
-    - sleep 3600
+    # - sleep 3600
     - buildah run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
        --volume "$PWD":/code
-       $container analyze -f json > gl-code-quality-report.json
+       $container -- sh -c 'export PATH=$PATH:usr/src/app/bin' analyze -f json > gl-code-quality-report.json
   except:
     - tags
   artifacts:
