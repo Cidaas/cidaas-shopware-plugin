@@ -1,2 +1,2 @@
-FROM docker.io/dockware/dev:6.5.6.1
+FROM dockware/dev:6.5.6.1
 COPY . ./custom/plugins/cidaassso-main
