@@ -110,6 +110,7 @@ class CidaasHelperController extends StorefrontController
         $this->loginService->checkWebshopId($user, $accessToken, $context);
         $this->loginService->updateAddressData($user, $context);
         $this->loginService->updateCustomerFromCidaas($user, $context);
+        $this->loginService->updateCustomerCustomFieldsFromCidaas($user, $context);
 
         $response = $this->loginService->loginBySub($sub, $context);
         $request->getSession()->set('sub', $sub);
@@ -345,10 +346,24 @@ class CidaasHelperController extends StorefrontController
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
+         // Initialize the customFields array
+         $customFields = [];
+
+         // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
+         if ($data->get('customFields') instanceof RequestDataBag) {
+             // Get the 'customFields' data
+             $customFieldData = $data->get('customFields');
+ 
+             // Iterate over each custom field
+             foreach ($customFieldData as $key => $value) {
+                 $customFields[$key] = $value;
+             }
+ 
+         }
 
         try {
             // Update profile
-            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub,$customFields, $context);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
