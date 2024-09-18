@@ -12,7 +12,7 @@ code_quality_json:
   image: quay.io/buildah/stable
   allow_failure: true
   script:
-    - buildah pull codeclimate/codeclimate
+    - buildah pull docker.io/codeclimate/codeclimate
     - buildah run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
