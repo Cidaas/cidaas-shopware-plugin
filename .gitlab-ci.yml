@@ -3,6 +3,10 @@ stages:
   - release
   - publish
 
+default:
+  tags:
+  - kubernetes
+
 code_quality_json:
   stage: test
   image: docker:git
