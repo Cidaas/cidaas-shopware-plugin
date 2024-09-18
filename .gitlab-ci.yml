@@ -13,13 +13,14 @@ code_quality_json:
   allow_failure: true
   script:
     - buildah pull docker.io/codeclimate/codeclimate
+    - container=$(buildah from codeclimate/codeclimate:latest)
     - buildah run
        --env SOURCE_CODE="$PWD"
        --env CODECLIMATE_CODE="$PWD"
        --volume "$PWD":/code
        --volume /var/run/docker.sock:/var/run/docker.sock
        --volume /tmp/cc:/tmp/cc
-       codeclimate/codeclimate:latest analyze -f json > gl-code-quality-report.json
+       $container analyze -f json > gl-code-quality-report.json
   except:
     - tags
   artifacts:
