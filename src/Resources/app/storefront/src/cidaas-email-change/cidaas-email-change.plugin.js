@@ -43,7 +43,7 @@ export default class CidaasEmailChange extends Plugin {
 
     handleVerify() {
         ElementLoadingIndicatorUtil.create(this.mailContainer);
-        this.client.post('/cidaas/emailform', JSON.stringify({
+        this.client.post('/cidaas/change/email', JSON.stringify({
             email: this.email
         }), (res) => {
             ElementLoadingIndicatorUtil.remove(this.mailContainer);

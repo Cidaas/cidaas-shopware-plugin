@@ -11,6 +11,7 @@
             <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\LogoutRoute" />
             <argument type="service"
                 id="Shopware\Core\Checkout\Customer\SalesChannel\ChangeCustomerProfileRoute" />
+            <argument type="service" id="Shopware\Storefront\Page\Account\Profile\AccountProfilePageLoader"/>
             <call method="setContainer">
                 <argument id="service_container" type="service" />
             </call>
@@ -63,6 +64,7 @@
             <argument type="service" id="customer_address.repository" />
             <argument type="service" id="customer_group_translation.repository" />
             <argument type="service" id="country.repository" />
+            <argument type="service" id="custom_field.repository" />
         </service>
         <service id="Cidaas\OauthConnect\Subscriber\SessionSubscriber"
             class="Cidaas\OauthConnect\Subscriber\SessionSubscriber">
