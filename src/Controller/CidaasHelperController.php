@@ -12,6 +12,8 @@ use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
+use Shopware\Storefront\Page\Account\Profile\AccountProfilePageLoadedHook;
+use Shopware\Storefront\Page\Account\Profile\AccountProfilePageLoader;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,7 +28,8 @@ class CidaasHelperController extends StorefrontController
         private readonly CidaasLoginService $loginService,
         private readonly CartService $cartService,
         private readonly AbstractLogoutRoute $logoutRoute,
-        private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute
+        private readonly AbstractChangeCustomerProfileRoute $updateCustomerProfileRoute,
+        private readonly AccountProfilePageLoader $profilePageLoader
     ) {
     }
 
@@ -36,11 +39,11 @@ class CidaasHelperController extends StorefrontController
     {
         if ($request->get('redirectTo')) {
             if ($request->get('redirectParameters')) {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
             } else {
-                return $this->forwardToRoute('cidaas.login', ['redirectTo' => $request->Get('redirectTo')]);
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->Get('redirectTo')]);
             }
-            return $this->redirectTo('cidaas.login');
+            return $this->redirectTo('frontend.cidaas.account.login.page');
         }
         return $this->forwardToRoute('frontend.home.page');
     }
@@ -58,7 +61,9 @@ class CidaasHelperController extends StorefrontController
             return $this->forwardToRoute('frontend.home.page');
         }
 
-        $baseUrl = $request->get('sw-sales-channel-absolute-base-url');
+         // get storfront url
+        $baseUrl = $request->get('sw-storefront-url');
+
         $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
 
         if (!$token || (!is_array($token) && !is_object($token))) {
@@ -105,6 +110,7 @@ class CidaasHelperController extends StorefrontController
         $this->loginService->checkWebshopId($user, $accessToken, $context);
         $this->loginService->updateAddressData($user, $context);
         $this->loginService->updateCustomerFromCidaas($user, $context);
+        $this->loginService->updateCustomerCustomFieldsFromCidaas($user, $context);
 
         $response = $this->loginService->loginBySub($sub, $context);
         $request->getSession()->set('sub', $sub);
@@ -218,7 +224,7 @@ class CidaasHelperController extends StorefrontController
         return $this->redirectToRoute('frontend.account.login.page', $parameters);
     }
 
-    #[Route(path: '/cidaas/exists', name: 'cidaas.exists', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/exists', name: 'frontend.cidaas.exists', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
     public function exists(Request $request, SalesChannelContext $context): Response
     {
         $email = $request->get('email');
@@ -226,7 +232,7 @@ class CidaasHelperController extends StorefrontController
         return $this->json($exists);
     }
 
-    #[Route(path: '/cidaas/authuri/{email}', name: 'cidaas.authuri', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/authuri/{email}', name: 'frontend.cidaas.authuri', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function authuri(Request $request, $email): Response
     {
         if ($request->getSession()->get('state')) {
@@ -238,7 +244,7 @@ class CidaasHelperController extends StorefrontController
         ));
     }
 
-    #[Route(path: '/cidaas/lastlogin/{customerId}', name: 'cidaas.lastlogin', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/lastlogin/{customerId}', name: 'frontend.cidaas.lastlogin', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function lastLogin(Request $request, SalesChannelContext $context, $customerId): Response
     {
         $lastLogin = $this->loginService->getLastLogin($customerId, $context);
@@ -247,9 +253,13 @@ class CidaasHelperController extends StorefrontController
         ));
     }
 
-    #[Route(path: '/cidaas/login', name: 'cidaas.login', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
+    #[Route(path: '/cidaas/login', name: 'frontend.cidaas.account.login.page', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET'])]
     public function cidaasLogin(Request $request, SalesChannelContext $context): Response
     {
+        $baseUrl = $request->get('sw-storefront-url');
+        $locale = $request->attributes->get('_locale');
+        $localeCode = explode('-', $locale)[0];
+
         if ($request->query->get('redirect_to')) {
             $request->getSession()->set('redirect_to', $request->query->get('redirect_to'));
         }
@@ -265,11 +275,11 @@ class CidaasHelperController extends StorefrontController
         } else {
             $request->getSession()->set('state', $state);
         }
-        $red = $this->loginService->getAuthorizationUri($state, $request->get('sw-sales-channel-absolute-base-url'));
+        $red = $this->loginService->getAuthorizationUri($state, $baseUrl, $localeCode);
         return new RedirectResponse($red);
     }
 
-    #[Route(path: '/cidaas/changepassword', name: 'cidaas.changepassword', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET', 'POST'])]
+    #[Route(path: '/cidaas/changepassword', name: 'frontend.cidaas.changepassword', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['GET', 'POST'])]
     public function changepassword(Request $request, SalesChannelContext $context): Response
     {
         try {
@@ -300,7 +310,7 @@ class CidaasHelperController extends StorefrontController
         }
     }
 
-    #[Route(path: '/cidaas/emailform', name: 'cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/change/email', name: 'cidaas.emailform', options: ['seo' => false], defaults: ['XmlHttpRequest' => true], methods: ['POST'])]
     public function emailForm(Request $request, SalesChannelContext $context): Response
     {
         try {
@@ -328,7 +338,7 @@ class CidaasHelperController extends StorefrontController
         }
     }
 
-    #[Route(path: '/cidaas/update-profile', name: 'frontend.account.profile.save', defaults: ['_loginRequired' => true], methods: ['POST'])]
+    #[Route(path: '/cidaas/profile/update', name: 'frontend.account.profile.save', defaults: ['_loginRequired' => true], methods: ['POST'])]
     public function updateProfile(Request $request, RequestDataBag $data, SalesChannelContext $context, CustomerEntity $customer): Response
     {
         $session = $request->getSession();
@@ -336,26 +346,42 @@ class CidaasHelperController extends StorefrontController
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
+         // Initialize the customFields array
+         $customFields = [];
+
+         // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
+         if ($data->get('customFields') instanceof RequestDataBag) {
+             // Get the 'customFields' data
+             $customFieldData = $data->get('customFields');
+ 
+             // Iterate over each custom field
+             foreach ($customFieldData as $key => $value) {
+                 $customFields[$key] = $value;
+             }
+ 
+         }
 
         try {
             // Update profile
-            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $context);
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub,$customFields, $context);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
-                throw new \Exception($this->trans('account.updateProfileError'));
+                $this->addFlash(self::DANGER, $this->trans('error.message-default'));
             }
 
             if ($responseData['success'] === true) {
                 $this->updateCustomerProfileRoute->change($data, $context, $customer);
-                $this->addFlash(self::SUCCESS, $this->trans('account.updateProfile'));
+                $this->loginService->updateCustomerCustomFields($customer, $data, $context, $sub);
+
+                $this->addFlash(self::SUCCESS, $this->trans('account.profileUpdateSuccess'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash(self::DANGER, $this->trans('account.updateProfileError') . $error);
+                $this->addFlash(self::DANGER, $this->trans('error.message-default'));
             }
         } catch (\Exception $e) {
             error_log($e->getMessage());
-            $this->addFlash(self::DANGER, $this->trans('account.updateProfileError') . $e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('error.message-default') . $e->getMessage());
         }
 
         return $this->redirectToRoute('frontend.account.profile.page');
@@ -382,5 +408,41 @@ class CidaasHelperController extends StorefrontController
                 'state' => $state,
             )
         );
+    }
+
+    #[Route(path: '/account/profile', name: 'frontend.account.profile.page', defaults: ['_loginRequired' => true, '_noStore' => true], methods: ['GET'])]
+    public function profileOverview(Request $request, SalesChannelContext $context): Response
+    {
+        $page = $this->profilePageLoader->load($request, $context);
+
+        $this->hook(new AccountProfilePageLoadedHook($page, $context));
+        // Get custom field definitions for customers (all possible custom fields from admin)
+        $customFieldDefinitions = $this->loginService->getCustomerCustomFieldDefinitions($context->getContext());
+
+        // Get the current customer and their custom field values
+        $customer = $context->getCustomer();
+        $customFields = $customer ? $customer->getCustomFields() : [];
+
+        // Initialize an array to hold all custom fields (merge definitions and values)
+        $allCustomFields = [];
+
+        // Iterate over the custom field definitions
+        foreach ($customFieldDefinitions as $customFieldDefinition) {
+            $fieldName = $customFieldDefinition->getName();
+
+            // Initialize all custom fields with default values (null if no customer value)
+            $allCustomFields[$fieldName] = null;
+        }
+
+        // Merge the customer's current custom fields with all custom fields
+        // The customer's custom fields will overwrite any default null values in $allCustomFields
+        $mergedCustomFields = array_merge($allCustomFields, $customFields);
+
+        return $this->renderStorefront('@Storefront/storefront/page/account/profile/index.html.twig', [
+            'page' => $page,
+            'customFields' => $mergedCustomFields,
+            'passwordFormViolation' => $request->get('passwordFormViolation'),
+            'emailFormViolation' => $request->get('emailFormViolation'),
+        ]);
     }
 }

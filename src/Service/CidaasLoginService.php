@@ -70,7 +70,8 @@ class CidaasLoginService
         EntityRepository $customerGroupRepository,
         EntityRepository $customerAddressRepo,
         EntityRepository $customerGroupTranslationRepo,
-        EntityRepository $countryRepository
+        EntityRepository $countryRepository,
+        EntityRepository $customFieldRepository
     ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->customerRepo = $customerRepo;
@@ -95,6 +96,7 @@ class CidaasLoginService
         $this->connection = $connection;
         $this->registerRoute = $registerRoute;
         $this->contextRestorer = $contextRestorer;
+        $this->customFieldRepository = $customFieldRepository;
 
     }
 
@@ -230,13 +232,13 @@ class CidaasLoginService
         return $customer->getLastLogin();
     }
 
-    public function getAuthorizationUri($state, $url, $email = null): String
+    public function getAuthorizationUri($state, $url, $localeCode, $email = null): String
     {
         $redirectUri = $url . '/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint
         . '?scope=' . urlencode("openid offline_access email profile groups") . '&response_type=code'
         . '&approval_prompt=auto&redirect_uri=' . urlencode($redirectUri)
-        . '&client_id=' . $this->clientId . '&state=' . $state;
+        . '&client_id=' . $this->clientId . '&state=' . $state . '&ui_locales=' . $localeCode;
         if ($email !== null) {
             $result .= '&userIdHint=' . $email . '&type=email';
         }
@@ -244,7 +246,7 @@ class CidaasLoginService
 
     }
 
-    public function getRegisterUri($state, $url, $userIdHint = null, $type = null): String
+    public function getRegisterUri($state, $url, $localeCode, $userIdHint = null, $type = null): String
     {
         $redirectUri = $url . '/cidaas/redirect';
         $result = $this->oAuthEndpoints->authorization_endpoint . '?scope='
@@ -252,7 +254,8 @@ class CidaasLoginService
         . '&response_type=code&approval_prompt=auto&redirect_uri='
         . urlencode($redirectUri)
             . '&view_type=register'
-            . '&state=' . $state;
+            . '&state=' . $state
+            . '&ui_locales=' . $localeCode;
         if ($userIdHint !== null) {
             $result .= '&userIdHint=' . $userIdHint
                 . '&type=' . $type;
@@ -508,6 +511,40 @@ class CidaasLoginService
         ], $context->getContext());
 
     }
+
+    public function updateCustomerCustomFieldsFromCidaas($user, $context)
+    {
+        $cidaasCustomerCustomFields = $user['customFields'];
+        $shopwareCustomFields = $this->getCustomerCustomFieldDefinitions($context->getContext());
+
+        // Prepare an array to hold custom field keys and definitions
+        $shopwareFieldKeys = [];
+
+        // Loop through the custom fields and store field keys
+        foreach ($shopwareCustomFields as $customFieldDefinition) {
+            $fieldName = $customFieldDefinition->getName();
+            $shopwareFieldKeys[$fieldName] = $customFieldDefinition;
+        }
+
+        $mappedCustomFields = [];
+        foreach ($shopwareFieldKeys as $shopwareFieldKey => $shopwareFieldDefinition) {
+            if (array_key_exists($shopwareFieldKey, $cidaasCustomerCustomFields)) {
+                // If field keys match, map the value from Cidaas to Shopware custom fields
+                $mappedCustomFields[$shopwareFieldKey] = $cidaasCustomerCustomFields[$shopwareFieldKey];
+            }
+        }
+        $mappedCustomFields['sub'] = $user['sub'];
+        $customer = $this->getCustomerByEmail($user['email'], $context);
+        $updateData = [
+            'id' => $customer->getId(),
+            'customFields' => $mappedCustomFields,
+        ];
+
+        $this->customerRepo->upsert([
+            $updateData,
+        ], $context->getContext());
+    }
+
     public function updateCustomerFromCidaas($user, $context)
     {
         $customer = $this->getCustomerBySub($user['sub'], $context);
@@ -695,7 +732,7 @@ class CidaasLoginService
         }
     }
 
-    public function updateProfile($firstName, $lastName, $salutationId, $sub, $context)
+    public function updateProfile($firstName, $lastName, $salutationId, $sub, $customFields, $context)
     {
         $client = new Client();
         $customer = $this->getCustomerBySub($sub, $context);
@@ -707,6 +744,7 @@ class CidaasLoginService
         $salutationKey = $queryBuilder->executeQuery()->fetchFirstColumn();
         $accessTokenObj = $this->getAccessToken();
         $accessToken = $accessTokenObj->token;
+        $customFields['salutation'] = $salutationKey ? $salutationKey : 'not_specified';
         try {
             $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
@@ -715,9 +753,7 @@ class CidaasLoginService
                 'form_params' => [
                     'given_name' => $firstName,
                     'family_name' => $lastName,
-                    'customFields' => [
-                        'salutation' => $salutationKey ? $salutationKey : 'not_specified',
-                    ],
+                    'customFields' => $customFields,
                     'sub' => $sub,
                     'provider' => 'self',
                 ],
@@ -1082,4 +1118,50 @@ class CidaasLoginService
         }
         return $response;
     }
+
+    public function getCustomerCustomFieldDefinitions($context): array
+    {
+        // Create a Criteria object to filter custom fields related to the customer entity
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'customer'));
+
+        // Fetch the custom field definitions from the repository
+        $customFieldDefinitions = $this->customFieldRepository->search($criteria, $context)->getEntities();
+
+        return $customFieldDefinitions->getElements();
+    }
+
+    public function updateCustomerCustomFields(CustomerEntity $customer, RequestDataBag $data, SalesChannelContext $context, string $sub): void
+    {
+        // Initialize the customFields array
+        $customFields = [];
+
+        // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
+        if ($data->get('customFields') instanceof RequestDataBag) {
+            // Get the 'customFields' data
+            $customFieldData = $data->get('customFields');
+
+            // Iterate over each custom field
+            foreach ($customFieldData as $key => $value) {
+                $customFields[$key] = $value;
+                // Log each custom field
+                error_log("Custom field: Key = $key, Value = " . print_r($value, true));
+            }
+
+        }
+
+        $customFields['sub'] = $sub;
+
+        // Prepare the update data
+        $updateData = [
+            'id' => $customer->getId(),
+            'customFields' => $customFields, // Assign the collected custom fields
+        ];
+
+        // Perform the update operation using the repository
+        $this->customerRepo->upsert([
+            $updateData,
+        ], $context->getContext());
+    }
+
 }

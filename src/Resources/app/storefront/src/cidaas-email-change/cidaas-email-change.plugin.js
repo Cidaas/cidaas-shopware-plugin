@@ -43,13 +43,30 @@ export default class CidaasEmailChange extends Plugin {
 
     handleVerify() {
         ElementLoadingIndicatorUtil.create(this.mailContainer);
-        this.client.post('/cidaas/emailform', JSON.stringify({
+        this.client.post('/cidaas/change/email', JSON.stringify({
             email: this.email
         }), (res) => {
             ElementLoadingIndicatorUtil.remove(this.mailContainer);
             document.getElementById('verifyThing').style.display = 'none';
-            window.location.href = "/account/profile"; 
+            this.redirectProfilePath();
         });
     }
+
+    redirectProfilePath() {
+        // Determine the base URL
+        const baseUrl = `${window.location.protocol}//${window.location.host}`;
+        // Optional: Get the locale from the current URL if it's available
+        const path = window.location.pathname;
+        const localeMatch = path.match(/^\/([a-z]{2})(\/|$)/i);
+        const locale = localeMatch ? localeMatch[1] : '';
+
+        // Construct the profile URL, including locale if applicable
+        const profileUrl = locale ? `${baseUrl}/${locale}/account/profile` : `${baseUrl}/account/profile`;
+
+        // Redirect to the logout URL
+        window.location.href = profileUrl;
+
+    }
+
     
 }
