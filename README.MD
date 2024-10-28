@@ -29,6 +29,19 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
 
 [Cidaas](https://www.cidaas.com) by Widas ID in cooperation with [Joshua Kopp](mailto:me@joshuakopp.de?subject=Shopware-Plugin-Cidaas)
 
+# **Setup Guide**
+
+This guide walks you through configuring the Cidaas plugin for Shopware locally, including:
+
+- Downloading and installing the Cidaas plugin
+- Setting up OAuth2 applications in Cidaas
+- Configuring Cidaas integration with Shopware
+- Mapping required registration fields between Cidaas and Shopware
+- Enabling features like passwordless login and profile synchronization.
+
+For more detailed setup instructions, refer to the [SETUP_GUIDE.md](././docs/SETUP_GUIDE.MD) document.
+
+
 ## Requirements / Installation
 
 - Installation of the plugin via upload
