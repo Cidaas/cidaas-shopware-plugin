@@ -301,11 +301,11 @@ class CidaasHelperController extends StorefrontController
                 $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
             } else {
                 $error = $responseData['error']['error'] ?? 'Unknown error';
-                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $error);
+                $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'));
             }
             return $this->json($res);
         } catch (\Exception $e) {
-            $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess') . $e->getMessage());
+            $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'));
             return $this->json(['success' => false, 'message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
