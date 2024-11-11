@@ -300,7 +300,6 @@ class CidaasHelperController extends StorefrontController
             if ($responseData['success'] === true) {
                 $this->addFlash(self::SUCCESS, $this->trans('account.passwordChangeSuccess'));
             } else {
-                $error = $responseData['error']['error'] ?? 'Unknown error';
                 $this->addFlash(self::DANGER, $this->trans('account.passwordChangeNoSuccess'));
             }
             return $this->json($res);
