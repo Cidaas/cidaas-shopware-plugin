@@ -714,21 +714,29 @@ class CidaasLoginService
         $client = new Client();
         $accessTokenObj = $this->getAccessToken();
         $accessToken = $accessTokenObj->token;
+
+        $postUrl = $this->cidaasUrl . '/users-srv/changepassword';
+        $formParams = [
+            'sub' => $sub,
+            'new_password' => $newPassword,
+            'confirm_password' => $confirmPassword,
+            'old_password' => $oldPassword,
+        ];
+
         try {
-            $response = $client->post($this->cidaasUrl . '/users-srv/changepassword', [
+            $response = $client->post($postUrl, [
                 'headers' => [
-                    'authorization' => 'Bearer ' . $accessToken,
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
                 ],
-                'form_params' => [
-                    'sub' => $sub,
-                    'new_password' => $newPassword,
-                    'confirm_password' => $confirmPassword,
-                    'old_password' => $oldPassword,
-                ],
+                'json' => $formParams,
             ]);
-            return json_decode($response->getBody()->getContents());
+
+            $responseBody = $response->getBody()->getContents();
+            return json_decode($responseBody);
         } catch (ClientException $e) {
-            return json_decode($e->getResponse()->getBody()->getContents());
+            $errorResponse = $e->getResponse()->getBody()->getContents();
+            return json_decode($errorResponse);
         }
     }
 

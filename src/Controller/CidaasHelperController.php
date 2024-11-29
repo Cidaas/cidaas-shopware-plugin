@@ -64,7 +64,7 @@ class CidaasHelperController extends StorefrontController
         // get storfront url
         $baseUrl = $request->get('sw-storefront-url');
         $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
-        // error_log(serialize($token));
+
         if (!$token || (!is_array($token) && !is_object($token))) {
             $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute('frontend.home.page');
@@ -285,11 +285,11 @@ class CidaasHelperController extends StorefrontController
             $newPassword = $request->get('newPassword');
             $confirmPassword = $request->get('confirmPassword');
             $oldPassword = $request->get('oldPassword');
-            
+
             // Attempt to change the password
             $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub);
             $responseData = json_decode(json_encode($res), true);
-            // error_log(serialize($responseData));
+
             if (!$res || !array_key_exists('success', $responseData)) {
                 throw new \Exception($this->trans('account.passwordChangeSuccess'));
             }
