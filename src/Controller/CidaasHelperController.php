@@ -56,6 +56,14 @@ class CidaasHelperController extends StorefrontController
         $state = $request->query->get('state');
         $sessionState = $request->getSession()->get('state');
 
+        if (isset($_SESSION['accessToken']) && isset($_SESSION['refreshToken'])) {
+            if ($request->getSession()->get('redirect_to')) {
+                $target = $request->getSession()->get('redirect_to');
+                return $this->redirectToRoute($target);
+            }
+            return $this->redirectToRoute('frontend.home.page');
+        }
+
         if ($state !== $sessionState) {
             $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute('frontend.home.page');
@@ -126,7 +134,6 @@ class CidaasHelperController extends StorefrontController
     {
         if ($request->getSession()->get('redirect_to')) {
             $target = $request->getSession()->get('redirect_to');
-            $request->getSession()->remove('redirect_to');
 
             if ($redirectParameters = $request->getSession()->get('redirectParameters')) {
                 $request->getSession()->remove('redirectParameters');
