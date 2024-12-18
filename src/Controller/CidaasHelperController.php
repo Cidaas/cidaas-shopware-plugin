@@ -56,25 +56,30 @@ class CidaasHelperController extends StorefrontController
         $state = $request->query->get('state');
         $sessionState = $request->getSession()->get('state');
 
+        if (isset($_SESSION['accessToken']) && isset($_SESSION['refreshToken'])) {
+            if ($request->getSession()->get('redirect_to')) {
+                $target = $request->getSession()->get('redirect_to');
+                return $this->redirectToRoute($target);
+            }
+            return $this->redirectToRoute('frontend.home.page');
+        }
+
         if ($state !== $sessionState) {
             $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute('frontend.home.page');
         }
 
-         // get storfront url
+        // get storfront url
         $baseUrl = $request->get('sw-storefront-url');
-
         $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
 
         if (!$token || (!is_array($token) && !is_object($token))) {
             $this->addFlash(self::DANGER, $this->trans('account.loginError'));
             return $this->forwardToRoute('frontend.home.page');
         }
-
         $accessToken = is_array($token) ? $token['access_token'] : $token->access_token;
         $sub = is_array($token) ? $token['sub'] : $token->sub;
         $refreshToken = is_array($token) ? $token['refresh_token'] : $token->refresh_token ?? null;
-
         $_SESSION['accessToken'] = $accessToken;
         if ($refreshToken) {
             $_SESSION['refreshToken'] = $refreshToken;
@@ -129,7 +134,6 @@ class CidaasHelperController extends StorefrontController
     {
         if ($request->getSession()->get('redirect_to')) {
             $target = $request->getSession()->get('redirect_to');
-            $request->getSession()->remove('redirect_to');
 
             if ($redirectParameters = $request->getSession()->get('redirectParameters')) {
                 $request->getSession()->remove('redirectParameters');
@@ -290,8 +294,7 @@ class CidaasHelperController extends StorefrontController
             $oldPassword = $request->get('oldPassword');
 
             // Attempt to change the password
-            $res = $this->loginService->changepassword($newPassword, $confirmPassword, $oldPassword, $sub);
-
+            $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
@@ -345,24 +348,24 @@ class CidaasHelperController extends StorefrontController
         $firstName = $request->get('firstName');
         $lastName = $request->get('lastName');
         $salutationId = $request->get('salutationId');
-         // Initialize the customFields array
-         $customFields = [];
+        // Initialize the customFields array
+        $customFields = [];
 
-         // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
-         if ($data->get('customFields') instanceof RequestDataBag) {
-             // Get the 'customFields' data
-             $customFieldData = $data->get('customFields');
- 
-             // Iterate over each custom field
-             foreach ($customFieldData as $key => $value) {
-                 $customFields[$key] = $value;
-             }
- 
-         }
+        // Check if 'customFields' exists in the RequestDataBag and is an instance of RequestDataBag
+        if ($data->get('customFields') instanceof RequestDataBag) {
+            // Get the 'customFields' data
+            $customFieldData = $data->get('customFields');
+
+            // Iterate over each custom field
+            foreach ($customFieldData as $key => $value) {
+                $customFields[$key] = $value;
+            }
+
+        }
 
         try {
             // Update profile
-            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub,$customFields, $context);
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $customFields, $context);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
