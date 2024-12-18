@@ -21,7 +21,8 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
 
 # Cidaas Shopware Plugin versions
 
-   ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   ## [Shopware Version 6.6](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.5) 
    ## [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
 
@@ -265,8 +266,4 @@ In the Shopware storefront, when the user updates their profile and address, the
   - billing_address_country
 
   We don't send empty values. If I send a new billing address with no company, the company does not get removed.
-
-# **Customer group assignment with Cidaas**
-- upcoming in next version
-
 
