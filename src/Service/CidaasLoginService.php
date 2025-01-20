@@ -669,25 +669,37 @@ class CidaasLoginService {
         return json_decode($response->getBody()->getContents(), true);
     }
 
-    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $token) {
+    public function changePassword($newPassword, $confirmPassword, $oldPassword, $sub )
+    {
         $client = new Client();
+        $accessTokenObj = $this->getAccessToken();
+        $accessToken = $accessTokenObj->token;
+
+        $postUrl = $this->cidaasUrl . '/users-srv/changepassword';
+        $formParams = [
+            'sub' => $sub,
+            'new_password' => $newPassword,
+            'confirm_password' => $confirmPassword,
+            'old_password' => $oldPassword,
+        ];
+
         try {
-            $response = $client->post($this->cidaasUrl.'/users-srv/changepassword', [
+            $response = $client->post($postUrl, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json',
                 ],
-                'form_params' => [
-                    'sub' => $sub,
-                    'new_password' => $newPassword,
-                    'confirm_password' => $confirmPassword,
-                    'old_password' => $oldPassword
-                ]
-                ]);
-            return json_decode($response->getBody()->getContents());
+                'json' => $formParams,
+            ]);
+
+            $responseBody = $response->getBody()->getContents();
+            return json_decode($responseBody);
         } catch (ClientException $e) {
-            return json_decode($e->getResponse()->getBody()->getContents());
+            $errorResponse = $e->getResponse()->getBody()->getContents();
+            return json_decode($errorResponse);
         }
     }
+
 
     public function updateProfile($firstName, $lastName, $salutationId, $sub, $token, $context) {
         $client = new Client();
