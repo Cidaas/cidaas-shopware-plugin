@@ -688,6 +688,7 @@ class CidaasLoginService {
                 'headers' => [
                     'Authorization' => 'Bearer ' . $accessToken,
                     'Content-Type' => 'application/json',
+                    'Accept-Language'=>  $_SESSION['locale'],
                 ],
                 'json' => $formParams,
             ]);

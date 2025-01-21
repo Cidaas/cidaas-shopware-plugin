@@ -1,39 +1,57 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 
 <container xmlns="http://symfony.com/schema/dic/services"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
         <service id="Cidaas\OauthConnect\Controller\CidaasHelperController" public="true">
             <argument type="service" id="Cidaas\OauthConnect\Service\CidaasLoginService" />
-            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\LogoutRoute"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\ListAddressRoute"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\AccountService"/>
-            <argument type="service" id="Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoader"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute"/>
-            <argument type="service" id="Shopware\Storefront\Page\Address\Listing\AddressListingPageLoader"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\UpsertAddressRoute"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\ChangeCustomerProfileRoute"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService" />
+            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\LogoutRoute" />
+            <argument type="service"
+                id="Shopware\Core\Checkout\Customer\SalesChannel\ListAddressRoute" />
+            <argument type="service"
+                id="Shopware\Core\Checkout\Customer\SalesChannel\AccountService" />
+            <argument type="service"
+                id="Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoader" />
+            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute" />
+            <argument type="service"
+                id="Shopware\Storefront\Page\Address\Listing\AddressListingPageLoader" />
+            <argument type="service"
+                id="Shopware\Core\Checkout\Customer\SalesChannel\UpsertAddressRoute" />
+            <argument type="service"
+                id="Shopware\Core\Checkout\Customer\SalesChannel\ChangeCustomerProfileRoute" />
             <call method="setContainer">
-                <argument id="service_container" type="service"/>
+                <argument id="service_container" type="service" />
             </call>
-             <call method="setTwig">
-                <argument type="service" id="twig"/>
+            <call method="setTwig">
+                <argument type="service" id="twig" />
             </call>
         </service>
         <service id="Cidaas\OauthConnect\Service\CidaasLoginService">
-            <argument type="service" id="event_dispatcher"/>
-            <argument type="service" id="customer.repository"/>
-            <argument type="service" id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer"/>
+            <argument type="service" id="event_dispatcher" />
+            <argument type="service" id="customer.repository" />
+            <argument type="service"
+                id="Shopware\Core\System\SalesChannel\Context\SalesChannelContextRestorer" />
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
-            <argument type="service" id ="Doctrine\DBAL\Connection"/>
-            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute"/>
+            <argument type="service" id="Doctrine\DBAL\Connection" />
+            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute" />
             <argument type="service" id="customer_group.repository" />
             <argument type="service" id="customer_address.repository" />
             <argument type="service" id="customer_group_translation.repository" />
-             <argument type="service" id="country.repository"/>
+            <argument type="service" id="country.repository" />
         </service>
+        <service id="Cidaas\OauthConnect\Subscriber\LanguageSwitchSubscriber"
+            class="Cidaas\OauthConnect\Subscriber\LanguageSwitchSubscriber" public="true">
+            <argument type="service" id="language.repository" />
+            <tag name="kernel.event_subscriber" />
+        </service>
+        <service id="Cidaas\OauthConnect\Subscriber\SessionSubscriber"
+            class="Cidaas\OauthConnect\Subscriber\SessionSubscriber">
+            <tag name="kernel.event_subscriber" />
+        </service>
+
+
     </services>
 </container>
