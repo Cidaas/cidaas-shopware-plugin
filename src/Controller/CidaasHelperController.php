@@ -387,19 +387,11 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
         try {
             $sub = $request->getSession()->get('sub');
 
-            $accessTokenObj =$this->loginService->getAccessToken();
-
-            if(!$accessTokenObj->success){
-                return  $this->redirectToRoute( 'frontend.account.logout.page' );
-            }
-            $accessToken = $accessTokenObj->token;
-
             $newPassword = $request->get('newPassword');
             $confirmPassword = $request->get('confirmPassword');
             $oldPassword = $request->get('oldPassword');
 
-            $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub, $accessToken);
-
+            $res = $this->loginService->changePassword($newPassword, $confirmPassword, $oldPassword, $sub );
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
