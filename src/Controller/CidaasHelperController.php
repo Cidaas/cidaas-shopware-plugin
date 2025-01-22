@@ -116,6 +116,10 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
 
         if ($state === $sess) {
             $token = $this->loginService->getCidaasAccessToken($code, $baseUrl);
+
+            $locale = $request->attributes->get('_locale');
+            $_SESSION['locale'] = $locale;
+
             if (is_array($token)) {
                 if (isset($token['sub'])) {
 

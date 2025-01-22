@@ -20,7 +20,6 @@ class SessionSubscriber implements EventSubscriberInterface
     {
         // Check if the session is not started
         if (session_status() === PHP_SESSION_NONE) {
-            $_SESSION['locale']= 'en-EN';
             session_start();
         }
     }
