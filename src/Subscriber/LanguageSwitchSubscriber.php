@@ -42,6 +42,7 @@ class LanguageSwitchSubscriber implements EventSubscriberInterface
 
         if (!$language || !$language->getLocale()) {
           $_SESSION['locale']= 'en-EN' ;
+          return; // Exit to avoid calling getLocale() on NULL
         }
 
         $locale = $language->getLocale()->getCode();
