@@ -439,7 +439,7 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
             if ($responseData['success'] === true) {
                 $this->addFlash(self::SUCCESS, $this->trans('account.emailChangeSuccess'));
             } else {
-                $error = $responseData['error']['error'] ?? 'Unknown error';
+                $error = $responseData['error']['error'] ?? $responseData['error'] ?? 'Unknown error';
                 $this->addFlash(self::DANGER, $this->trans('account.emailChangeNoSuccess') . $error);
             }
 
@@ -481,8 +481,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                     if (array_key_exists('error', $responseData)) {
                             // Handle error data
                             // Extract error details
-                            $error = $responseData['error']['error'];
-                            $this->addFlash('danger', 'Failed to update profile: '.$error);
+                            $error = $responseData['error']['error'] ?? $responseData['error'] ?? 'Unknown error';
+                            $this->addFlash('danger', 'Failed to update profile: ' . $error);
                         } else {
                             // No error information available
                             error_log(json_encode($responseData));
@@ -617,8 +617,8 @@ use Shopware\Core\Checkout\Customer\SalesChannel\AbstractChangeCustomerProfileRo
                    $this->addFlash('success', 'Successfully updated Billing address');
                 } elseif ($responseData['success'] === false){
                   if (array_key_exists('error', $responseData)) {
-                          $error = $responseData['error']['error'];
-                          $this->addFlash('danger', 'Failed to update billing address: '.$error);
+                        $error = $responseData['error']['error'] ?? $responseData['error'] ?? 'Unknown error';
+                        $this->addFlash('danger', 'Failed to update billing address: ' . $error);
                       } else {
                           // No error information available
                           error_log(json_encode($responseData));
