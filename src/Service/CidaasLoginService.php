@@ -396,32 +396,35 @@ class CidaasLoginService {
     }
 
     public function changeEmail($email, $sub, $token, $context)
-    {
-        $client = new Client();
-        $customer = $this->getCustomerBySub($sub, $context);
+{
+    $client = new Client();
+    $customer = $this->getCustomerBySub($sub, $context);
 
-        try {
-            $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$token
-                ],
-                'form_params' => [
-                    'email' => $email,
-                    'sub' => $sub,
-                    'provider' => 'self',
-                    'email_verified' => true
-                ]
-                ]);
-            $this->customerRepo->update([[
-                'id' => $customer->getId(),
-                'email' => $email
-            ]], $context->getContext());
+    try {
+        $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ],
+            'json' => [
+                'email' => $email,
+                'email_verified' => true,
+                'sub' => $sub,
+                'provider' => 'self',
+            ],
+        ]);
 
-            return json_decode($response->getBody()->getContents());
-        } catch (ClientException $e) {
-            return json_decode($e->getResponse()->getBody()->getContents());
-        }
+        $this->customerRepo->update([[
+            'id' => $customer->getId(),
+            'email' => $email,
+        ]], $context->getContext());
+
+        return json_decode($response->getBody()->getContents());
+    } catch (ClientException $e) {
+        return json_decode($e->getResponse()->getBody()->getContents());
     }
+}
+
 
     public function mapSubToCustomer($email, $sub,  $context)
     {
@@ -714,9 +717,10 @@ class CidaasLoginService {
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer '.$token,
+                    'Content-Type' => 'application/json' 
                 ],
-                'form_params' => [
+                'json' => [
                     'given_name' => $firstName,
                     'family_name' => $lastName,
                     'customFields' => [
@@ -816,11 +820,12 @@ class CidaasLoginService {
         try {
             $response = $client->put($this->cidaasUrl.'/users-srv/user/profile/'.$sub, [
                 'headers' => [
-                    'authorization' => 'Bearer '.$token
+                    'authorization' => 'Bearer '.$token,
+                    'Content-Type' => 'application/json'
                 ],
-                'form_params' => [
+                'json' => [
                     'customFields' => [
-                        'billing_address_zipcode' => $zipCode ,
+                        'billing_address_zipcode' => $zipCode,
                         'billing_address_street' => $street,
                         'company' => $company,
                         'billing_address_city' => $city,
@@ -829,7 +834,8 @@ class CidaasLoginService {
                     'sub' => $sub,
                     'provider' => 'self'
                 ]
-                ]);
+            ]);
+            
              
                 $this->customerAddressRepo->update([
                     [
