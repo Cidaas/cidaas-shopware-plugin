@@ -294,6 +294,8 @@ class CidaasHelperController extends StorefrontController
 
             $responseData = json_decode(json_encode($res), true);
 
+            // error_log(json_encode($responseData));
+
             if (!$res || !array_key_exists('success', $responseData)) {
                 throw new \Exception($this->trans('account.passwordChangeSuccess'));
             }
@@ -362,7 +364,7 @@ class CidaasHelperController extends StorefrontController
 
         try {
             // Update profile
-            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub,$customFields, $context);
+            $res = $this->loginService->updateProfile($firstName, $lastName, $salutationId, $sub, $customFields, $context);
             $responseData = json_decode(json_encode($res), true);
 
             if (!$res || !array_key_exists('success', $responseData)) {
