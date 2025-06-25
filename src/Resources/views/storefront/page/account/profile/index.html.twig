@@ -1,52 +1,67 @@
 {% sw_extends '@Storefront/storefront/page/account/profile/index.html.twig' %}
- {% block page_account_profile_credentials_change_mail %}
+
+{# Custom Fields Block - dynamically render all customer custom fields #}
+{% block page_account_profile_content_inner %}
+    {{ parent() }}
+
+    {% if page.customer.customFields is defined and page.customer.customFields|length > 0 %}
+        <div class="alert alert-info mt-4">
+            <h4>Custom Fields</h4>
+            <ul class="list-unstyled mb-0">
+                {% for fieldName, value in page.customer.customFields %}
+                    <li>
+                        <strong>{{ fieldName|replace({'_': ' '})|title }}:</strong>
+                        {{ value is not empty ? value : '—' }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{# Email Change Button #}
+{% block page_account_profile_credentials_change_mail %}
     <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
         <a class="account-profile-change{% if not emailFormViolation %} collapsed{% endif %}"
-            data-bs-toggle="collapse"
-            href="#profile-email-form"
-            role="button"
-            aria-expanded="{% if emailFormViolation %}true{% else %}false{% endif %}"
-            aria-controls="profile-email-form">
+           data-bs-toggle="collapse"
+           href="#profile-email-form"
+           role="button"
+           aria-expanded="{% if emailFormViolation %}true{% else %}false{% endif %}"
+           aria-controls="profile-email-form">
             {{ "account.profileChangeEmail"|trans|sw_sanitize }}
         </a>
     </div>
 {% endblock %}
+
+{# Password Change Button #}
 {% block page_account_profile_credentials_change_password %}
-    {# <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
-        <a href="/cidaas/changepassword" target="_blank">
-           Passwort ändern
-        </a>
-    </div> #}
     <div class="col-12 col-sm-6 col-md-3 mt-2 mt-md-0">
         <a class="account-profile-change{% if not passwordFormViolation %} collapsed{% endif %}"
-            data-bs-toggle="collapse"
-            href="#profile-password-form"
-            role="button"
-            aria-expanded="{% if passwordFormViolation %}true{% else %}false{% endif %}"
-            aria-controls="profile-password-form">
+           data-bs-toggle="collapse"
+           href="#profile-password-form"
+           role="button"
+           aria-expanded="{% if passwordFormViolation %}true{% else %}false{% endif %}"
+           aria-controls="profile-password-form">
             {{ "account.profileChangePassword"|trans|sw_sanitize }}
         </a>
     </div>
 {% endblock %}
 
+{# Email Form Content #}
 {% block page_account_profile_mail_collapse %}
     <div class="collapse" id="profile-email-form" data-parent=".profile-content">
         <div class="card account-email">
-            {% sw_include '@CidaasHelper/storefront/cidaasauth/changeemail.html.twig' 
-                with {
-                    context
-                }
-            %}
+            {% sw_include '@CidaasHelper/storefront/cidaasauth/changeemail.html.twig' with { context } %}
         </div>
     </div>
 {% endblock %}
 
+{# Password Form Content #}
 {% block page_account_profile_password %}
-    <div class="collapse{% if passwordFormViolation and formViolations %} show{% endif %}" id="profile-password-form" data-parent=".profile-content">
+    <div class="collapse{% if passwordFormViolation and formViolations %} show{% endif %}"
+         id="profile-password-form" data-parent=".profile-content">
         <div class="card account-password">
-            {% sw_include '@CidaasHelper/storefront/cidaasauth/changepassword.html.twig' with {
-                context
-            } %}
+            {% sw_include '@CidaasHelper/storefront/cidaasauth/changepassword.html.twig' with { context } %}
         </div>
     </div>
 {% endblock %}
