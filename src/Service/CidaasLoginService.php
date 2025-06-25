@@ -790,20 +790,20 @@ class CidaasLoginService
         $queryBuilder->select('country_id')
             ->from('country_translation')
             ->where('name="' . $countryVal . '"');
-        $country = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN);
+        $country = $queryBuilder->executeQuery()->fetchFirstColumn();
         if (!$country) {
             $queryBuilder = $this->connection->createQueryBuilder();
             $queryBuilder->select('id')
                 ->from('country')
                 ->where('iso="' . $countryVal . '"');
-            $country = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN);
+            $country = $queryBuilder->executeQuery()->fetchFirstColumn();
         }
         if (!$country) {
             $queryBuilder = $this->connection->createQueryBuilder();
             $queryBuilder->select('id')
                 ->from('country')
                 ->where('iso="DE"');
-            $country = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN);
+            $country = $queryBuilder->executeQuery()->fetchFirstColumn();
         }
         return Uuid::fromBytesToHex($country[0]);
     }
@@ -816,13 +816,15 @@ class CidaasLoginService
             $queryBuilder->select('id')
                 ->from('salutation')
                 ->where('salutation_key="not_specified"');
-            $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
+            $salutation = $queryBuilder->executeQuery()->fetchFirstColumn()[0];
+
             return Uuid::fromBytesToHex($salutation);
         }
         $queryBuilder->select('id')
             ->from('salutation')
             ->where('salutation_key="' . $salutation . '"');
-        $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
+        $salutation = $queryBuilder->executeQuery()->fetchFirstColumn()[0];
+
         return Uuid::fromBytesToHex($salutation);
     }
 

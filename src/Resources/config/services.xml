@@ -15,9 +15,6 @@
             <call method="setContainer">
                 <argument id="service_container" type="service" />
             </call>
-            <call method="setTwig">
-                <argument type="service" id="twig" />
-            </call>
         </service>
 
         <service id="Cidaas\OauthConnect\Controller\CidaasAddressController" public="true">
@@ -35,9 +32,6 @@
             <call method="setContainer">
                 <argument id="service_container" type="service" />
             </call>
-            <call method="setTwig">
-                <argument type="service" id="twig" />
-            </call>
         </service>
         <service id="Cidaas\OauthConnect\Controller\CidaasRegisterController" public="true">
             <argument type="service" id="Cidaas\OauthConnect\Service\CidaasLoginService" />
@@ -47,9 +41,6 @@
             <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\RegisterRoute" />
             <call method="setContainer">
                 <argument id="service_container" type="service" />
-            </call>
-            <call method="setTwig">
-                <argument type="service" id="twig" />
             </call>
         </service>
 
