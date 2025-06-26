@@ -810,23 +810,30 @@ class CidaasLoginService
 
     private function getSalutationId($salutation)
     {
+        $salutationKey = $salutation ?: 'not_specified';
+    
         $queryBuilder = $this->connection->createQueryBuilder();
-        if ($salutation === null || $salutation === "") {
-            $queryBuilder = $this->connection->createQueryBuilder();
-            $queryBuilder->select('id')
-                ->from('salutation')
-                ->where('salutation_key="not_specified"');
-            $salutation = $queryBuilder->executeQuery()->fetchFirstColumn()[0];
-
-            return Uuid::fromBytesToHex($salutation);
-        }
         $queryBuilder->select('id')
             ->from('salutation')
-            ->where('salutation_key="' . $salutation . '"');
-        $salutation = $queryBuilder->executeQuery()->fetchFirstColumn()[0];
-
-        return Uuid::fromBytesToHex($salutation);
+            ->where('salutation_key = :salutationKey')
+            ->setParameter('salutationKey', $salutationKey);
+    
+        $result = $queryBuilder->executeQuery()->fetchFirstColumn();
+    
+        // Fallback if first result is empty and salutation was custom
+        if (empty($result) && $salutation && $salutation !== 'not_specified') {
+            $fallbackQuery = $this->connection->createQueryBuilder();
+            $fallbackQuery->select('id')
+                ->from('salutation')
+                ->where('salutation_key = :salutationKey')
+                ->setParameter('salutationKey', 'not_specified');
+    
+            $result = $fallbackQuery->executeQuery()->fetchFirstColumn();
+        }
+    
+        return !empty($result) ? Uuid::fromBytesToHex($result[0]) : null;
     }
+    
 
     private function getAdminToken()
     {

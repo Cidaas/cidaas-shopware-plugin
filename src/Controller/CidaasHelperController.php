@@ -34,19 +34,28 @@ class CidaasHelperController extends StorefrontController
     }
 
     // Redirect all account login
-    #[Route(path: '/account/login', name: 'frontend.account.login.page')]
+    #[Route(path: '/account/login', name: 'frontend.account.login.page', methods: ['GET'])]
     public function loginRedirect(Request $request): Response
     {
-        if ($request->get('redirectTo')) {
-            if ($request->get('redirectParameters')) {
-                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->get('redirectTo'), 'redirectParameters' => json_decode($request->get('redirectParameters'))]);
-            } else {
-                return $this->forwardToRoute('frontend.cidaas.account.login.page', ['redirectTo' => $request->Get('redirectTo')]);
+        $redirectTo = $request->get('redirectTo');
+        $redirectParams = $request->get('redirectParameters');
+    
+        if ($redirectTo) {
+            if ($redirectParams) {
+                return $this->forwardToRoute('frontend.cidaas.account.login.page', [
+                    'redirectTo' => $redirectTo,
+                    'redirectParameters' => json_decode($redirectParams, true)
+                ]);
             }
-            return $this->redirectTo('frontend.cidaas.account.login.page');
+    
+            return $this->forwardToRoute('frontend.cidaas.account.login.page', [
+                'redirectTo' => $redirectTo
+            ]);
         }
+    
         return $this->forwardToRoute('frontend.home.page');
     }
+    
 
     // handle redirect from Cidaas
     #[Route(path: '/cidaas/redirect', name: 'cidaas.redirect', options: ['seo' => false], methods: ['GET'])]
