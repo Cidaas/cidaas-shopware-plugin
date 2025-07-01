@@ -6,3 +6,7 @@ services:
       - '80:80'
     volumes:
       - .:/var/www/html/custom/plugins/cidaassso-main
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  

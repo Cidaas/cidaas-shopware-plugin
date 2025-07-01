@@ -21,7 +21,8 @@ This is a shopware 6 plugin that allows you to integrate your store into the cid
 
 # Cidaas Shopware Plugin versions
 
-   ## [Shopware Version 6.6](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   ## [Shopware Version 6.7](https://github.com/Cidaas/cidaas-shopware-plugin/tree/master) 
+   ## [Shopware Version 6.6](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.6) 
    ## [Shopware Version 6.5](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.5) 
    ## [Shopware Version 6.4](https://github.com/Cidaas/cidaas-shopware-plugin/tree/version_6.4) 
 
@@ -267,3 +268,78 @@ In the Shopware storefront, when the user updates their profile and address, the
 
   We don't send empty values. If I send a new billing address with no company, the company does not get removed.
 
+# How are Cidaas Custom Fields Synchronized to Shopware?
+
+The synchronization of Cidaas custom fields to Shopware occurs during the login and registration flow. When a user logs in via Cidaas, the system fetches the user's profile using the access token and retrieves all necessary fields, including custom fields, via the Cidaas UserInfo endpoint.
+
+These custom fields can include user-specific metadata such as:
+
+- `document_number`
+- `connect_dealer_type`
+- Any other organization-defined fields
+
+Once the profile is fetched, the system maps these fields into Shopware's customer entity. These are stored within the `customFields` object of the customer record in the Shopware database.
+
+If any required fields are missing from the Cidaas user profile during login (e.g., a `document_number` is not provided), the system redirects the user to a `register_additional_info` page where the user is prompted to fill in the missing details before continuing.
+
+---
+
+## Custom Field Mapping Logic
+
+For each expected custom field, the plugin extracts it from the Cidaas profile and stores it as follows:
+
+- If the field exists: it is saved directly into `customer.customFields`.
+- If the field is missing: user is redirected to complete it (on first login).
+- Fields are merged with existing Shopware custom fields, avoiding data loss.
+
+---
+
+## Example Custom Fields Stored in Shopware
+
+- `document_number` → Customer identity or license info
+- `connect_dealer_type` → Can be `"retail"` or `"wholesale"`
+
+These are made editable and visible in the Shopware storefront via a customized account profile page.
+
+---
+
+## Data Flow
+
+1. **Cidaas Login**
+   - OAuth flow returns access token
+   - Fetch user info via `/userinfo` endpoint
+
+2. **Custom Field Mapping**
+   - Extract relevant fields from user info
+   - Merge into Shopware `customer.customFields`
+
+3. **Render in Storefront**
+   - Custom fields are exposed to Twig templates
+   - Editable via form fields (input/select)
+
+4. **Update on Save**
+   - Changes submitted by user are saved to Shopware
+   - Plugin optionally syncs changes back to Cidaas
+
+---
+
+## Custom Fields Updated in Storefront
+
+The following fields are editable from the Shopware profile page:
+
+- `document_number` (text input)
+- `connect_dealer_type` (select dropdown)
+
+Each field is rendered based on its type and stored persistently in Shopware’s customer record.
+
+---
+
+## Notes
+
+- All synced fields are stored under `customFields` JSON in the customer entity.
+- Make sure the field names match the expected keys from the Cidaas user profile or have a mapped equivalent in your plugin logic.
+- No empty values are written during sync to prevent overwriting existing data.
+- Cidaas `sub` value is used to uniquely identify the user in Shopware.
+- Any update to these fields in Shopware can optionally be sent back to Cidaas using the update user API.
+
+ 
