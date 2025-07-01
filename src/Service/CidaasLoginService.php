@@ -311,7 +311,7 @@ class CidaasLoginService
         $this->customerRepo->upsert([
             $updateData,
         ], $context->getContext());
-
+        $this->updateCustomerCustomFieldsFromCidaas($user, $context);
         return $data;
     }
 
@@ -804,24 +804,41 @@ class CidaasLoginService
         return Uuid::fromBytesToHex($country[0]);
     }
 
-    private function getSalutationId($salutation)
-    {
-        $queryBuilder = $this->connection->createQueryBuilder();
-        if ($salutation === null || $salutation === "") {
+    private function getSalutationId($salutation): ?string
+        {
+            $queryBuilder = $this->connection->createQueryBuilder();
+            // Fallback for empty or undefined values
+            if (empty($salutation) || $salutation === 'undefined') {
+                $queryBuilder->select('id')
+                    ->from('salutation')
+                    ->where('salutation_key = :key')
+                    ->setParameter('key', 'not_specified');
+
+                $result = $queryBuilder->execute()->fetchOne();
+
+                return $result ? Uuid::fromBytesToHex($result) : null;
+            }
+            // Try to fetch given salutation
             $queryBuilder = $this->connection->createQueryBuilder();
             $queryBuilder->select('id')
                 ->from('salutation')
-                ->where('salutation_key="not_specified"');
-            $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
-            return Uuid::fromBytesToHex($salutation);
-        }
-        $queryBuilder->select('id')
-            ->from('salutation')
-            ->where('salutation_key="' . $salutation . '"');
-        $salutation = $queryBuilder->execute()->fetchAll(FetchMode::COLUMN)[0];
-        return Uuid::fromBytesToHex($salutation);
-    }
+                ->where('salutation_key = :key')
+                ->setParameter('key', $salutation);
+            $result = $queryBuilder->execute()->fetchOne();
 
+            // If not found, fallback to 'not_specified'
+            if (!$result) {
+                $queryBuilder = $this->connection->createQueryBuilder();
+                $queryBuilder->select('id')
+                    ->from('salutation')
+                    ->where('salutation_key = :key')
+                    ->setParameter('key', 'not_specified');
+
+                $result = $queryBuilder->execute()->fetchOne();
+            }
+
+            return $result ? Uuid::fromBytesToHex($result) : null;
+        }
     private function getAdminToken()
     {
         $client = new Client();

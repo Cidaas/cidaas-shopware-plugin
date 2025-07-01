@@ -3,17 +3,104 @@
 {% block component_address_personal_fields %}
     {{ parent() }}
 
-    <div class="row g-2">
-        {% for fieldKey, fieldValue in customFields %}
-            {% if fieldKey != 'sub' %}
-                <div class="form-group col-sm-6">
-                    <label class="form-label" for="customFields[{{ fieldKey }}]">
-                        {{ ("customFields." ~ fieldKey)|trans|sw_sanitize }}
-                    </label>
-                    <input type="text" class="form-control" name="customFields[{{ fieldKey }}]" value="{{ fieldValue }}" id="customFields[{{ fieldKey }}]">
-                </div>
-            {% endif %}
-        {% endfor %}
-    </div>
-{% endblock %}
+    {% if customFields is defined and customFields|length > 0 %}
+        <div class="row mt-4">
+            <h5 class="col-12">Custom Fields</h5>
 
+            {% for field in customFields %}
+                <div class="form-group col-12 col-md-6 mb-3">
+                    <label class="form-label" for="custom-field-{{ field.name }}">
+                        {{ field.label['en-GB'] ?? field.label }}
+                    </label>
+
+                    {% set fieldName = 'customFields[' ~ field.name ~ ']' %}
+
+                    {% if field.type == 'text' %}
+                        <input type="text"
+                               name="{{ fieldName }}"
+                               id="custom-field-{{ field.name }}"
+                               class="form-control"
+                               value="{{ field.value|e }}" />
+
+                    {% elseif field.type == 'textarea' or field.type == 'html' %}
+                        <textarea name="{{ fieldName }}"
+                                  id="custom-field-{{ field.name }}"
+                                  class="form-control">{{ field.value|e }}</textarea>
+
+                    {% elseif field.type == 'int' or field.type == 'float' %}
+                        <input type="number"
+                               name="{{ fieldName }}"
+                               id="custom-field-{{ field.name }}"
+                               class="form-control"
+                               value="{{ field.value }}" />
+
+                    {% elseif field.type == 'bool' %}
+                        <div class="form-check mt-2">
+                            <input type="checkbox"
+                                   name="{{ fieldName }}"
+                                   id="custom-field-{{ field.name }}"
+                                   class="form-check-input"
+                                   value="1"
+                                   {% if field.value %}checked{% endif %} />
+                            <label class="form-check-label" for="custom-field-{{ field.name }}">
+                                {{ field.label['en-GB'] ?? field.label }}
+                            </label>
+                        </div>
+
+                    {% elseif field.type == 'date' %}
+                        <input type="date"
+                               name="{{ fieldName }}"
+                               id="custom-field-{{ field.name }}"
+                               class="form-control"
+                               value="{{ field.value }}" />
+
+                    {% elseif field.type == 'datetime' %}
+                        <input type="datetime-local"
+                               name="{{ fieldName }}"
+                               id="custom-field-{{ field.name }}"
+                               class="form-control"
+                               value="{{ field.value }}" />
+
+                    {% elseif field.type == 'select' %}
+                        <select name="{{ fieldName }}"
+                                id="custom-field-{{ field.name }}"
+                                class="form-select">
+                            {% for option in field.options %}
+                                {% set optionLabel = option.label['en-GB'] ?? option.label %}
+                                <option value="{{ option.value }}"
+                                        {% if option.value == field.value %}selected{% endif %}>
+                                    {{ optionLabel }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                    {% elseif field.type == 'checkbox' %}
+                        {% for option in field.options %}
+                            {% set isChecked = field.value is iterable and option.value in field.value %}
+                            {% set optionLabel = option.label['en-GB'] ?? option.label %}
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       name="{{ fieldName }}[]"
+                                       id="custom-field-{{ field.name }}-{{ loop.index }}"
+                                       class="form-check-input"
+                                       value="{{ option.value }}"
+                                       {% if isChecked %}checked{% endif %} />
+                                <label class="form-check-label"
+                                       for="custom-field-{{ field.name }}-{{ loop.index }}">
+                                    {{ optionLabel }}
+                                </label>
+                            </div>
+                        {% endfor %}
+
+                    {% else %}
+                        <input type="text"
+                               name="{{ fieldName }}"
+                               id="custom-field-{{ field.name }}"
+                               class="form-control"
+                               value="{{ field.value|e }}" />
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

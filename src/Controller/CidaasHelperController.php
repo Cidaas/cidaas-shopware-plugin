@@ -412,38 +412,54 @@ class CidaasHelperController extends StorefrontController
     }
 
     #[Route(path: '/account/profile', name: 'frontend.account.profile.page', defaults: ['_loginRequired' => true, '_noStore' => true], methods: ['GET'])]
-    public function profileOverview(Request $request, SalesChannelContext $context): Response
-    {
-        $page = $this->profilePageLoader->load($request, $context);
+        public function profileOverview(Request $request, SalesChannelContext $context): Response
+        {
+            $page = $this->profilePageLoader->load($request, $context);
+            $this->hook(new AccountProfilePageLoadedHook($page, $context));
 
-        $this->hook(new AccountProfilePageLoadedHook($page, $context));
-        // Get custom field definitions for customers (all possible custom fields from admin)
-        $customFieldDefinitions = $this->loginService->getCustomerCustomFieldDefinitions($context->getContext());
+            $customer = $context->getCustomer();
+            $customFields = $customer ? $customer->getCustomFields() : [];
 
-        // Get the current customer and their custom field values
-        $customer = $context->getCustomer();
-        $customFields = $customer ? $customer->getCustomFields() : [];
+            // Get all field definitions for 'customer'
+            $definitions = $this->loginService->getCustomerCustomFieldDefinitions($context->getContext());
 
-        // Initialize an array to hold all custom fields (merge definitions and values)
-        $allCustomFields = [];
+            $formattedFields = [];
 
-        // Iterate over the custom field definitions
-        foreach ($customFieldDefinitions as $customFieldDefinition) {
-            $fieldName = $customFieldDefinition->getName();
+            foreach ($definitions as $definition) {
+                $name = $definition->getName();
+                $config = $definition->getConfig();
+                $label = $config['label']['en-GB'] ?? $name;
+                $type = $definition->getType();
+                $options = $config['options'] ?? [];
 
-            // Initialize all custom fields with default values (null if no customer value)
-            $allCustomFields[$fieldName] = null;
+                $value = $customFields[$name] ?? null;
+
+                $displayValue = $value;
+                if ($type === 'select' && is_array($options)) {
+                    foreach ($options as $option) {
+                        if ($option['value'] == $value) {
+                            $displayValue = $option['label']['en-GB'] ?? $option['value'];
+                            break;
+                        }
+                    }
+                }
+
+                $formattedFields[] = [
+                    'name' => $name,
+                    'label' => $label,
+                    'value' => $value,
+                    'displayValue' => $displayValue,
+                    'type' => $type,
+                    'options' => $options
+                ];
+            }
+
+            return $this->renderStorefront('@Storefront/storefront/page/account/profile/index.html.twig', [
+                'page' => $page,
+                'customFields' => $formattedFields,
+                'passwordFormViolation' => $request->get('passwordFormViolation'),
+                'emailFormViolation' => $request->get('emailFormViolation'),
+            ]);
         }
 
-        // Merge the customer's current custom fields with all custom fields
-        // The customer's custom fields will overwrite any default null values in $allCustomFields
-        $mergedCustomFields = array_merge($allCustomFields, $customFields);
-
-        return $this->renderStorefront('@Storefront/storefront/page/account/profile/index.html.twig', [
-            'page' => $page,
-            'customFields' => $mergedCustomFields,
-            'passwordFormViolation' => $request->get('passwordFormViolation'),
-            'emailFormViolation' => $request->get('emailFormViolation'),
-        ]);
-    }
 }
