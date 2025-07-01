@@ -311,7 +311,7 @@ class CidaasLoginService
         $this->customerRepo->upsert([
             $updateData,
         ], $context->getContext());
-
+        $this->updateCustomerCustomFieldsFromCidaas($user, $context);
         return $data;
     }
 
