@@ -757,6 +757,16 @@ class CidaasLoginService
         $accessTokenObj = $this->getAccessToken();
         $accessToken = $accessTokenObj->token;
         $customFields['salutation'] = $salutationKey ? $salutationKey : 'not_specified';
+
+        // Convert checkbox numeric values (1/0) to true/false boolean
+        foreach ($customFields as $key => $value) {
+        if ($value === 1 || $value === '1') {
+            $customFields[$key] = true;
+            } elseif ($value === 0 || $value === '0') {
+                $customFields[$key] = false;
+            }
+        }
+    
         try {
             $response = $client->put($this->cidaasUrl . '/users-srv/user/profile/' . $sub, [
                 'headers' => [
@@ -777,6 +787,7 @@ class CidaasLoginService
                 'firstName' => $firstName,
                 'lastName' => $lastName,
                 'salutationId' => $salutationId,
+                'customFields' => $customFields,
             ]], $context->getContext());
             return json_decode($response->getBody()->getContents());
         } catch (ClientException $e) {
@@ -1174,6 +1185,14 @@ class CidaasLoginService
             }
 
         }
+        foreach ($customFields as $key => $value) {
+            if ($value === 1 || $value === '1') {
+                $customFields[$key] = true;
+            } elseif ($value === 0 || $value === '0') {
+                $customFields[$key] = false;
+            }
+        }
+
 
         $customFields['sub'] = $sub;
 
@@ -1188,5 +1207,37 @@ class CidaasLoginService
             $updateData,
         ], $context->getContext());
     }
+
+    public function getCustomerCheckboxCustomFields(SalesChannelContext $context): array
+        {
+            // Filter custom fields where the entity is 'customer'
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('customFieldSet.relations.entityName', 'customer'));
+
+            // Fetch the custom field definitions
+            $customFieldDefinitions = $this->customFieldRepository
+                ->search($criteria, $context->getContext())
+                ->getEntities();
+
+            $checkboxFields = [];
+
+
+            foreach ($customFieldDefinitions as $customField) {
+                $type = $customField->getType();
+                $config = $customField->getConfig();
+                $component = $config['componentName'] ?? '';
+                $configType = $config['type'] ?? '';
+
+                // Case 1: Single checkbox
+                if ($type === 'bool' && $configType === 'checkbox') {
+                    $checkboxFields[] = $customField->getName();
+                }
+            }
+
+
+            return $checkboxFields;
+        }
+
+
 
 }
