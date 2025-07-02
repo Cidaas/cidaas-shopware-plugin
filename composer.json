@@ -3,7 +3,7 @@
   "description": "Cidaas SSO - OpenID Connect",
   "type": "shopware-platform-plugin",
   "license": "MIT",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "authors": [
     {
       "name": "Joshua Kopp",
@@ -20,17 +20,17 @@
     "shopware-plugin-class": "Cidaas\\OauthConnect\\CidaasOauthConnect",
     "plugin-icon": "src/Resources/config/plugin.png",
     "label": {
-      "de-DE": "Cidaas SSO - OpenId Connect",
-      "en-GB": "Cidaas SSO - OpenId Connect"
+      "de-DE": "Cidaas SSO - OpenID Connect",
+      "en-GB": "Cidaas SSO - OpenID Connect"
     },
     "description": {
-        "de-DE": "Ein Shopware 6 plugin um einen Login über das cidaas IDP zu ermöglichen",
-        "en-GB": "A Shopware 6 plugin that allows customers to login via cidaas IDP"
+      "de-DE": "Ein Shopware 6 Plugin, um einen Login über das Cidaas IDP zu ermöglichen",
+      "en-GB": "A Shopware 6 plugin that allows customers to log in via Cidaas IDP"
     }
   },
   "require": {
     "php": "~8.2",
-    "shopware/core": "~6.6.0",
-    "shopware/storefront": "~6.6.0"
+    "shopware/core": "~6.7.0",
+    "shopware/storefront": "~6.7.0"
   }
 }
