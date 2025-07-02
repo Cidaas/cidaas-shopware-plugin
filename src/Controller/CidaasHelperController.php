@@ -365,12 +365,26 @@ class CidaasHelperController extends StorefrontController
             // Get the 'customFields' data
             $customFieldData = $data->get('customFields');
 
-            // Iterate over each custom field
-            foreach ($customFieldData as $key => $value) {
-                $customFields[$key] = $value;
+               // Iterate over each custom field
+               foreach ($customFieldData as $key => $value) {
+                if (is_array($value)) {
+                    // Remove empty string from hidden input
+                    $filtered = array_filter($value, fn ($v) => $v !== '');
+                    $customFields[$key] = array_values($filtered); // normalize indexes
+                } else {
+                    $customFields[$key] = $value;
+                }
             }
-
+ 
+         }
+         $allCheckboxKeys = $this->loginService->getCustomerCheckboxCustomFields($context);
+         foreach ($allCheckboxKeys as $key) {
+            if (!array_key_exists($key, $customFields)) {
+                $customFields[$key] = "0";
+            }
         }
+
+
 
         try {
             // Update profile
